@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { Download, Upload, FileText, FileCode, AlertCircle, Plug, Loader2, CheckCircle2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -70,16 +70,31 @@ const validateFTPConfig = (config: FTPConfig): FTPValidation => {
   };
 };
 
+const FTP_CONFIG_KEY = 'pdv_ftp_config';
+
+const getDefaultFTPConfig = (): FTPConfig => {
+  const saved = localStorage.getItem(FTP_CONFIG_KEY);
+  if (saved) {
+    try {
+      return JSON.parse(saved);
+    } catch {
+      // ignore parse errors
+    }
+  }
+  // Configuração padrão inicial
+  return {
+    host: '192.168.99.108',
+    user: 'ftp_local',
+    password: '212431',
+    port: 21,
+    folder: '/',
+  };
+};
+
 export function ExportModal({ order, open, onClose, onSuccess }: ExportModalProps) {
   const [format, setFormat] = useState<'xml' | 'txt'>('xml');
   const [destination, setDestination] = useState<'download' | 'ftp'>('download');
-  const [ftpConfig, setFtpConfig] = useState<FTPConfig>({
-    host: '',
-    user: '',
-    password: '',
-    port: 21,
-    folder: '/',
-  });
+  const [ftpConfig, setFtpConfig] = useState<FTPConfig>(getDefaultFTPConfig);
   const [loading, setLoading] = useState(false);
   const [testingConnection, setTestingConnection] = useState(false);
   const [connectionTested, setConnectionTested] = useState(false);
@@ -118,9 +133,11 @@ export function ExportModal({ order, open, onClose, onSuccess }: ExportModalProp
         });
       } else {
         setConnectionTested(true);
+        // Salvar configuração no localStorage após sucesso
+        localStorage.setItem(FTP_CONFIG_KEY, JSON.stringify(ftpConfig));
         toast({
           title: 'Conexão bem-sucedida!',
-          description: data.message,
+          description: data.message + ' (configurações salvas)',
         });
       }
     } catch (err) {
