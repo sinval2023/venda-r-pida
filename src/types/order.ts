@@ -27,7 +27,7 @@ export interface Product {
 
 export interface ExportConfig {
   format: 'xml' | 'txt';
-  destination: 'download' | 'ftp';
+  destination: 'download' | 'share' | 'ftp';
   ftpConfig?: FTPConfig;
   useFixedFilename?: boolean;
 }

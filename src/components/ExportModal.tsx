@@ -1,5 +1,5 @@
-import { useState, useMemo, useEffect } from 'react';
-import { Download, Upload, FileText, FileCode, AlertCircle, Plug, Loader2, CheckCircle2 } from 'lucide-react';
+import { useState, useMemo } from 'react';
+import { Download, Upload, FileText, FileCode, AlertCircle, Plug, Loader2, CheckCircle2, Share2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -8,7 +8,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card } from '@/components/ui/card';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Order, ExportConfig, FTPConfig } from '@/types/order';
-import { exportOrder } from '@/utils/exportOrder';
+import { exportOrder, generateXML, generateTXT } from '@/utils/exportOrder';
 import { toast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 interface ExportModalProps {
@@ -93,15 +93,17 @@ const getDefaultFTPConfig = (): FTPConfig => {
 
 export function ExportModal({ order, open, onClose, onSuccess }: ExportModalProps) {
   const [format, setFormat] = useState<'xml' | 'txt'>('xml');
-  const [destination, setDestination] = useState<'download' | 'ftp'>('download');
+  const [destination, setDestination] = useState<'download' | 'share' | 'ftp'>('download');
   const [ftpConfig, setFtpConfig] = useState<FTPConfig>(getDefaultFTPConfig);
   const [loading, setLoading] = useState(false);
   const [testingConnection, setTestingConnection] = useState(false);
   const [connectionTested, setConnectionTested] = useState(false);
   const [showValidation, setShowValidation] = useState(false);
   const [useFixedFilename, setUseFixedFilename] = useState(true);
+  const [sharing, setSharing] = useState(false);
 
   const ftpValidation = useMemo(() => validateFTPConfig(ftpConfig), [ftpConfig]);
+  const canShare = typeof navigator !== 'undefined' && navigator.share && navigator.canShare;
 
   const handleTestConnection = async () => {
     setShowValidation(true);
@@ -151,7 +153,52 @@ export function ExportModal({ order, open, onClose, onSuccess }: ExportModalProp
     setTestingConnection(false);
   };
 
+  const handleShare = async () => {
+    setSharing(true);
+    try {
+      const content = format === 'xml' ? generateXML(order) : generateTXT(order);
+      const extension = format === 'xml' ? 'xml' : 'txt';
+      const mimeType = format === 'xml' ? 'application/xml' : 'text/plain';
+      const filename = `pedido_${order.number.toString().padStart(6, '0')}.${extension}`;
+      
+      const file = new File([content], filename, { type: mimeType });
+      
+      if (navigator.canShare && navigator.canShare({ files: [file] })) {
+        await navigator.share({
+          files: [file],
+          title: `Pedido #${order.number.toString().padStart(6, '0')}`,
+          text: `Pedido de venda - Total: R$ ${order.total.toFixed(2)}`,
+        });
+        toast({
+          title: 'Arquivo compartilhado!',
+          description: 'Selecione o Google Drive ou outro app para salvar.',
+        });
+        onSuccess();
+      } else {
+        toast({
+          title: 'Compartilhamento não suportado',
+          description: 'Seu navegador não suporta compartilhar arquivos. Use o Download.',
+          variant: 'destructive',
+        });
+      }
+    } catch (err: any) {
+      if (err.name !== 'AbortError') {
+        toast({
+          title: 'Erro ao compartilhar',
+          description: 'Não foi possível compartilhar o arquivo.',
+          variant: 'destructive',
+        });
+      }
+    }
+    setSharing(false);
+  };
+
   const handleExport = async () => {
+    if (destination === 'share') {
+      await handleShare();
+      return;
+    }
+
     if (destination === 'ftp') {
       setShowValidation(true);
       if (!ftpValidation.isValid) {
@@ -166,11 +213,14 @@ export function ExportModal({ order, open, onClose, onSuccess }: ExportModalProp
 
     setLoading(true);
     
+    // After early return for 'share', destination is only 'download' | 'ftp'
+    const actualDestination = destination as 'download' | 'ftp';
+    
     const config: ExportConfig = {
       format,
-      destination,
-      ftpConfig: destination === 'ftp' ? ftpConfig : undefined,
-      useFixedFilename: destination === 'download' ? useFixedFilename : false,
+      destination: actualDestination,
+      ftpConfig: actualDestination === 'ftp' ? ftpConfig : undefined,
+      useFixedFilename: actualDestination === 'download' ? useFixedFilename : false,
     };
 
     const result = await exportOrder(order, config);
@@ -242,14 +292,18 @@ export function ExportModal({ order, open, onClose, onSuccess }: ExportModalProp
             </div>
           </div>
 
-          <Tabs value={destination} onValueChange={(v) => setDestination(v as 'download' | 'ftp')}>
-            <TabsList className="grid w-full grid-cols-2">
-              <TabsTrigger value="download" className="flex items-center gap-2">
-                <Download className="h-4 w-4" />
+          <Tabs value={destination} onValueChange={(v) => setDestination(v as 'download' | 'share' | 'ftp')}>
+            <TabsList className="grid w-full grid-cols-3">
+              <TabsTrigger value="download" className="flex items-center gap-1 text-xs">
+                <Download className="h-3 w-3" />
                 Download
               </TabsTrigger>
-              <TabsTrigger value="ftp" className="flex items-center gap-2">
-                <Upload className="h-4 w-4" />
+              <TabsTrigger value="share" className="flex items-center gap-1 text-xs" disabled={!canShare}>
+                <Share2 className="h-3 w-3" />
+                Compartilhar
+              </TabsTrigger>
+              <TabsTrigger value="ftp" className="flex items-center gap-1 text-xs">
+                <Upload className="h-3 w-3" />
                 FTP
               </TabsTrigger>
             </TabsList>
@@ -267,6 +321,16 @@ export function ExportModal({ order, open, onClose, onSuccess }: ExportModalProp
                 <Label htmlFor="useFixedFilename" className="text-sm cursor-pointer">
                   Usar nome fixo para integração com PDV (pedido_pdv.xml)
                 </Label>
+              </div>
+            </TabsContent>
+
+            <TabsContent value="share" className="mt-4 space-y-3">
+              <p className="text-sm text-muted-foreground">
+                Compartilhe o arquivo diretamente para o <strong>Google Drive</strong>, WhatsApp, Email ou qualquer outro app instalado no seu dispositivo.
+              </p>
+              <div className="p-3 bg-accent/50 rounded-lg text-sm">
+                <p className="font-medium mb-1">💡 Dica para Google Drive:</p>
+                <p className="text-muted-foreground">Ao compartilhar, selecione "Salvar no Drive" para enviar o XML diretamente para sua pasta do Google Drive.</p>
               </div>
             </TabsContent>
 
@@ -383,10 +447,10 @@ export function ExportModal({ order, open, onClose, onSuccess }: ExportModalProp
 
           <Button
             onClick={handleExport}
-            disabled={loading}
+            disabled={loading || sharing}
             className="w-full bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700"
           >
-            {loading ? 'Exportando...' : 'Exportar Pedido'}
+            {loading || sharing ? 'Exportando...' : destination === 'share' ? 'Compartilhar Arquivo' : 'Exportar Pedido'}
           </Button>
         </div>
       </DialogContent>
