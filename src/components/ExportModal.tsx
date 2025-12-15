@@ -6,6 +6,7 @@ import { Label } from '@/components/ui/label';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card } from '@/components/ui/card';
+import { Checkbox } from '@/components/ui/checkbox';
 import { Order, ExportConfig, FTPConfig } from '@/types/order';
 import { exportOrder } from '@/utils/exportOrder';
 import { toast } from '@/hooks/use-toast';
@@ -81,6 +82,7 @@ export function ExportModal({ order, open, onClose, onSuccess }: ExportModalProp
   });
   const [loading, setLoading] = useState(false);
   const [showValidation, setShowValidation] = useState(false);
+  const [useFixedFilename, setUseFixedFilename] = useState(true);
 
   const ftpValidation = useMemo(() => validateFTPConfig(ftpConfig), [ftpConfig]);
 
@@ -103,6 +105,7 @@ export function ExportModal({ order, open, onClose, onSuccess }: ExportModalProp
       format,
       destination,
       ftpConfig: destination === 'ftp' ? ftpConfig : undefined,
+      useFixedFilename: destination === 'download' ? useFixedFilename : false,
     };
 
     const result = await exportOrder(order, config);
@@ -186,10 +189,20 @@ export function ExportModal({ order, open, onClose, onSuccess }: ExportModalProp
               </TabsTrigger>
             </TabsList>
 
-            <TabsContent value="download" className="mt-4">
+            <TabsContent value="download" className="mt-4 space-y-3">
               <p className="text-sm text-muted-foreground">
                 O arquivo será baixado diretamente no seu dispositivo.
               </p>
+              <div className="flex items-center space-x-2">
+                <Checkbox 
+                  id="useFixedFilename" 
+                  checked={useFixedFilename}
+                  onCheckedChange={(checked) => setUseFixedFilename(checked === true)}
+                />
+                <Label htmlFor="useFixedFilename" className="text-sm cursor-pointer">
+                  Usar nome fixo para integração com PDV (pedido_pdv.xml)
+                </Label>
+              </div>
             </TabsContent>
 
             <TabsContent value="ftp" className="mt-4 space-y-3">

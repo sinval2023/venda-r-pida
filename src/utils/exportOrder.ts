@@ -77,7 +77,11 @@ export async function exportOrder(order: Order, config: ExportConfig): Promise<{
   const content = config.format === 'xml' ? generateXML(order) : generateTXT(order);
   const extension = config.format === 'xml' ? 'xml' : 'txt';
   const mimeType = config.format === 'xml' ? 'application/xml' : 'text/plain';
-  const filename = `pedido_${order.number.toString().padStart(6, '0')}.${extension}`;
+  
+  // Se useFixedFilename estiver ativo, usa nome fixo para integração com PDV
+  const filename = config.useFixedFilename 
+    ? `pedido_pdv.${extension}` 
+    : `pedido_${order.number.toString().padStart(6, '0')}.${extension}`;
 
   if (config.destination === 'download') {
     downloadFile(content, filename, mimeType);
