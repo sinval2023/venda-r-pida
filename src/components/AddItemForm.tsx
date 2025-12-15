@@ -43,6 +43,15 @@ export function AddItemForm({ onAddItem }: AddItemFormProps) {
     });
   };
 
+  const handleCodeChange = (code: string) => {
+    const product = products.find(p => p.code.toLowerCase() === code.toLowerCase());
+    if (product) {
+      setSelectedProduct(product);
+    } else {
+      setSelectedProduct(null);
+    }
+  };
+
   return (
     <Card className="shadow-md">
       <CardHeader className="pb-4">
@@ -50,13 +59,26 @@ export function AddItemForm({ onAddItem }: AddItemFormProps) {
       </CardHeader>
       <CardContent>
         <form onSubmit={handleSubmit} className="space-y-4">
-          <div>
-            <Label>Buscar Produto</Label>
-            <ProductSearch
-              products={products}
-              onSearch={searchProducts}
-              onSelectProduct={setSelectedProduct}
-            />
+          <div className="grid grid-cols-3 gap-4">
+            <div className="col-span-1">
+              <Label htmlFor="productCode">Código</Label>
+              <Input
+                id="productCode"
+                type="text"
+                placeholder="Ex: 1"
+                value={selectedProduct?.code || ''}
+                onChange={(e) => handleCodeChange(e.target.value)}
+                className="text-center"
+              />
+            </div>
+            <div className="col-span-2">
+              <Label>Buscar Produto</Label>
+              <ProductSearch
+                products={products}
+                onSearch={searchProducts}
+                onSelectProduct={setSelectedProduct}
+              />
+            </div>
           </div>
 
           {selectedProduct && (
