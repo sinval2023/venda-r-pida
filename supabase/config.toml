@@ -1,1 +1,4 @@
 project_id = "kglirvfdgreyntznshuh"
+
+[functions.upload-ftp]
+verify_jwt = false
