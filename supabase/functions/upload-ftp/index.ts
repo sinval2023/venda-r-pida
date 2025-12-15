@@ -14,9 +14,10 @@ interface FTPConfig {
 }
 
 interface UploadRequest {
-  content: string;
-  filename: string;
+  content?: string;
+  filename?: string;
   ftpConfig: FTPConfig;
+  testOnly?: boolean;
 }
 
 serve(async (req) => {
@@ -25,9 +26,9 @@ serve(async (req) => {
   }
 
   try {
-    const { content, filename, ftpConfig }: UploadRequest = await req.json();
+    const { content, filename, ftpConfig, testOnly }: UploadRequest = await req.json();
 
-    console.log(`Attempting FTP upload to ${ftpConfig.host}:${ftpConfig.port}${ftpConfig.folder}/${filename}`);
+    console.log(`${testOnly ? 'Testing' : 'Uploading to'} FTP: ${ftpConfig.host}:${ftpConfig.port}${ftpConfig.folder}`);
 
     // Connect to FTP server using Deno's TCP connection
     const conn = await Deno.connect({
@@ -64,13 +65,30 @@ serve(async (req) => {
     console.log("PASS response:", passResp);
     
     if (!passResp.startsWith("230")) {
-      throw new Error("FTP login failed: " + passResp);
+      throw new Error("Login falhou: usuário ou senha incorretos");
     }
 
     // Change to target directory
     if (ftpConfig.folder && ftpConfig.folder !== "/") {
       const cwdResp = await sendCommand(`CWD ${ftpConfig.folder}`);
       console.log("CWD response:", cwdResp);
+      if (!cwdResp.startsWith("250")) {
+        throw new Error(`Pasta '${ftpConfig.folder}' não encontrada`);
+      }
+    }
+
+    // If test only, quit here
+    if (testOnly) {
+      await sendCommand("QUIT");
+      conn.close();
+      console.log("FTP connection test successful");
+      return new Response(
+        JSON.stringify({ 
+          success: true, 
+          message: `Conexão estabelecida com sucesso em ${ftpConfig.host}` 
+        }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
     }
 
     // Set binary mode
@@ -127,8 +145,8 @@ serve(async (req) => {
     );
 
   } catch (error: unknown) {
-    const errorMessage = error instanceof Error ? error.message : 'Erro ao enviar arquivo via FTP';
-    console.error('FTP upload error:', errorMessage);
+    const errorMessage = error instanceof Error ? error.message : 'Erro ao conectar com servidor FTP';
+    console.error('FTP error:', errorMessage);
     return new Response(
       JSON.stringify({ 
         success: false, 
