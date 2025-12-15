@@ -1,4 +1,5 @@
 import { Order, ExportConfig } from '@/types/order';
+import { supabase } from '@/integrations/supabase/client';
 
 export function generateXML(order: Order): string {
   const itemsXml = order.items.map(item => `
@@ -83,12 +84,30 @@ export async function exportOrder(order: Order, config: ExportConfig): Promise<{
     return { success: true };
   }
 
-  // FTP upload would require a backend function
-  // For now, we'll simulate success
   if (config.destination === 'ftp' && config.ftpConfig) {
-    // This would call an edge function to handle FTP upload
-    console.log('FTP upload configuration:', config.ftpConfig);
-    return { success: true };
+    try {
+      const { data, error } = await supabase.functions.invoke('upload-ftp', {
+        body: {
+          content,
+          filename,
+          ftpConfig: config.ftpConfig,
+        },
+      });
+
+      if (error) {
+        console.error('FTP upload error:', error);
+        return { success: false, error: error.message || 'Erro ao enviar via FTP' };
+      }
+
+      if (!data?.success) {
+        return { success: false, error: data?.error || 'Erro ao enviar via FTP' };
+      }
+
+      return { success: true };
+    } catch (err) {
+      console.error('FTP upload exception:', err);
+      return { success: false, error: 'Erro de conexão com o servidor FTP' };
+    }
   }
 
   return { success: false, error: 'Configuração inválida' };
