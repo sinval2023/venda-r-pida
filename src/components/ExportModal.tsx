@@ -1,5 +1,5 @@
 import { useState, useMemo } from 'react';
-import { Download, Upload, FileText, FileCode, AlertCircle } from 'lucide-react';
+import { Download, Upload, FileText, FileCode, AlertCircle, Plug, Loader2, CheckCircle2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -10,7 +10,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Order, ExportConfig, FTPConfig } from '@/types/order';
 import { exportOrder } from '@/utils/exportOrder';
 import { toast } from '@/hooks/use-toast';
-
+import { supabase } from '@/integrations/supabase/client';
 interface ExportModalProps {
   order: Order;
   open: boolean;
@@ -81,10 +81,58 @@ export function ExportModal({ order, open, onClose, onSuccess }: ExportModalProp
     folder: '/',
   });
   const [loading, setLoading] = useState(false);
+  const [testingConnection, setTestingConnection] = useState(false);
+  const [connectionTested, setConnectionTested] = useState(false);
   const [showValidation, setShowValidation] = useState(false);
   const [useFixedFilename, setUseFixedFilename] = useState(true);
 
   const ftpValidation = useMemo(() => validateFTPConfig(ftpConfig), [ftpConfig]);
+
+  const handleTestConnection = async () => {
+    setShowValidation(true);
+    if (!ftpValidation.isValid) {
+      toast({
+        title: 'Configuração FTP inválida',
+        description: 'Por favor, corrija os campos destacados.',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    setTestingConnection(true);
+    setConnectionTested(false);
+
+    try {
+      const { data, error } = await supabase.functions.invoke('upload-ftp', {
+        body: {
+          ftpConfig,
+          testOnly: true,
+        },
+      });
+
+      if (error || !data?.success) {
+        toast({
+          title: 'Falha na conexão',
+          description: data?.error || error?.message || 'Não foi possível conectar ao servidor FTP',
+          variant: 'destructive',
+        });
+      } else {
+        setConnectionTested(true);
+        toast({
+          title: 'Conexão bem-sucedida!',
+          description: data.message,
+        });
+      }
+    } catch (err) {
+      toast({
+        title: 'Erro de conexão',
+        description: 'Não foi possível conectar ao servidor FTP',
+        variant: 'destructive',
+      });
+    }
+
+    setTestingConnection(false);
+  };
 
   const handleExport = async () => {
     if (destination === 'ftp') {
@@ -289,6 +337,30 @@ export function ExportModal({ order, open, onClose, onSuccess }: ExportModalProp
                   </p>
                 )}
               </div>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={handleTestConnection}
+                disabled={testingConnection}
+                className="w-full flex items-center gap-2"
+              >
+                {testingConnection ? (
+                  <>
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                    Testando...
+                  </>
+                ) : connectionTested ? (
+                  <>
+                    <CheckCircle2 className="h-4 w-4 text-green-500" />
+                    Conexão OK - Testar novamente
+                  </>
+                ) : (
+                  <>
+                    <Plug className="h-4 w-4" />
+                    Testar Conexão
+                  </>
+                )}
+              </Button>
             </TabsContent>
           </Tabs>
 
