@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { Download, Upload, FileText, FileCode } from 'lucide-react';
+import { useState, useMemo } from 'react';
+import { Download, Upload, FileText, FileCode, AlertCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -17,6 +17,58 @@ interface ExportModalProps {
   onSuccess: () => void;
 }
 
+interface FTPValidation {
+  isValid: boolean;
+  errors: {
+    host?: string;
+    user?: string;
+    password?: string;
+    port?: string;
+    folder?: string;
+  };
+}
+
+const validateFTPConfig = (config: FTPConfig): FTPValidation => {
+  const errors: FTPValidation['errors'] = {};
+
+  // Host validation
+  if (!config.host.trim()) {
+    errors.host = 'Host é obrigatório';
+  } else if (!/^[a-zA-Z0-9]([a-zA-Z0-9-]*\.)*[a-zA-Z0-9][a-zA-Z0-9-]*\.[a-zA-Z]{2,}$/.test(config.host.trim()) &&
+             !/^(\d{1,3}\.){3}\d{1,3}$/.test(config.host.trim())) {
+    errors.host = 'Host inválido (ex: ftp.exemplo.com.br ou IP)';
+  }
+
+  // User validation
+  if (!config.user.trim()) {
+    errors.user = 'Usuário é obrigatório';
+  } else if (config.user.trim().length < 2) {
+    errors.user = 'Usuário deve ter pelo menos 2 caracteres';
+  }
+
+  // Password validation
+  if (!config.password) {
+    errors.password = 'Senha é obrigatória';
+  }
+
+  // Port validation
+  if (!config.port || config.port < 1 || config.port > 65535) {
+    errors.port = 'Porta deve ser entre 1 e 65535';
+  }
+
+  // Folder validation
+  if (!config.folder.trim()) {
+    errors.folder = 'Pasta destino é obrigatória';
+  } else if (!config.folder.startsWith('/')) {
+    errors.folder = 'Pasta deve começar com /';
+  }
+
+  return {
+    isValid: Object.keys(errors).length === 0,
+    errors,
+  };
+};
+
 export function ExportModal({ order, open, onClose, onSuccess }: ExportModalProps) {
   const [format, setFormat] = useState<'xml' | 'txt'>('xml');
   const [destination, setDestination] = useState<'download' | 'ftp'>('download');
@@ -28,8 +80,23 @@ export function ExportModal({ order, open, onClose, onSuccess }: ExportModalProp
     folder: '/',
   });
   const [loading, setLoading] = useState(false);
+  const [showValidation, setShowValidation] = useState(false);
+
+  const ftpValidation = useMemo(() => validateFTPConfig(ftpConfig), [ftpConfig]);
 
   const handleExport = async () => {
+    if (destination === 'ftp') {
+      setShowValidation(true);
+      if (!ftpValidation.isValid) {
+        toast({
+          title: 'Configuração FTP inválida',
+          description: 'Por favor, corrija os campos destacados.',
+          variant: 'destructive',
+        });
+        return;
+      }
+    }
+
     setLoading(true);
     
     const config: ExportConfig = {
@@ -133,7 +200,14 @@ export function ExportModal({ order, open, onClose, onSuccess }: ExportModalProp
                   placeholder="ftp.exemplo.com.br"
                   value={ftpConfig.host}
                   onChange={(e) => setFtpConfig({ ...ftpConfig, host: e.target.value })}
+                  className={showValidation && ftpValidation.errors.host ? 'border-destructive' : ''}
                 />
+                {showValidation && ftpValidation.errors.host && (
+                  <p className="text-xs text-destructive mt-1 flex items-center gap-1">
+                    <AlertCircle className="h-3 w-3" />
+                    {ftpValidation.errors.host}
+                  </p>
+                )}
               </div>
               <div className="grid grid-cols-2 gap-3">
                 <div>
@@ -143,7 +217,14 @@ export function ExportModal({ order, open, onClose, onSuccess }: ExportModalProp
                     placeholder="usuario"
                     value={ftpConfig.user}
                     onChange={(e) => setFtpConfig({ ...ftpConfig, user: e.target.value })}
+                    className={showValidation && ftpValidation.errors.user ? 'border-destructive' : ''}
                   />
+                  {showValidation && ftpValidation.errors.user && (
+                    <p className="text-xs text-destructive mt-1 flex items-center gap-1">
+                      <AlertCircle className="h-3 w-3" />
+                      {ftpValidation.errors.user}
+                    </p>
+                  )}
                 </div>
                 <div>
                   <Label htmlFor="ftpPort">Porta</Label>
@@ -152,7 +233,14 @@ export function ExportModal({ order, open, onClose, onSuccess }: ExportModalProp
                     type="number"
                     value={ftpConfig.port}
                     onChange={(e) => setFtpConfig({ ...ftpConfig, port: parseInt(e.target.value) || 21 })}
+                    className={showValidation && ftpValidation.errors.port ? 'border-destructive' : ''}
                   />
+                  {showValidation && ftpValidation.errors.port && (
+                    <p className="text-xs text-destructive mt-1 flex items-center gap-1">
+                      <AlertCircle className="h-3 w-3" />
+                      {ftpValidation.errors.port}
+                    </p>
+                  )}
                 </div>
               </div>
               <div>
@@ -163,7 +251,14 @@ export function ExportModal({ order, open, onClose, onSuccess }: ExportModalProp
                   placeholder="••••••••"
                   value={ftpConfig.password}
                   onChange={(e) => setFtpConfig({ ...ftpConfig, password: e.target.value })}
+                  className={showValidation && ftpValidation.errors.password ? 'border-destructive' : ''}
                 />
+                {showValidation && ftpValidation.errors.password && (
+                  <p className="text-xs text-destructive mt-1 flex items-center gap-1">
+                    <AlertCircle className="h-3 w-3" />
+                    {ftpValidation.errors.password}
+                  </p>
+                )}
               </div>
               <div>
                 <Label htmlFor="ftpFolder">Pasta destino</Label>
@@ -172,14 +267,21 @@ export function ExportModal({ order, open, onClose, onSuccess }: ExportModalProp
                   placeholder="/pedidos"
                   value={ftpConfig.folder}
                   onChange={(e) => setFtpConfig({ ...ftpConfig, folder: e.target.value })}
+                  className={showValidation && ftpValidation.errors.folder ? 'border-destructive' : ''}
                 />
+                {showValidation && ftpValidation.errors.folder && (
+                  <p className="text-xs text-destructive mt-1 flex items-center gap-1">
+                    <AlertCircle className="h-3 w-3" />
+                    {ftpValidation.errors.folder}
+                  </p>
+                )}
               </div>
             </TabsContent>
           </Tabs>
 
           <Button
             onClick={handleExport}
-            disabled={loading || (destination === 'ftp' && (!ftpConfig.host || !ftpConfig.user))}
+            disabled={loading}
             className="w-full bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700"
           >
             {loading ? 'Exportando...' : 'Exportar Pedido'}
