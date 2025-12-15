@@ -87,7 +87,7 @@ const getDefaultFTPConfig = (): FTPConfig => {
     user: 'ftp_local',
     password: '212431',
     port: 21,
-    folder: '/',
+    folder: '/pdv',
   };
 };
 
