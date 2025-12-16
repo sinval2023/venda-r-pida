@@ -252,6 +252,8 @@ export function ExportModal({ order, open, onClose, onSuccess }: ExportModalProp
   };
 
   const handleExport = async () => {
+    console.log('handleExport called, destination:', destination);
+    
     if (destination === 'share') {
       await handleShare();
       return;
@@ -276,33 +278,44 @@ export function ExportModal({ order, open, onClose, onSuccess }: ExportModalProp
 
     setLoading(true);
     
-    // After early return for 'share', destination is only 'download' | 'ftp'
-    const actualDestination = destination as 'download' | 'ftp';
-    
-    const config: ExportConfig = {
-      format,
-      destination: actualDestination,
-      ftpConfig: actualDestination === 'ftp' ? ftpConfig : undefined,
-      useFixedFilename: actualDestination === 'download' ? useFixedFilename : false,
-    };
+    try {
+      // After early return for 'share', destination is only 'download' | 'ftp'
+      const actualDestination = destination as 'download' | 'ftp';
+      
+      const config: ExportConfig = {
+        format,
+        destination: actualDestination,
+        ftpConfig: actualDestination === 'ftp' ? ftpConfig : undefined,
+        useFixedFilename: actualDestination === 'download' ? useFixedFilename : false,
+      };
 
-    const result = await exportOrder(order, config);
+      console.log('Calling exportOrder with config:', config);
+      const result = await exportOrder(order, config);
+      console.log('exportOrder result:', result);
 
-    if (result.success) {
-      toast({
-        title: 'Pedido exportado com sucesso!',
-        description: `Pedido #${order.number.toString().padStart(6, '0')} foi ${destination === 'download' ? 'baixado' : 'enviado'}.`,
-      });
-      onSuccess();
-    } else {
+      if (result.success) {
+        toast({
+          title: 'Pedido exportado com sucesso!',
+          description: `Pedido #${order.number.toString().padStart(6, '0')} foi ${destination === 'download' ? 'baixado' : 'enviado via FTP'}.`,
+        });
+        onSuccess();
+      } else {
+        toast({
+          title: 'Erro ao exportar',
+          description: result.error || 'Tente novamente.',
+          variant: 'destructive',
+        });
+      }
+    } catch (err: any) {
+      console.error('Export error:', err);
       toast({
         title: 'Erro ao exportar',
-        description: result.error || 'Tente novamente.',
+        description: err?.message || 'Erro inesperado ao exportar.',
         variant: 'destructive',
       });
+    } finally {
+      setLoading(false);
     }
-
-    setLoading(false);
   };
 
   const formatCurrency = (value: number) => {
