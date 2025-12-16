@@ -197,13 +197,22 @@ export function ExportModal({ order, open, onClose, onSuccess }: ExportModalProp
     setSharing(true);
     try {
       const content = format === 'xml' ? generateXML(order) : generateTXT(order);
+      const extension = format === 'xml' ? 'xml' : 'txt';
+      const mimeType = format === 'xml' ? 'application/xml' : 'text/plain';
+      const filename = `pedido_${order.number.toString().padStart(6, '0')}.${extension}`;
 
-      // Keep URL size safe for WhatsApp Web
-      const MAX_XML_CHARS = 2000;
-      const xmlForMessage = content.length > MAX_XML_CHARS
-        ? `${content.slice(0, MAX_XML_CHARS)}\n...(XML truncado)...`
-        : content;
+      // First, download the file
+      const blob = new Blob([content], { type: mimeType });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
 
+      // Build summary message for WhatsApp (no XML, just info)
       const itemsList = order.items
         .map((item) => `• ${item.quantity}x ${item.code} - R$ ${item.total.toFixed(2)}`)
         .join('\n');
@@ -214,45 +223,27 @@ export function ExportModal({ order, open, onClose, onSuccess }: ExportModalProp
         `📅 Data: ${new Date(order.date).toLocaleDateString('pt-BR')}\n\n` +
         `*ITENS:*\n${itemsList}\n\n` +
         `💰 *TOTAL: R$ ${order.total.toFixed(2)}*\n\n` +
-        `---\n` +
-        `*XML (texto):*\n\`\`\`\n${xmlForMessage}\n\`\`\``;
+        `📎 _Arquivo ${filename} baixado - anexe abaixo_`;
 
-      let encodedMessage = '';
-      try {
-        encodedMessage = encodeURIComponent(message);
-      } catch (encodeErr) {
-        console.error('WhatsApp encode error:', encodeErr);
-        toast({
-          title: 'Erro ao preparar mensagem',
-          description: 'Não foi possível preparar o texto para o WhatsApp.',
-          variant: 'destructive',
-        });
-        return;
-      }
+      const encodedMessage = encodeURIComponent(message);
+      const phoneNumber = '5511947791957';
 
-      const phoneNumber = '5511947791957'; // 11-94779-1957
-      const url = `https://web.whatsapp.com/send?phone=${phoneNumber}&text=${encodedMessage}`;
-      const opened = window.open(url, '_blank', 'noopener,noreferrer');
-
-      if (!opened) {
-        toast({
-          title: 'Popup bloqueado',
-          description: 'Permita popups para abrir o WhatsApp Web.',
-          variant: 'destructive',
-        });
-        return;
-      }
+      // Small delay to ensure download starts
+      setTimeout(() => {
+        const whatsappUrl = `https://web.whatsapp.com/send?phone=${phoneNumber}&text=${encodedMessage}`;
+        window.open(whatsappUrl, '_blank', 'noopener,noreferrer');
+      }, 500);
 
       toast({
-        title: 'WhatsApp Web aberto!',
-        description: 'Revise a mensagem e envie pelo WhatsApp.',
+        title: 'Arquivo baixado!',
+        description: `Anexe o arquivo "${filename}" no WhatsApp Web.`,
       });
       onSuccess();
     } catch (err: any) {
-      console.error('WhatsApp open error:', err);
+      console.error('WhatsApp error:', err);
       toast({
-        title: 'Erro ao abrir WhatsApp',
-        description: err?.message || 'Não foi possível abrir o WhatsApp Web.',
+        title: 'Erro',
+        description: err?.message || 'Não foi possível preparar o envio.',
         variant: 'destructive',
       });
     } finally {
@@ -402,11 +393,11 @@ export function ExportModal({ order, open, onClose, onSuccess }: ExportModalProp
 
             <TabsContent value="whatsapp" className="mt-4 space-y-3">
               <p className="text-sm text-muted-foreground">
-                Abrirá o <strong>WhatsApp Web</strong> diretamente para o número <strong>(11) 94779-1957</strong>.
+                O arquivo será <strong>baixado</strong> e o <strong>WhatsApp Web</strong> será aberto para o número <strong>(11) 94779-1957</strong>.
               </p>
               <div className="p-3 bg-accent/50 rounded-lg text-sm border border-border">
-                <p className="font-medium mb-1">Como funciona:</p>
-                <p className="text-muted-foreground">A mensagem já vai preenchida; basta revisar e enviar.</p>
+                <p className="font-medium mb-1">📎 Como anexar o arquivo:</p>
+                <p className="text-muted-foreground">Clique no ícone de clipe (📎) no WhatsApp Web e selecione o arquivo baixado.</p>
               </div>
             </TabsContent>
 
