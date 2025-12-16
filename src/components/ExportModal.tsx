@@ -197,40 +197,67 @@ export function ExportModal({ order, open, onClose, onSuccess }: ExportModalProp
     setSharing(true);
     try {
       const content = format === 'xml' ? generateXML(order) : generateTXT(order);
-      
-      // Build order items list for the message
-      const itemsList = order.items.map(item => 
-        `• ${item.quantity}x ${item.code} - R$ ${item.total.toFixed(2)}`
-      ).join('\n');
-      
-      // Build complete message with order details
-      const message = 
+
+      // Keep URL size safe for WhatsApp Web
+      const MAX_XML_CHARS = 2000;
+      const xmlForMessage = content.length > MAX_XML_CHARS
+        ? `${content.slice(0, MAX_XML_CHARS)}\n...(XML truncado)...`
+        : content;
+
+      const itemsList = order.items
+        .map((item) => `• ${item.quantity}x ${item.code} - R$ ${item.total.toFixed(2)}`)
+        .join('\n');
+
+      const message =
         `📋 *PEDIDO DE VENDA #${order.number.toString().padStart(6, '0')}*\n\n` +
         `👤 Vendedor: ${order.vendorName}\n` +
         `📅 Data: ${new Date(order.date).toLocaleDateString('pt-BR')}\n\n` +
         `*ITENS:*\n${itemsList}\n\n` +
         `💰 *TOTAL: R$ ${order.total.toFixed(2)}*\n\n` +
         `---\n` +
-        `*Dados XML:*\n\`\`\`\n${content}\n\`\`\``;
-      
-      const encodedMessage = encodeURIComponent(message);
-      const phoneNumber = '5511947791957'; // 11-94779-1957 formatted
-      
-      window.open(`https://wa.me/${phoneNumber}?text=${encodedMessage}`, '_blank');
-      
+        `*XML (texto):*\n\`\`\`\n${xmlForMessage}\n\`\`\``;
+
+      let encodedMessage = '';
+      try {
+        encodedMessage = encodeURIComponent(message);
+      } catch (encodeErr) {
+        console.error('WhatsApp encode error:', encodeErr);
+        toast({
+          title: 'Erro ao preparar mensagem',
+          description: 'Não foi possível preparar o texto para o WhatsApp.',
+          variant: 'destructive',
+        });
+        return;
+      }
+
+      const phoneNumber = '5511947791957'; // 11-94779-1957
+      const url = `https://web.whatsapp.com/send?phone=${phoneNumber}&text=${encodedMessage}`;
+      const opened = window.open(url, '_blank', 'noopener,noreferrer');
+
+      if (!opened) {
+        toast({
+          title: 'Popup bloqueado',
+          description: 'Permita popups para abrir o WhatsApp Web.',
+          variant: 'destructive',
+        });
+        return;
+      }
+
       toast({
-        title: 'WhatsApp aberto!',
+        title: 'WhatsApp Web aberto!',
         description: 'Revise a mensagem e envie pelo WhatsApp.',
       });
       onSuccess();
     } catch (err: any) {
+      console.error('WhatsApp open error:', err);
       toast({
         title: 'Erro ao abrir WhatsApp',
-        description: 'Não foi possível abrir o WhatsApp.',
+        description: err?.message || 'Não foi possível abrir o WhatsApp Web.',
         variant: 'destructive',
       });
+    } finally {
+      setSharing(false);
     }
-    setSharing(false);
   };
 
   const handleExport = async () => {
@@ -343,7 +370,7 @@ export function ExportModal({ order, open, onClose, onSuccess }: ExportModalProp
                 <Download className="h-3 w-3" />
                 Download
               </TabsTrigger>
-              <TabsTrigger value="whatsapp" className="flex items-center gap-1 text-xs" disabled={!canShare}>
+              <TabsTrigger value="whatsapp" className="flex items-center gap-1 text-xs">
                 <MessageCircle className="h-3 w-3" />
                 WhatsApp
               </TabsTrigger>
@@ -375,11 +402,11 @@ export function ExportModal({ order, open, onClose, onSuccess }: ExportModalProp
 
             <TabsContent value="whatsapp" className="mt-4 space-y-3">
               <p className="text-sm text-muted-foreground">
-                Envie o arquivo XML diretamente pelo <strong>WhatsApp</strong> para qualquer contato ou grupo.
+                Abrirá o <strong>WhatsApp Web</strong> diretamente para o número <strong>(11) 94779-1957</strong>.
               </p>
-              <div className="p-3 bg-green-500/10 rounded-lg text-sm border border-green-500/20">
-                <p className="font-medium mb-1 text-green-700 dark:text-green-400">📱 Como funciona:</p>
-                <p className="text-muted-foreground">Ao clicar em enviar, selecione o WhatsApp na lista de apps e escolha o contato ou grupo de destino.</p>
+              <div className="p-3 bg-accent/50 rounded-lg text-sm border border-border">
+                <p className="font-medium mb-1">Como funciona:</p>
+                <p className="text-muted-foreground">A mensagem já vai preenchida; basta revisar e enviar.</p>
               </div>
             </TabsContent>
 
