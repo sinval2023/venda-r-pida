@@ -74,6 +74,8 @@ export function downloadFile(content: string, filename: string, mimeType: string
 }
 
 export async function exportOrder(order: Order, config: ExportConfig): Promise<{ success: boolean; error?: string }> {
+  console.log('exportOrder called with config:', config);
+  
   const content = config.format === 'xml' ? generateXML(order) : generateTXT(order);
   const extension = config.format === 'xml' ? 'xml' : 'txt';
   const mimeType = config.format === 'xml' ? 'application/xml' : 'text/plain';
@@ -83,6 +85,8 @@ export async function exportOrder(order: Order, config: ExportConfig): Promise<{
     ? `pedido_pdv.${extension}` 
     : `pedido_${order.number.toString().padStart(6, '0')}.${extension}`;
 
+  console.log('Generated filename:', filename, 'Content length:', content.length);
+
   if (config.destination === 'download') {
     downloadFile(content, filename, mimeType);
     return { success: true };
@@ -90,6 +94,8 @@ export async function exportOrder(order: Order, config: ExportConfig): Promise<{
 
   if (config.destination === 'ftp' && config.ftpConfig) {
     try {
+      console.log('Sending to FTP:', config.ftpConfig.host, config.ftpConfig.folder);
+      
       const { data, error } = await supabase.functions.invoke('upload-ftp', {
         body: {
           content,
@@ -97,6 +103,8 @@ export async function exportOrder(order: Order, config: ExportConfig): Promise<{
           ftpConfig: config.ftpConfig,
         },
       });
+
+      console.log('FTP response:', { data, error });
 
       if (error) {
         console.error('FTP upload error:', error);
