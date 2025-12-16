@@ -105,7 +105,12 @@ export function ExportModal({ order, open, onClose, onSuccess }: ExportModalProp
   const ftpValidation = useMemo(() => validateFTPConfig(ftpConfig), [ftpConfig]);
   const canShare = typeof navigator !== 'undefined' && navigator.share && navigator.canShare;
 
-  const handleTestConnection = async () => {
+  const handleTestConnection = async (e?: React.MouseEvent) => {
+    e?.preventDefault();
+    e?.stopPropagation();
+    
+    console.log('Testing FTP connection...');
+    
     setShowValidation(true);
     if (!ftpValidation.isValid) {
       toast({
@@ -120,12 +125,16 @@ export function ExportModal({ order, open, onClose, onSuccess }: ExportModalProp
     setConnectionTested(false);
 
     try {
+      console.log('Calling upload-ftp with testOnly:', ftpConfig);
+      
       const { data, error } = await supabase.functions.invoke('upload-ftp', {
         body: {
           ftpConfig,
           testOnly: true,
         },
       });
+
+      console.log('Test connection response:', { data, error });
 
       if (error || !data?.success) {
         toast({
@@ -143,6 +152,7 @@ export function ExportModal({ order, open, onClose, onSuccess }: ExportModalProp
         });
       }
     } catch (err) {
+      console.error('Test connection error:', err);
       toast({
         title: 'Erro de conexão',
         description: 'Não foi possível conectar ao servidor FTP',
@@ -511,7 +521,7 @@ export function ExportModal({ order, open, onClose, onSuccess }: ExportModalProp
               <Button
                 type="button"
                 variant="outline"
-                onClick={handleTestConnection}
+                onClick={(e) => handleTestConnection(e)}
                 disabled={testingConnection}
                 className="w-full flex items-center gap-2"
               >
