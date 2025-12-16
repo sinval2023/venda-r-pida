@@ -1,6 +1,7 @@
 import { useState, useMemo } from 'react';
 import type { MouseEvent } from 'react';
-import { Download, Upload, FileText, FileCode, AlertCircle, Loader2, Share2, MessageCircle } from 'lucide-react';
+import { Download, Upload, FileText, FileCode, AlertCircle, Loader2, Share2, MessageCircle, CheckCircle2 } from 'lucide-react';
+import { Progress } from '@/components/ui/progress';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -102,6 +103,8 @@ export function ExportModal({ order, open, onClose, onSuccess }: ExportModalProp
   const [showValidation, setShowValidation] = useState(false);
   const [useFixedFilename, setUseFixedFilename] = useState(true);
   const [sharing, setSharing] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState(0);
+  const [uploadStatus, setUploadStatus] = useState<string>('');
 
   const ftpValidation = useMemo(() => validateFTPConfig(ftpConfig), [ftpConfig]);
   const canShare = typeof navigator !== 'undefined' && navigator.share && navigator.canShare;
@@ -288,10 +291,17 @@ export function ExportModal({ order, open, onClose, onSuccess }: ExportModalProp
     }
 
     setLoading(true);
+    setUploadProgress(0);
+    setUploadStatus('');
     
     try {
       // After early return for 'share', destination is only 'download' | 'ftp'
       const actualDestination = destination as 'download' | 'ftp';
+      
+      if (actualDestination === 'ftp') {
+        setUploadProgress(10);
+        setUploadStatus('Preparando arquivo...');
+      }
       
       const config: ExportConfig = {
         format,
@@ -300,17 +310,31 @@ export function ExportModal({ order, open, onClose, onSuccess }: ExportModalProp
         useFixedFilename: actualDestination === 'download' ? useFixedFilename : false,
       };
 
+      if (actualDestination === 'ftp') {
+        setUploadProgress(30);
+        setUploadStatus('Conectando ao servidor FTP...');
+      }
+
       console.log('Calling exportOrder with config:', config);
       const result = await exportOrder(order, config);
       console.log('exportOrder result:', result);
 
       if (result.success) {
+        if (actualDestination === 'ftp') {
+          setUploadProgress(100);
+          setUploadStatus('Enviado com sucesso!');
+        }
         toast({
           title: 'Pedido exportado com sucesso!',
           description: `Pedido #${order.number.toString().padStart(6, '0')} foi ${destination === 'download' ? 'baixado' : 'enviado via FTP'}.`,
         });
-        onSuccess();
+        // Small delay to show 100% before closing
+        setTimeout(() => {
+          onSuccess();
+        }, actualDestination === 'ftp' ? 800 : 0);
       } else {
+        setUploadProgress(0);
+        setUploadStatus('');
         toast({
           title: 'Erro ao exportar',
           description: result.error || 'Tente novamente.',
@@ -319,12 +343,15 @@ export function ExportModal({ order, open, onClose, onSuccess }: ExportModalProp
       }
     } catch (err: any) {
       console.error('Export error:', err);
+      setUploadProgress(0);
+      setUploadStatus('');
       toast({
         title: 'Erro ao exportar',
         description: err?.message || 'Erro inesperado ao exportar.',
         variant: 'destructive',
       });
     } finally {
+      if (!loading) return; // already handled by success timeout
       setLoading(false);
     }
   };
@@ -519,6 +546,22 @@ export function ExportModal({ order, open, onClose, onSuccess }: ExportModalProp
                   </p>
                 )}
               </div>
+              {loading && destination === 'ftp' && (
+                <div className="space-y-2 p-3 bg-accent/30 rounded-lg border border-border">
+                  <div className="flex items-center justify-between text-sm">
+                    <span className="text-muted-foreground flex items-center gap-2">
+                      {uploadProgress === 100 ? (
+                        <CheckCircle2 className="h-4 w-4 text-green-500" />
+                      ) : (
+                        <Loader2 className="h-4 w-4 animate-spin text-primary" />
+                      )}
+                      {uploadStatus}
+                    </span>
+                    <span className="font-medium">{uploadProgress}%</span>
+                  </div>
+                  <Progress value={uploadProgress} className="h-2" />
+                </div>
+              )}
               <Button
                 type="button"
                 onClick={(e) => {
