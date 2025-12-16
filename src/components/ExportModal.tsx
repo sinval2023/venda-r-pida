@@ -81,13 +81,13 @@ const getDefaultFTPConfig = (): FTPConfig => {
       // ignore parse errors
     }
   }
-  // Configuração padrão inicial
+  // Configuração padrão inicial - FTP externo
   return {
-    host: '192.168.99.108',
-    user: 'ftp_local',
-    password: '212431',
+    host: '177.234.159.174',
+    user: 'gsn',
+    password: '212431axy',
     port: 21,
-    folder: '/pdv',
+    folder: '/XML',
   };
 };
 
