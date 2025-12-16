@@ -197,45 +197,38 @@ export function ExportModal({ order, open, onClose, onSuccess }: ExportModalProp
     setSharing(true);
     try {
       const content = format === 'xml' ? generateXML(order) : generateTXT(order);
-      const extension = format === 'xml' ? 'xml' : 'txt';
-      const mimeType = format === 'xml' ? 'application/xml' : 'text/plain';
-      const filename = `pedido_${order.number.toString().padStart(6, '0')}.${extension}`;
       
-      const file = new File([content], filename, { type: mimeType });
+      // Build order items list for the message
+      const itemsList = order.items.map(item => 
+        `• ${item.quantity}x ${item.code} - R$ ${item.total.toFixed(2)}`
+      ).join('\n');
       
-      if (navigator.canShare && navigator.canShare({ files: [file] })) {
-        await navigator.share({
-          files: [file],
-          title: `Pedido #${order.number.toString().padStart(6, '0')}`,
-          text: `📋 Pedido de Venda #${order.number.toString().padStart(6, '0')}\n💰 Total: R$ ${order.total.toFixed(2)}\n📦 ${order.items.length} itens`,
-        });
-        toast({
-          title: 'Arquivo enviado!',
-          description: 'Selecione o WhatsApp para enviar.',
-        });
-        onSuccess();
-      } else {
-        // Fallback: open WhatsApp with text only
-        const text = encodeURIComponent(
-          `📋 *Pedido de Venda #${order.number.toString().padStart(6, '0')}*\n` +
-          `💰 Total: R$ ${order.total.toFixed(2)}\n` +
-          `📦 ${order.items.length} itens\n\n` +
-          `_Arquivo ${extension.toUpperCase()} disponível para download_`
-        );
-        window.open(`https://wa.me/?text=${text}`, '_blank');
-        toast({
-          title: 'WhatsApp aberto',
-          description: 'Seu navegador não suporta envio de arquivos. Mensagem de texto enviada.',
-        });
-      }
+      // Build complete message with order details
+      const message = 
+        `📋 *PEDIDO DE VENDA #${order.number.toString().padStart(6, '0')}*\n\n` +
+        `👤 Vendedor: ${order.vendorName}\n` +
+        `📅 Data: ${new Date(order.date).toLocaleDateString('pt-BR')}\n\n` +
+        `*ITENS:*\n${itemsList}\n\n` +
+        `💰 *TOTAL: R$ ${order.total.toFixed(2)}*\n\n` +
+        `---\n` +
+        `*Dados XML:*\n\`\`\`\n${content}\n\`\`\``;
+      
+      const encodedMessage = encodeURIComponent(message);
+      const phoneNumber = '5511947791957'; // 11-94779-1957 formatted
+      
+      window.open(`https://wa.me/${phoneNumber}?text=${encodedMessage}`, '_blank');
+      
+      toast({
+        title: 'WhatsApp aberto!',
+        description: 'Revise a mensagem e envie pelo WhatsApp.',
+      });
+      onSuccess();
     } catch (err: any) {
-      if (err.name !== 'AbortError') {
-        toast({
-          title: 'Erro ao compartilhar',
-          description: 'Não foi possível abrir o WhatsApp.',
-          variant: 'destructive',
-        });
-      }
+      toast({
+        title: 'Erro ao abrir WhatsApp',
+        description: 'Não foi possível abrir o WhatsApp.',
+        variant: 'destructive',
+      });
     }
     setSharing(false);
   };
