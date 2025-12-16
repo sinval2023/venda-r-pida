@@ -14,6 +14,45 @@ export type Database = {
   }
   public: {
     Tables: {
+      ftp_upload_history: {
+        Row: {
+          created_at: string
+          file_format: string
+          filename: string
+          ftp_folder: string
+          ftp_host: string
+          id: string
+          items_count: number
+          order_number: number
+          order_total: number
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          file_format?: string
+          filename: string
+          ftp_folder: string
+          ftp_host: string
+          id?: string
+          items_count?: number
+          order_number: number
+          order_total?: number
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          file_format?: string
+          filename?: string
+          ftp_folder?: string
+          ftp_host?: string
+          id?: string
+          items_count?: number
+          order_number?: number
+          order_total?: number
+          user_id?: string
+        }
+        Relationships: []
+      }
       order_sequence: {
         Row: {
           id: number

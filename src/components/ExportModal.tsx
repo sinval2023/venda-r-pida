@@ -13,6 +13,8 @@ import { Order, ExportConfig, FTPConfig } from '@/types/order';
 import { exportOrder, generateXML, generateTXT } from '@/utils/exportOrder';
 import { toast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
+import { useFTPHistory } from '@/hooks/useFTPHistory';
+import { FTPHistoryList } from '@/components/FTPHistoryList';
 interface ExportModalProps {
   order: Order;
   open: boolean;
@@ -106,6 +108,7 @@ export function ExportModal({ order, open, onClose, onSuccess }: ExportModalProp
   const [uploadProgress, setUploadProgress] = useState(0);
   const [uploadStatus, setUploadStatus] = useState<string>('');
 
+  const { history: ftpHistory, loading: historyLoading, addEntry: addFTPHistoryEntry } = useFTPHistory();
   const ftpValidation = useMemo(() => validateFTPConfig(ftpConfig), [ftpConfig]);
   const canShare = typeof navigator !== 'undefined' && navigator.share && navigator.canShare;
 
@@ -323,6 +326,18 @@ export function ExportModal({ order, open, onClose, onSuccess }: ExportModalProp
         if (actualDestination === 'ftp') {
           setUploadProgress(100);
           setUploadStatus('Enviado com sucesso!');
+          
+          // Save to history
+          const filename = `pedido_${order.number.toString().padStart(6, '0')}.${format}`;
+          await addFTPHistoryEntry({
+            order_number: order.number,
+            filename,
+            ftp_host: ftpConfig.host,
+            ftp_folder: ftpConfig.folder,
+            file_format: format,
+            order_total: order.total,
+            items_count: order.items.length,
+          });
         }
         toast({
           title: 'Pedido exportado com sucesso!',
@@ -546,6 +561,10 @@ export function ExportModal({ order, open, onClose, onSuccess }: ExportModalProp
                   </p>
                 )}
               </div>
+              
+              {/* FTP History */}
+              <FTPHistoryList history={ftpHistory} loading={historyLoading} />
+              
               {loading && destination === 'ftp' && (
                 <div className="space-y-2 p-3 bg-accent/30 rounded-lg border border-border">
                   <div className="flex items-center justify-between text-sm">
