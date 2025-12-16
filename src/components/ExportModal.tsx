@@ -1,5 +1,5 @@
 import { useState, useMemo } from 'react';
-import { Download, Upload, FileText, FileCode, AlertCircle, Plug, Loader2, CheckCircle2, Share2 } from 'lucide-react';
+import { Download, Upload, FileText, FileCode, AlertCircle, Plug, Loader2, CheckCircle2, Share2, MessageCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -93,7 +93,7 @@ const getDefaultFTPConfig = (): FTPConfig => {
 
 export function ExportModal({ order, open, onClose, onSuccess }: ExportModalProps) {
   const [format, setFormat] = useState<'xml' | 'txt'>('xml');
-  const [destination, setDestination] = useState<'download' | 'share' | 'ftp'>('download');
+  const [destination, setDestination] = useState<'download' | 'share' | 'whatsapp' | 'ftp'>('download');
   const [ftpConfig, setFtpConfig] = useState<FTPConfig>(getDefaultFTPConfig);
   const [loading, setLoading] = useState(false);
   const [testingConnection, setTestingConnection] = useState(false);
@@ -193,9 +193,61 @@ export function ExportModal({ order, open, onClose, onSuccess }: ExportModalProp
     setSharing(false);
   };
 
+  const handleWhatsApp = async () => {
+    setSharing(true);
+    try {
+      const content = format === 'xml' ? generateXML(order) : generateTXT(order);
+      const extension = format === 'xml' ? 'xml' : 'txt';
+      const mimeType = format === 'xml' ? 'application/xml' : 'text/plain';
+      const filename = `pedido_${order.number.toString().padStart(6, '0')}.${extension}`;
+      
+      const file = new File([content], filename, { type: mimeType });
+      
+      if (navigator.canShare && navigator.canShare({ files: [file] })) {
+        await navigator.share({
+          files: [file],
+          title: `Pedido #${order.number.toString().padStart(6, '0')}`,
+          text: `📋 Pedido de Venda #${order.number.toString().padStart(6, '0')}\n💰 Total: R$ ${order.total.toFixed(2)}\n📦 ${order.items.length} itens`,
+        });
+        toast({
+          title: 'Arquivo enviado!',
+          description: 'Selecione o WhatsApp para enviar.',
+        });
+        onSuccess();
+      } else {
+        // Fallback: open WhatsApp with text only
+        const text = encodeURIComponent(
+          `📋 *Pedido de Venda #${order.number.toString().padStart(6, '0')}*\n` +
+          `💰 Total: R$ ${order.total.toFixed(2)}\n` +
+          `📦 ${order.items.length} itens\n\n` +
+          `_Arquivo ${extension.toUpperCase()} disponível para download_`
+        );
+        window.open(`https://wa.me/?text=${text}`, '_blank');
+        toast({
+          title: 'WhatsApp aberto',
+          description: 'Seu navegador não suporta envio de arquivos. Mensagem de texto enviada.',
+        });
+      }
+    } catch (err: any) {
+      if (err.name !== 'AbortError') {
+        toast({
+          title: 'Erro ao compartilhar',
+          description: 'Não foi possível abrir o WhatsApp.',
+          variant: 'destructive',
+        });
+      }
+    }
+    setSharing(false);
+  };
+
   const handleExport = async () => {
     if (destination === 'share') {
       await handleShare();
+      return;
+    }
+
+    if (destination === 'whatsapp') {
+      await handleWhatsApp();
       return;
     }
 
@@ -292,15 +344,19 @@ export function ExportModal({ order, open, onClose, onSuccess }: ExportModalProp
             </div>
           </div>
 
-          <Tabs value={destination} onValueChange={(v) => setDestination(v as 'download' | 'share' | 'ftp')}>
-            <TabsList className="grid w-full grid-cols-3">
+          <Tabs value={destination} onValueChange={(v) => setDestination(v as 'download' | 'share' | 'whatsapp' | 'ftp')}>
+            <TabsList className="grid w-full grid-cols-4">
               <TabsTrigger value="download" className="flex items-center gap-1 text-xs">
                 <Download className="h-3 w-3" />
                 Download
               </TabsTrigger>
+              <TabsTrigger value="whatsapp" className="flex items-center gap-1 text-xs" disabled={!canShare}>
+                <MessageCircle className="h-3 w-3" />
+                WhatsApp
+              </TabsTrigger>
               <TabsTrigger value="share" className="flex items-center gap-1 text-xs" disabled={!canShare}>
                 <Share2 className="h-3 w-3" />
-                Compartilhar
+                Outros
               </TabsTrigger>
               <TabsTrigger value="ftp" className="flex items-center gap-1 text-xs">
                 <Upload className="h-3 w-3" />
@@ -324,9 +380,19 @@ export function ExportModal({ order, open, onClose, onSuccess }: ExportModalProp
               </div>
             </TabsContent>
 
+            <TabsContent value="whatsapp" className="mt-4 space-y-3">
+              <p className="text-sm text-muted-foreground">
+                Envie o arquivo XML diretamente pelo <strong>WhatsApp</strong> para qualquer contato ou grupo.
+              </p>
+              <div className="p-3 bg-green-500/10 rounded-lg text-sm border border-green-500/20">
+                <p className="font-medium mb-1 text-green-700 dark:text-green-400">📱 Como funciona:</p>
+                <p className="text-muted-foreground">Ao clicar em enviar, selecione o WhatsApp na lista de apps e escolha o contato ou grupo de destino.</p>
+              </div>
+            </TabsContent>
+
             <TabsContent value="share" className="mt-4 space-y-3">
               <p className="text-sm text-muted-foreground">
-                Compartilhe o arquivo diretamente para o <strong>Google Drive</strong>, WhatsApp, Email ou qualquer outro app instalado no seu dispositivo.
+                Compartilhe o arquivo para o <strong>Google Drive</strong>, Email ou qualquer outro app instalado no seu dispositivo.
               </p>
               <div className="p-3 bg-accent/50 rounded-lg text-sm">
                 <p className="font-medium mb-1">💡 Dica para Google Drive:</p>
@@ -448,9 +514,12 @@ export function ExportModal({ order, open, onClose, onSuccess }: ExportModalProp
           <Button
             onClick={handleExport}
             disabled={loading || sharing}
-            className="w-full bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700"
+            className={`w-full ${destination === 'whatsapp' ? 'bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700' : 'bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary/70'}`}
           >
-            {loading || sharing ? 'Exportando...' : destination === 'share' ? 'Compartilhar Arquivo' : 'Exportar Pedido'}
+            {loading || sharing ? 'Exportando...' : 
+              destination === 'whatsapp' ? 'Enviar via WhatsApp' :
+              destination === 'share' ? 'Compartilhar Arquivo' : 
+              'Exportar Pedido'}
           </Button>
         </div>
       </DialogContent>
