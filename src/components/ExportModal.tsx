@@ -1,5 +1,6 @@
 import { useState, useMemo } from 'react';
-import { Download, Upload, FileText, FileCode, AlertCircle, Plug, Loader2, CheckCircle2, Share2, MessageCircle } from 'lucide-react';
+import type { MouseEvent } from 'react';
+import { Download, Upload, FileText, FileCode, AlertCircle, Loader2, Share2, MessageCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -81,11 +82,11 @@ const getDefaultFTPConfig = (): FTPConfig => {
       // ignore parse errors
     }
   }
-  // Configuração padrão inicial - FTP externo
+  // Configuração padrão inicial (sem senha por segurança)
   return {
     host: '177.234.159.174',
     user: 'gsn',
-    password: '212431axy',
+    password: '',
     port: 21,
     folder: '/XML',
   };
@@ -105,7 +106,7 @@ export function ExportModal({ order, open, onClose, onSuccess }: ExportModalProp
   const ftpValidation = useMemo(() => validateFTPConfig(ftpConfig), [ftpConfig]);
   const canShare = typeof navigator !== 'undefined' && navigator.share && navigator.canShare;
 
-  const handleTestConnection = async (e?: React.MouseEvent) => {
+  const handleTestConnection = async (e?: MouseEvent<HTMLButtonElement>) => {
     e?.preventDefault();
     e?.stopPropagation();
     
@@ -144,8 +145,8 @@ export function ExportModal({ order, open, onClose, onSuccess }: ExportModalProp
         });
       } else {
         setConnectionTested(true);
-        // Salvar configuração no localStorage após sucesso
-        localStorage.setItem(FTP_CONFIG_KEY, JSON.stringify(ftpConfig));
+        // Salvar configuração no localStorage após sucesso (sem senha)
+        localStorage.setItem(FTP_CONFIG_KEY, JSON.stringify({ ...ftpConfig, password: '' }));
         toast({
           title: 'Conexão bem-sucedida!',
           description: data.message + ' (configurações salvas)',
@@ -520,25 +521,24 @@ export function ExportModal({ order, open, onClose, onSuccess }: ExportModalProp
               </div>
               <Button
                 type="button"
-                variant="outline"
-                onClick={(e) => handleTestConnection(e)}
-                disabled={testingConnection}
-                className="w-full flex items-center gap-2"
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  void handleExport();
+                }}
+                disabled={loading || sharing}
+                className="w-full flex items-center justify-center gap-2 group"
               >
-                {testingConnection ? (
+                {loading ? (
                   <>
                     <Loader2 className="h-4 w-4 animate-spin" />
-                    Testando...
-                  </>
-                ) : connectionTested ? (
-                  <>
-                    <CheckCircle2 className="h-4 w-4 text-green-500" />
-                    Conexão OK - Testar novamente
+                    Enviando...
                   </>
                 ) : (
                   <>
-                    <Plug className="h-4 w-4" />
-                    Testar Conexão
+                    <Upload className="h-4 w-4" />
+                    <span className="group-hover:hidden">Enviar via FTP</span>
+                    <span className="hidden group-hover:inline">Enviar agora</span>
                   </>
                 )}
               </Button>

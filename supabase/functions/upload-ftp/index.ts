@@ -94,18 +94,33 @@ serve(async (req) => {
     // Set binary mode
     await sendCommand("TYPE I");
 
-    // Enter passive mode
-    const pasvResp = await sendCommand("PASV");
-    console.log("PASV response:", pasvResp);
-    
-    // Parse PASV response to get data connection details
-    const pasvMatch = pasvResp.match(/\((\d+),(\d+),(\d+),(\d+),(\d+),(\d+)\)/);
-    if (!pasvMatch) {
-      throw new Error("Failed to parse PASV response: " + pasvResp);
+    // Prefer EPSV (works better with NAT) and fallback to PASV
+    let dataHost = ftpConfig.host;
+    let dataPort: number | null = null;
+
+    const epsvResp = await sendCommand("EPSV");
+    console.log("EPSV response:", epsvResp);
+
+    const epsvMatch = epsvResp.match(/\(\|\|\|(\d+)\|\)/);
+    if (epsvResp.startsWith("229") && epsvMatch) {
+      dataPort = parseInt(epsvMatch[1]);
     }
-    
-    const dataHost = `${pasvMatch[1]}.${pasvMatch[2]}.${pasvMatch[3]}.${pasvMatch[4]}`;
-    const dataPort = parseInt(pasvMatch[5]) * 256 + parseInt(pasvMatch[6]);
+
+    if (!dataPort) {
+      const pasvResp = await sendCommand("PASV");
+      console.log("PASV response:", pasvResp);
+
+      const pasvMatch = pasvResp.match(/\((\d+),(\d+),(\d+),(\d+),(\d+),(\d+)\)/);
+      if (!pasvMatch) {
+        throw new Error("Failed to parse PASV response: " + pasvResp);
+      }
+
+      const respHost = `${pasvMatch[1]}.${pasvMatch[2]}.${pasvMatch[3]}.${pasvMatch[4]}`;
+      dataPort = parseInt(pasvMatch[5]) * 256 + parseInt(pasvMatch[6]);
+
+      // Many servers behind NAT return a private IP in PASV; use the original FTP host instead
+      console.log("PASV provided host:", respHost, "| Using host:", dataHost, "| Data port:", dataPort);
+    }
 
     // Connect to data port
     const dataConn = await Deno.connect({
