@@ -14,14 +14,24 @@ interface AddItemFormProps {
 
 export interface AddItemFormRef {
   focusCode: () => void;
+  focusQuantity: () => void;
+  setProduct: (product: Product) => void;
 }
 
 export const AddItemForm = forwardRef<AddItemFormRef, AddItemFormProps>(({ onAddItem }, ref) => {
   const codeInputRef = useRef<HTMLInputElement>(null);
+  const quantityInputRef = useRef<HTMLInputElement>(null);
   
   useImperativeHandle(ref, () => ({
     focusCode: () => {
       codeInputRef.current?.focus();
+    },
+    focusQuantity: () => {
+      quantityInputRef.current?.focus();
+      quantityInputRef.current?.select();
+    },
+    setProduct: (product: Product) => {
+      setSelectedProduct(product);
     }
   }));
   const { products, searchProducts, loading } = useProducts();
@@ -104,6 +114,7 @@ export const AddItemForm = forwardRef<AddItemFormRef, AddItemFormProps>(({ onAdd
             <div>
               <Label htmlFor="quantity">Quantidade</Label>
               <Input
+                ref={quantityInputRef}
                 id="quantity"
                 type="number"
                 min="1"

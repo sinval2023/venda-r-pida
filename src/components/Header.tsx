@@ -12,7 +12,7 @@ export function Header({ title, showAdminLink, onAdminClick }: HeaderProps) {
   const { user, isAdmin, signOut } = useAuth();
 
   return (
-    <header className="fixed top-0 left-0 right-0 z-50 bg-gradient-to-r from-primary to-primary/80 text-primary-foreground shadow-lg">
+    <header className="fixed top-0 left-0 right-0 z-50 bg-gradient-to-r from-sky-400 via-sky-500 to-cyan-400 text-white shadow-lg">
       <div className="container mx-auto px-4 py-4 flex items-center justify-between">
         <h1 className="text-xl font-bold truncate">{title}</h1>
         
@@ -22,7 +22,7 @@ export function Header({ title, showAdminLink, onAdminClick }: HeaderProps) {
               variant="ghost"
               size="icon"
               onClick={onAdminClick}
-              className="text-primary-foreground hover:bg-primary-foreground/20"
+              className="text-white hover:bg-white/20"
             >
               <Package className="h-5 w-5" />
             </Button>
@@ -41,7 +41,7 @@ export function Header({ title, showAdminLink, onAdminClick }: HeaderProps) {
                 variant="ghost"
                 size="icon"
                 onClick={signOut}
-                className="text-primary-foreground hover:bg-primary-foreground/20"
+                className="text-white hover:bg-white/20"
               >
                 <LogOut className="h-5 w-5" />
               </Button>
