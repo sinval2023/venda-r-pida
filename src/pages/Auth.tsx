@@ -146,7 +146,7 @@ export default function Auth() {
                 <Button
                   type="submit"
                   disabled={isSubmitting}
-                  className="w-full bg-gradient-to-r from-primary to-primary/80"
+                  className="w-full h-12 text-lg font-bold font-roboto bg-gradient-to-r from-emerald-400 to-green-500 hover:from-emerald-500 hover:to-green-600 text-white shadow-lg transition-all duration-200"
                 >
                   {isSubmitting ? 'Entrando...' : 'Entrar'}
                 </Button>
@@ -188,7 +188,7 @@ export default function Auth() {
                 <Button
                   type="submit"
                   disabled={isSubmitting}
-                  className="w-full bg-gradient-to-r from-primary to-primary/80"
+                  className="w-full h-12 text-lg font-bold font-roboto bg-gradient-to-r from-emerald-400 to-green-500 hover:from-emerald-500 hover:to-green-600 text-white shadow-lg transition-all duration-200"
                 >
                   {isSubmitting ? 'Cadastrando...' : 'Criar conta'}
                 </Button>
