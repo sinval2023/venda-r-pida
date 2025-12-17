@@ -14,27 +14,27 @@ export function ProductQuickPanel({ onSelectProduct }: ProductQuickPanelProps) {
 
   if (loading) {
     return (
-      <div className="grid grid-cols-2 sm:grid-cols-5 gap-2">
+      <div className="flex flex-col gap-2">
         {Array.from({ length: 10 }).map((_, i) => (
-          <Card key={i} className="p-3 animate-pulse bg-muted h-16" />
+          <Card key={i} className="p-2 animate-pulse bg-muted h-12" />
         ))}
       </div>
     );
   }
 
   return (
-    <div className="grid grid-cols-2 sm:grid-cols-5 gap-2">
+    <div className="flex flex-col gap-2">
       {quickProducts.map((product) => (
         <Card
           key={product.id}
           onClick={() => onSelectProduct(product)}
-          className="p-3 cursor-pointer transition-all duration-200 hover:scale-105 hover:shadow-lg hover:border-2 hover:border-sky-400 bg-gradient-to-br from-white to-sky-50 dark:from-slate-800 dark:to-slate-700 group"
+          className="p-2 cursor-pointer transition-all duration-200 hover:scale-[1.02] hover:shadow-lg hover:border-2 hover:border-sky-400 bg-gradient-to-br from-white to-sky-50 dark:from-slate-800 dark:to-slate-700 group"
         >
-          <div className="text-center">
-            <div className="text-lg font-bold text-sky-600 dark:text-sky-400 group-hover:text-sky-700 dark:group-hover:text-sky-300">
+          <div className="flex items-center gap-2">
+            <div className="text-base font-bold text-sky-600 dark:text-sky-400 group-hover:text-sky-700 dark:group-hover:text-sky-300 min-w-[60px]">
               {product.code}
             </div>
-            <div className="text-xs text-muted-foreground truncate group-hover:text-foreground transition-colors">
+            <div className="text-xs text-muted-foreground truncate group-hover:text-foreground transition-colors flex-1">
               {product.description}
             </div>
           </div>
@@ -44,7 +44,7 @@ export function ProductQuickPanel({ onSelectProduct }: ProductQuickPanelProps) {
       {quickProducts.length < 10 && Array.from({ length: 10 - quickProducts.length }).map((_, i) => (
         <Card
           key={`empty-${i}`}
-          className="p-3 bg-muted/30 border-dashed h-16"
+          className="p-2 bg-muted/30 border-dashed h-12"
         >
           <div className="text-center text-muted-foreground/50 text-sm">
             —
