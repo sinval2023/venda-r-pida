@@ -1,20 +1,50 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { useProducts } from '@/hooks/useProducts';
 import { ProductCard } from './ProductCard';
 import { Product } from '@/types/order';
 import { Input } from '@/components/ui/input';
-import { Search, Package } from 'lucide-react';
+import { Search, Package, FolderOpen } from 'lucide-react';
 import { Card } from '@/components/ui/card';
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
+import { ChevronDown } from 'lucide-react';
 
 interface ProductGridProps {
   onAddToOrder: (product: Product, quantity: number, unitPrice: number) => void;
 }
 
 export function ProductGrid({ onAddToOrder }: ProductGridProps) {
-  const { products, loading, searchProducts } = useProducts();
+  const { products, loading, searchProducts, getProductsByCategory } = useProducts();
   const [searchQuery, setSearchQuery] = useState('');
+  const [openCategories, setOpenCategories] = useState<Set<string>>(new Set());
 
   const filteredProducts = searchQuery ? searchProducts(searchQuery) : products;
+  
+  const groupedProducts = useMemo(() => {
+    if (searchQuery) {
+      // When searching, show flat list
+      return null;
+    }
+    return getProductsByCategory();
+  }, [products, searchQuery, getProductsByCategory]);
+
+  const toggleCategory = (category: string) => {
+    setOpenCategories(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(category)) {
+        newSet.delete(category);
+      } else {
+        newSet.add(category);
+      }
+      return newSet;
+    });
+  };
+
+  // Initialize all categories as open
+  useMemo(() => {
+    if (groupedProducts) {
+      setOpenCategories(new Set(Object.keys(groupedProducts)));
+    }
+  }, [groupedProducts]);
 
   if (loading) {
     return (
@@ -49,14 +79,15 @@ export function ProductGrid({ onAddToOrder }: ProductGridProps) {
         />
       </div>
 
-      {/* Products Grid */}
+      {/* Products by Category or Flat List when searching */}
       {filteredProducts.length === 0 ? (
         <div className="flex flex-col items-center justify-center py-12 text-muted-foreground">
           <Package className="h-16 w-16 mb-4 opacity-50" />
           <p className="text-lg font-medium">Nenhum produto encontrado</p>
           <p className="text-sm">Tente ajustar sua busca</p>
         </div>
-      ) : (
+      ) : searchQuery || !groupedProducts ? (
+        // Flat list when searching
         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3">
           {filteredProducts.map((product) => (
             <ProductCard
@@ -64,6 +95,39 @@ export function ProductGrid({ onAddToOrder }: ProductGridProps) {
               product={product}
               onAddToOrder={onAddToOrder}
             />
+          ))}
+        </div>
+      ) : (
+        // Grouped by category
+        <div className="space-y-4">
+          {Object.entries(groupedProducts).map(([categoryName, categoryProducts]) => (
+            <Collapsible
+              key={categoryName}
+              open={openCategories.has(categoryName)}
+              onOpenChange={() => toggleCategory(categoryName)}
+            >
+              <CollapsibleTrigger className="w-full">
+                <div className="flex items-center justify-between p-3 bg-gradient-to-r from-primary/10 to-primary/5 rounded-lg hover:from-primary/15 hover:to-primary/10 transition-colors">
+                  <div className="flex items-center gap-2">
+                    <FolderOpen className="h-5 w-5 text-primary" />
+                    <span className="font-bold text-foreground">{categoryName}</span>
+                    <span className="text-sm text-muted-foreground">({categoryProducts.length})</span>
+                  </div>
+                  <ChevronDown className={`h-5 w-5 text-muted-foreground transition-transform ${openCategories.has(categoryName) ? 'rotate-180' : ''}`} />
+                </div>
+              </CollapsibleTrigger>
+              <CollapsibleContent>
+                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3 pt-3">
+                  {categoryProducts.map((product) => (
+                    <ProductCard
+                      key={product.id}
+                      product={product}
+                      onAddToOrder={onAddToOrder}
+                    />
+                  ))}
+                </div>
+              </CollapsibleContent>
+            </Collapsible>
           ))}
         </div>
       )}

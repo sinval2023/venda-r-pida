@@ -14,6 +14,33 @@ export type Database = {
   }
   public: {
     Tables: {
+      categories: {
+        Row: {
+          active: boolean
+          created_at: string
+          display_order: number
+          id: string
+          name: string
+          updated_at: string
+        }
+        Insert: {
+          active?: boolean
+          created_at?: string
+          display_order?: number
+          id?: string
+          name: string
+          updated_at?: string
+        }
+        Update: {
+          active?: boolean
+          created_at?: string
+          display_order?: number
+          id?: string
+          name?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       ftp_credentials: {
         Row: {
           created_at: string
@@ -107,6 +134,7 @@ export type Database = {
       products: {
         Row: {
           active: boolean
+          category_id: string | null
           code: string
           created_at: string
           default_price: number
@@ -116,6 +144,7 @@ export type Database = {
         }
         Insert: {
           active?: boolean
+          category_id?: string | null
           code: string
           created_at?: string
           default_price?: number
@@ -125,6 +154,7 @@ export type Database = {
         }
         Update: {
           active?: boolean
+          category_id?: string | null
           code?: string
           created_at?: string
           default_price?: number
@@ -132,7 +162,15 @@ export type Database = {
           id?: string
           updated_at?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "products_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "categories"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       profiles: {
         Row: {
