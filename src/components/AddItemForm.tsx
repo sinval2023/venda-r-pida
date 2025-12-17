@@ -1,5 +1,4 @@
 import { useState, useEffect, useRef, useImperativeHandle, forwardRef } from 'react';
-import { Plus } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -150,10 +149,9 @@ export const AddItemForm = forwardRef<AddItemFormRef, AddItemFormProps>(({ onAdd
           <Button
             type="submit"
             disabled={!selectedProduct || quantity <= 0 || unitPrice <= 0}
-            className="w-full bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary/70"
+            className="w-full h-10 bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white text-lg font-bold shadow-md hover:shadow-lg transition-all duration-200"
           >
-            <Plus className="h-4 w-4 mr-2" />
-            Adicionar Item
+            ADICIONAR
           </Button>
         </form>
       </CardContent>

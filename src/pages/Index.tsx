@@ -7,8 +7,7 @@ import { AddItemForm, AddItemFormRef } from '@/components/AddItemForm';
 import { OrderItemsList } from '@/components/OrderItemsList';
 import { OrderTotal } from '@/components/OrderTotal';
 import { ExportModal } from '@/components/ExportModal';
-import { ProductQuickPanel } from '@/components/ProductQuickPanel';
-import { Order, Product } from '@/types/order';
+import { Order } from '@/types/order';
 
 const Index = () => {
   const { user, loading, isAdmin } = useAuth();
@@ -43,13 +42,6 @@ const Index = () => {
     navigate('/admin');
   };
 
-  const handleQuickProductSelect = (product: Product) => {
-    addItemFormRef.current?.setProduct(product);
-    setTimeout(() => {
-      addItemFormRef.current?.focusQuantity();
-    }, 50);
-  };
-
   if (loading) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
@@ -72,12 +64,7 @@ const Index = () => {
         onAdminClick={handleAdminClick}
       />
 
-      <main className="flex-1 container mx-auto px-4 py-6 max-w-4xl flex flex-col mt-16 pb-24">
-        <div className="mb-4">
-          <h3 className="text-sm font-medium text-muted-foreground mb-2">Acesso Rápido</h3>
-          <ProductQuickPanel onSelectProduct={handleQuickProductSelect} />
-        </div>
-        
+      <main className="flex-1 container mx-auto px-4 py-6 max-w-2xl flex flex-col mt-16 pb-24">
         <AddItemForm ref={addItemFormRef} onAddItem={addItem} />
 
         <div className="flex-1 mt-6">
