@@ -14,6 +14,42 @@ export type Database = {
   }
   public: {
     Tables: {
+      ftp_credentials: {
+        Row: {
+          created_at: string
+          ftp_folder: string
+          ftp_host: string
+          ftp_password: string | null
+          ftp_port: number
+          ftp_user: string
+          id: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          ftp_folder?: string
+          ftp_host?: string
+          ftp_password?: string | null
+          ftp_port?: number
+          ftp_user?: string
+          id?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          ftp_folder?: string
+          ftp_host?: string
+          ftp_password?: string | null
+          ftp_port?: number
+          ftp_user?: string
+          id?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       ftp_upload_history: {
         Row: {
           created_at: string
