@@ -1,26 +1,34 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { useOrder } from '@/hooks/useOrder';
 import { Header } from '@/components/Header';
-import { AddItemForm, AddItemFormRef } from '@/components/AddItemForm';
+import { ProductGrid } from '@/components/ProductGrid';
 import { OrderItemsList } from '@/components/OrderItemsList';
 import { OrderTotal } from '@/components/OrderTotal';
 import { ExportModal } from '@/components/ExportModal';
-import { Order } from '@/types/order';
+import { Order, Product } from '@/types/order';
+import { toast } from 'sonner';
 
 const Index = () => {
   const { user, loading, isAdmin } = useAuth();
   const navigate = useNavigate();
   const { items, addItem, removeItem, getTotal, clearOrder, finalizeOrder } = useOrder();
   const [exportOrder, setExportOrder] = useState<Order | null>(null);
-  const addItemFormRef = useRef<AddItemFormRef>(null);
 
   useEffect(() => {
     if (!loading && !user) {
       navigate('/auth');
     }
   }, [user, loading, navigate]);
+
+  const handleAddToOrder = (product: Product, quantity: number, unitPrice: number) => {
+    addItem(product, quantity, unitPrice);
+    toast.success(`${product.code} adicionado ao pedido`, {
+      description: `${quantity}x ${product.description}`,
+      duration: 2000,
+    });
+  };
 
   const handleFinalize = async () => {
     const order = await finalizeOrder();
@@ -32,10 +40,6 @@ const Index = () => {
   const handleExportSuccess = () => {
     setExportOrder(null);
     clearOrder();
-    // Focus on code input after a short delay
-    setTimeout(() => {
-      addItemFormRef.current?.focusCode();
-    }, 100);
   };
 
   const handleAdminClick = () => {
@@ -64,15 +68,20 @@ const Index = () => {
         onAdminClick={handleAdminClick}
       />
 
-      <main className="flex-1 container mx-auto px-4 py-6 max-w-2xl flex flex-col mt-16 pb-24">
-        <AddItemForm ref={addItemFormRef} onAddItem={addItem} />
+      <main className="flex-1 container mx-auto px-3 sm:px-4 py-4 sm:py-6 flex flex-col mt-16 pb-28">
+        {/* Product Grid */}
+        <ProductGrid onAddToOrder={handleAddToOrder} />
 
-        <div className="flex-1 mt-6">
-          <OrderItemsList
-            items={items}
-            onRemoveItem={removeItem}
-          />
-        </div>
+        {/* Order Items List */}
+        {items.length > 0 && (
+          <div className="mt-6 border-t pt-6">
+            <h2 className="text-lg font-bold mb-4 text-foreground">Itens do Pedido ({items.length})</h2>
+            <OrderItemsList
+              items={items}
+              onRemoveItem={removeItem}
+            />
+          </div>
+        )}
       </main>
 
       <OrderTotal 
