@@ -547,9 +547,6 @@ export function ExportModal({ order, open, onClose, onSuccess }: ExportModalProp
                     />
                   </div>
                   
-                  {/* FTP History */}
-                  <FTPHistoryList history={ftpHistory} loading={historyLoading} />
-                  
                   <Button
                     type="button"
                     onClick={(e) => {
@@ -558,11 +555,14 @@ export function ExportModal({ order, open, onClose, onSuccess }: ExportModalProp
                       void handleExport();
                     }}
                     disabled={loading || sharing}
-                    className="w-full h-10 flex items-center justify-center gap-2 bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white"
+                    className="w-full h-12 flex items-center justify-center gap-2 text-lg font-bold bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 hover:scale-[1.02] transition-all shadow-lg text-white"
                   >
-                    <Upload className="h-4 w-4" />
-                    Enviar via FTP
+                    <Upload className="h-5 w-5" />
+                    ENVIAR
                   </Button>
+                  
+                  {/* FTP History */}
+                  <FTPHistoryList history={ftpHistory} loading={historyLoading} />
                 </>
               )}
             </TabsContent>
