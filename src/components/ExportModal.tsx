@@ -380,42 +380,42 @@ export function ExportModal({ order, open, onClose, onSuccess }: ExportModalProp
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent className="max-w-md mx-4">
-        <DialogHeader>
-          <DialogTitle>Exportar Pedido #{order.number.toString().padStart(6, '0')}</DialogTitle>
+      <DialogContent className="w-[95vw] max-w-lg mx-auto max-h-[85vh] overflow-y-auto">
+        <DialogHeader className="pb-2">
+          <DialogTitle className="text-base">Exportar Pedido #{order.number.toString().padStart(6, '0')}</DialogTitle>
         </DialogHeader>
 
-        <div className="space-y-6">
-          <Card className="p-4 bg-accent/50">
-            <div className="flex justify-between">
-              <span className="text-muted-foreground">Total:</span>
-              <span className="font-bold text-xl">{formatCurrency(order.total)}</span>
+        <div className="space-y-3">
+          <Card className="p-3 bg-accent/50">
+            <div className="flex justify-between items-center">
+              <span className="text-muted-foreground text-sm">Total:</span>
+              <span className="font-bold text-lg">{formatCurrency(order.total)}</span>
             </div>
-            <div className="flex justify-between text-sm mt-1">
+            <div className="flex justify-between text-xs mt-1">
               <span className="text-muted-foreground">Itens:</span>
               <span>{order.items.length}</span>
             </div>
           </Card>
 
           <div>
-            <Label className="mb-2 block">Formato do arquivo</Label>
+            <Label className="mb-1 block text-sm">Formato</Label>
             <div className="grid grid-cols-2 gap-2">
               <Button
                 type="button"
                 variant={format === 'xml' ? 'default' : 'outline'}
                 onClick={() => setFormat('xml')}
-                className="flex items-center gap-2"
+                className="flex items-center gap-2 h-8 text-sm"
               >
-                <FileCode className="h-4 w-4" />
+                <FileCode className="h-3 w-3" />
                 XML
               </Button>
               <Button
                 type="button"
                 variant={format === 'txt' ? 'default' : 'outline'}
                 onClick={() => setFormat('txt')}
-                className="flex items-center gap-2"
+                className="flex items-center gap-2 h-8 text-sm"
               >
-                <FileText className="h-4 w-4" />
+                <FileText className="h-3 w-3" />
                 TXT
               </Button>
             </div>
@@ -477,108 +477,80 @@ export function ExportModal({ order, open, onClose, onSuccess }: ExportModalProp
               </div>
             </TabsContent>
 
-            <TabsContent value="ftp" className="mt-4 space-y-3">
-              <div>
-                <Label htmlFor="ftpHost">Host</Label>
-                <Input
-                  id="ftpHost"
-                  placeholder="ftp.exemplo.com.br"
-                  value={ftpConfig.host}
-                  onChange={(e) => setFtpConfig({ ...ftpConfig, host: e.target.value })}
-                  className={showValidation && ftpValidation.errors.host ? 'border-destructive' : ''}
-                />
-                {showValidation && ftpValidation.errors.host && (
-                  <p className="text-xs text-destructive mt-1 flex items-center gap-1">
-                    <AlertCircle className="h-3 w-3" />
-                    {ftpValidation.errors.host}
-                  </p>
-                )}
-              </div>
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <Label htmlFor="ftpUser">Usuário</Label>
+            <TabsContent value="ftp" className="mt-3 space-y-2">
+              <div className="grid grid-cols-3 gap-2">
+                <div className="col-span-2">
+                  <Label htmlFor="ftpHost" className="text-xs">Host</Label>
                   <Input
-                    id="ftpUser"
-                    placeholder="usuario"
-                    value={ftpConfig.user}
-                    onChange={(e) => setFtpConfig({ ...ftpConfig, user: e.target.value })}
-                    className={showValidation && ftpValidation.errors.user ? 'border-destructive' : ''}
+                    id="ftpHost"
+                    placeholder="ftp.exemplo.com.br"
+                    value={ftpConfig.host}
+                    onChange={(e) => setFtpConfig({ ...ftpConfig, host: e.target.value })}
+                    className={`h-8 text-sm ${showValidation && ftpValidation.errors.host ? 'border-destructive' : ''}`}
                   />
-                  {showValidation && ftpValidation.errors.user && (
-                    <p className="text-xs text-destructive mt-1 flex items-center gap-1">
-                      <AlertCircle className="h-3 w-3" />
-                      {ftpValidation.errors.user}
-                    </p>
-                  )}
                 </div>
                 <div>
-                  <Label htmlFor="ftpPort">Porta</Label>
+                  <Label htmlFor="ftpPort" className="text-xs">Porta</Label>
                   <Input
                     id="ftpPort"
                     type="number"
                     value={ftpConfig.port}
                     onChange={(e) => setFtpConfig({ ...ftpConfig, port: parseInt(e.target.value) || 21 })}
-                    className={showValidation && ftpValidation.errors.port ? 'border-destructive' : ''}
+                    className={`h-8 text-sm ${showValidation && ftpValidation.errors.port ? 'border-destructive' : ''}`}
                   />
-                  {showValidation && ftpValidation.errors.port && (
-                    <p className="text-xs text-destructive mt-1 flex items-center gap-1">
-                      <AlertCircle className="h-3 w-3" />
-                      {ftpValidation.errors.port}
-                    </p>
-                  )}
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-2">
+                <div>
+                  <Label htmlFor="ftpUser" className="text-xs">Usuário</Label>
+                  <Input
+                    id="ftpUser"
+                    placeholder="usuario"
+                    value={ftpConfig.user}
+                    onChange={(e) => setFtpConfig({ ...ftpConfig, user: e.target.value })}
+                    className={`h-8 text-sm ${showValidation && ftpValidation.errors.user ? 'border-destructive' : ''}`}
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="ftpPassword" className="text-xs">Senha</Label>
+                  <Input
+                    id="ftpPassword"
+                    type="password"
+                    placeholder="••••••••"
+                    value={ftpConfig.password}
+                    onChange={(e) => setFtpConfig({ ...ftpConfig, password: e.target.value })}
+                    className={`h-8 text-sm ${showValidation && ftpValidation.errors.password ? 'border-destructive' : ''}`}
+                  />
                 </div>
               </div>
               <div>
-                <Label htmlFor="ftpPassword">Senha</Label>
-                <Input
-                  id="ftpPassword"
-                  type="password"
-                  placeholder="••••••••"
-                  value={ftpConfig.password}
-                  onChange={(e) => setFtpConfig({ ...ftpConfig, password: e.target.value })}
-                  className={showValidation && ftpValidation.errors.password ? 'border-destructive' : ''}
-                />
-                {showValidation && ftpValidation.errors.password && (
-                  <p className="text-xs text-destructive mt-1 flex items-center gap-1">
-                    <AlertCircle className="h-3 w-3" />
-                    {ftpValidation.errors.password}
-                  </p>
-                )}
-              </div>
-              <div>
-                <Label htmlFor="ftpFolder">Pasta destino</Label>
+                <Label htmlFor="ftpFolder" className="text-xs">Pasta destino</Label>
                 <Input
                   id="ftpFolder"
                   placeholder="/pedidos"
                   value={ftpConfig.folder}
                   onChange={(e) => setFtpConfig({ ...ftpConfig, folder: e.target.value })}
-                  className={showValidation && ftpValidation.errors.folder ? 'border-destructive' : ''}
+                  className={`h-8 text-sm ${showValidation && ftpValidation.errors.folder ? 'border-destructive' : ''}`}
                 />
-                {showValidation && ftpValidation.errors.folder && (
-                  <p className="text-xs text-destructive mt-1 flex items-center gap-1">
-                    <AlertCircle className="h-3 w-3" />
-                    {ftpValidation.errors.folder}
-                  </p>
-                )}
               </div>
               
               {/* FTP History */}
               <FTPHistoryList history={ftpHistory} loading={historyLoading} />
               
               {loading && destination === 'ftp' && (
-                <div className="space-y-2 p-3 bg-accent/30 rounded-lg border border-border">
-                  <div className="flex items-center justify-between text-sm">
-                    <span className="text-muted-foreground flex items-center gap-2">
+                <div className="space-y-1 p-2 bg-accent/30 rounded-lg border border-border">
+                  <div className="flex items-center justify-between text-xs">
+                    <span className="text-muted-foreground flex items-center gap-1">
                       {uploadProgress === 100 ? (
-                        <CheckCircle2 className="h-4 w-4 text-green-500" />
+                        <CheckCircle2 className="h-3 w-3 text-green-500" />
                       ) : (
-                        <Loader2 className="h-4 w-4 animate-spin text-primary" />
+                        <Loader2 className="h-3 w-3 animate-spin text-primary" />
                       )}
                       {uploadStatus}
                     </span>
                     <span className="font-medium">{uploadProgress}%</span>
                   </div>
-                  <Progress value={uploadProgress} className="h-2" />
+                  <Progress value={uploadProgress} className="h-1.5" />
                 </div>
               )}
               <Button
@@ -589,7 +561,7 @@ export function ExportModal({ order, open, onClose, onSuccess }: ExportModalProp
                   void handleExport();
                 }}
                 disabled={loading || sharing}
-                className="w-full flex items-center justify-center gap-2 group"
+                className="w-full h-9 flex items-center justify-center gap-2 bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white"
               >
                 {loading ? (
                   <>
@@ -599,24 +571,25 @@ export function ExportModal({ order, open, onClose, onSuccess }: ExportModalProp
                 ) : (
                   <>
                     <Upload className="h-4 w-4" />
-                    <span className="group-hover:hidden">Enviar via FTP</span>
-                    <span className="hidden group-hover:inline">Enviar agora</span>
+                    Enviar via FTP
                   </>
                 )}
               </Button>
             </TabsContent>
           </Tabs>
 
-          <Button
-            onClick={handleExport}
-            disabled={loading || sharing}
-            className={`w-full ${destination === 'whatsapp' ? 'bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700' : 'bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary/70'}`}
-          >
-            {loading || sharing ? 'Exportando...' : 
-              destination === 'whatsapp' ? 'Enviar via WhatsApp' :
-              destination === 'share' ? 'Compartilhar Arquivo' : 
-              'Exportar Pedido'}
-          </Button>
+          {destination !== 'ftp' && (
+            <Button
+              onClick={handleExport}
+              disabled={loading || sharing}
+              className="w-full h-9 bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white"
+            >
+              {loading || sharing ? 'Exportando...' : 
+                destination === 'whatsapp' ? 'Enviar via WhatsApp' :
+                destination === 'share' ? 'Compartilhar Arquivo' : 
+                'Exportar Pedido'}
+            </Button>
+          )}
         </div>
       </DialogContent>
     </Dialog>

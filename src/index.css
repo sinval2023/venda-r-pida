@@ -38,6 +38,9 @@ All colors MUST be HSL.
 
     --radius: 0.5rem;
 
+    --success: 142 76% 36%;
+    --success-foreground: 0 0% 100%;
+
     --sidebar-background: 0 0% 98%;
 
     --sidebar-foreground: 240 5.3% 26.1%;
