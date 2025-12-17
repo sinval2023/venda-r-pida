@@ -365,8 +365,6 @@ export function ExportModal({ order, open, onClose, onSuccess }: ExportModalProp
         description: err?.message || 'Erro inesperado ao exportar.',
         variant: 'destructive',
       });
-    } finally {
-      if (!loading) return; // already handled by success timeout
       setLoading(false);
     }
   };
@@ -380,7 +378,7 @@ export function ExportModal({ order, open, onClose, onSuccess }: ExportModalProp
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent className="w-[95vw] max-w-lg mx-auto max-h-[85vh] overflow-y-auto">
+      <DialogContent className="w-[95vw] max-w-xl mx-auto sm:max-h-[90vh]">
         <DialogHeader className="pb-2">
           <DialogTitle className="text-base">Exportar Pedido #{order.number.toString().padStart(6, '0')}</DialogTitle>
         </DialogHeader>
@@ -477,104 +475,96 @@ export function ExportModal({ order, open, onClose, onSuccess }: ExportModalProp
               </div>
             </TabsContent>
 
-            <TabsContent value="ftp" className="mt-3 space-y-2">
-              <div className="grid grid-cols-3 gap-2">
-                <div className="col-span-2">
-                  <Label htmlFor="ftpHost" className="text-xs">Host</Label>
-                  <Input
-                    id="ftpHost"
-                    placeholder="ftp.exemplo.com.br"
-                    value={ftpConfig.host}
-                    onChange={(e) => setFtpConfig({ ...ftpConfig, host: e.target.value })}
-                    className={`h-8 text-sm ${showValidation && ftpValidation.errors.host ? 'border-destructive' : ''}`}
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="ftpPort" className="text-xs">Porta</Label>
-                  <Input
-                    id="ftpPort"
-                    type="number"
-                    value={ftpConfig.port}
-                    onChange={(e) => setFtpConfig({ ...ftpConfig, port: parseInt(e.target.value) || 21 })}
-                    className={`h-8 text-sm ${showValidation && ftpValidation.errors.port ? 'border-destructive' : ''}`}
-                  />
-                </div>
-              </div>
-              <div className="grid grid-cols-2 gap-2">
-                <div>
-                  <Label htmlFor="ftpUser" className="text-xs">Usuário</Label>
-                  <Input
-                    id="ftpUser"
-                    placeholder="usuario"
-                    value={ftpConfig.user}
-                    onChange={(e) => setFtpConfig({ ...ftpConfig, user: e.target.value })}
-                    className={`h-8 text-sm ${showValidation && ftpValidation.errors.user ? 'border-destructive' : ''}`}
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="ftpPassword" className="text-xs">Senha</Label>
-                  <Input
-                    id="ftpPassword"
-                    type="password"
-                    placeholder="••••••••"
-                    value={ftpConfig.password}
-                    onChange={(e) => setFtpConfig({ ...ftpConfig, password: e.target.value })}
-                    className={`h-8 text-sm ${showValidation && ftpValidation.errors.password ? 'border-destructive' : ''}`}
-                  />
-                </div>
-              </div>
-              <div>
-                <Label htmlFor="ftpFolder" className="text-xs">Pasta destino</Label>
-                <Input
-                  id="ftpFolder"
-                  placeholder="/pedidos"
-                  value={ftpConfig.folder}
-                  onChange={(e) => setFtpConfig({ ...ftpConfig, folder: e.target.value })}
-                  className={`h-8 text-sm ${showValidation && ftpValidation.errors.folder ? 'border-destructive' : ''}`}
-                />
-              </div>
-              
-              {/* FTP History */}
-              <FTPHistoryList history={ftpHistory} loading={historyLoading} />
-              
-              {loading && destination === 'ftp' && (
-                <div className="space-y-1 p-2 bg-accent/30 rounded-lg border border-border">
-                  <div className="flex items-center justify-between text-xs">
-                    <span className="text-muted-foreground flex items-center gap-1">
-                      {uploadProgress === 100 ? (
-                        <CheckCircle2 className="h-3 w-3 text-green-500" />
-                      ) : (
-                        <Loader2 className="h-3 w-3 animate-spin text-primary" />
-                      )}
-                      {uploadStatus}
-                    </span>
-                    <span className="font-medium">{uploadProgress}%</span>
+            <TabsContent value="ftp" className="mt-3 space-y-3">
+              {loading && destination === 'ftp' ? (
+                <div className="py-8 space-y-4">
+                  <div className="flex flex-col items-center justify-center gap-3">
+                    {uploadProgress === 100 ? (
+                      <CheckCircle2 className="h-12 w-12 text-green-500" />
+                    ) : (
+                      <Loader2 className="h-12 w-12 animate-spin text-primary" />
+                    )}
+                    <p className="text-lg font-medium text-center">{uploadStatus}</p>
                   </div>
-                  <Progress value={uploadProgress} className="h-1.5" />
+                  <Progress value={uploadProgress} className="h-2 w-full" />
+                  <p className="text-center text-sm text-muted-foreground">{uploadProgress}%</p>
                 </div>
-              )}
-              <Button
-                type="button"
-                onClick={(e) => {
-                  e.preventDefault();
-                  e.stopPropagation();
-                  void handleExport();
-                }}
-                disabled={loading || sharing}
-                className="w-full h-9 flex items-center justify-center gap-2 bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white"
-              >
-                {loading ? (
-                  <>
-                    <Loader2 className="h-4 w-4 animate-spin" />
-                    Enviando...
-                  </>
-                ) : (
-                  <>
+              ) : (
+                <>
+                  <div className="grid grid-cols-3 gap-2">
+                    <div className="col-span-2">
+                      <Label htmlFor="ftpHost" className="text-xs">Host</Label>
+                      <Input
+                        id="ftpHost"
+                        placeholder="ftp.exemplo.com.br"
+                        value={ftpConfig.host}
+                        onChange={(e) => setFtpConfig({ ...ftpConfig, host: e.target.value })}
+                        className={`h-9 text-sm ${showValidation && ftpValidation.errors.host ? 'border-destructive' : ''}`}
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="ftpPort" className="text-xs">Porta</Label>
+                      <Input
+                        id="ftpPort"
+                        type="number"
+                        value={ftpConfig.port}
+                        onChange={(e) => setFtpConfig({ ...ftpConfig, port: parseInt(e.target.value) || 21 })}
+                        className={`h-9 text-sm ${showValidation && ftpValidation.errors.port ? 'border-destructive' : ''}`}
+                      />
+                    </div>
+                  </div>
+                  <div className="grid grid-cols-2 gap-2">
+                    <div>
+                      <Label htmlFor="ftpUser" className="text-xs">Usuário</Label>
+                      <Input
+                        id="ftpUser"
+                        placeholder="usuario"
+                        value={ftpConfig.user}
+                        onChange={(e) => setFtpConfig({ ...ftpConfig, user: e.target.value })}
+                        className={`h-9 text-sm ${showValidation && ftpValidation.errors.user ? 'border-destructive' : ''}`}
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="ftpPassword" className="text-xs">Senha</Label>
+                      <Input
+                        id="ftpPassword"
+                        type="password"
+                        placeholder="••••••••"
+                        value={ftpConfig.password}
+                        onChange={(e) => setFtpConfig({ ...ftpConfig, password: e.target.value })}
+                        className={`h-9 text-sm ${showValidation && ftpValidation.errors.password ? 'border-destructive' : ''}`}
+                      />
+                    </div>
+                  </div>
+                  <div>
+                    <Label htmlFor="ftpFolder" className="text-xs">Pasta destino</Label>
+                    <Input
+                      id="ftpFolder"
+                      placeholder="/pedidos"
+                      value={ftpConfig.folder}
+                      onChange={(e) => setFtpConfig({ ...ftpConfig, folder: e.target.value })}
+                      className={`h-9 text-sm ${showValidation && ftpValidation.errors.folder ? 'border-destructive' : ''}`}
+                    />
+                  </div>
+                  
+                  {/* FTP History */}
+                  <FTPHistoryList history={ftpHistory} loading={historyLoading} />
+                  
+                  <Button
+                    type="button"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      void handleExport();
+                    }}
+                    disabled={loading || sharing}
+                    className="w-full h-10 flex items-center justify-center gap-2 bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white"
+                  >
                     <Upload className="h-4 w-4" />
                     Enviar via FTP
-                  </>
-                )}
-              </Button>
+                  </Button>
+                </>
+              )}
             </TabsContent>
           </Tabs>
 

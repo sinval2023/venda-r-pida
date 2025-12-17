@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef, useImperativeHandle, forwardRef } from 'react';
 import { Plus } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -12,7 +12,18 @@ interface AddItemFormProps {
   onAddItem: (product: Product, quantity: number, unitPrice: number) => void;
 }
 
-export function AddItemForm({ onAddItem }: AddItemFormProps) {
+export interface AddItemFormRef {
+  focusCode: () => void;
+}
+
+export const AddItemForm = forwardRef<AddItemFormRef, AddItemFormProps>(({ onAddItem }, ref) => {
+  const codeInputRef = useRef<HTMLInputElement>(null);
+  
+  useImperativeHandle(ref, () => ({
+    focusCode: () => {
+      codeInputRef.current?.focus();
+    }
+  }));
   const { products, searchProducts, loading } = useProducts();
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
   const [quantity, setQuantity] = useState<number>(1);
@@ -63,6 +74,7 @@ export function AddItemForm({ onAddItem }: AddItemFormProps) {
             <div className="col-span-1">
               <Label htmlFor="productCode">Código</Label>
               <Input
+                ref={codeInputRef}
                 id="productCode"
                 type="text"
                 placeholder="Ex: 1"
@@ -136,4 +148,6 @@ export function AddItemForm({ onAddItem }: AddItemFormProps) {
       </CardContent>
     </Card>
   );
-}
+});
+
+AddItemForm.displayName = 'AddItemForm';
