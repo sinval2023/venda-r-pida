@@ -1,6 +1,6 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import type { MouseEvent } from 'react';
-import { Download, Upload, FileText, FileCode, AlertCircle, Loader2, Share2, MessageCircle, CheckCircle2 } from 'lucide-react';
+import { Download, Upload, FileText, FileCode, AlertCircle, Loader2, Share2, MessageCircle, CheckCircle2, Save } from 'lucide-react';
 import { Progress } from '@/components/ui/progress';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -15,6 +15,7 @@ import { toast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { useFTPHistory } from '@/hooks/useFTPHistory';
 import { FTPHistoryList } from '@/components/FTPHistoryList';
+import { useAuth } from '@/hooks/useAuth';
 interface ExportModalProps {
   order: Order;
   open: boolean;
@@ -96,6 +97,7 @@ const getDefaultFTPConfig = (): FTPConfig => {
 };
 
 export function ExportModal({ order, open, onClose, onSuccess }: ExportModalProps) {
+  const { user } = useAuth();
   const [format, setFormat] = useState<'xml' | 'txt'>('xml');
   const [destination, setDestination] = useState<'download' | 'share' | 'whatsapp' | 'ftp'>('download');
   const [ftpConfig, setFtpConfig] = useState<FTPConfig>(getDefaultFTPConfig);
@@ -107,10 +109,114 @@ export function ExportModal({ order, open, onClose, onSuccess }: ExportModalProp
   const [sharing, setSharing] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
   const [uploadStatus, setUploadStatus] = useState<string>('');
+  const [saveCredentials, setSaveCredentials] = useState(false);
+  const [credentialsLoaded, setCredentialsLoaded] = useState(false);
+  const [savingCredentials, setSavingCredentials] = useState(false);
 
   const { history: ftpHistory, loading: historyLoading, addEntry: addFTPHistoryEntry } = useFTPHistory();
   const ftpValidation = useMemo(() => validateFTPConfig(ftpConfig), [ftpConfig]);
   const canShare = typeof navigator !== 'undefined' && navigator.share && navigator.canShare;
+
+  // Load saved FTP credentials from database
+  useEffect(() => {
+    const loadCredentials = async () => {
+      if (!user || credentialsLoaded) return;
+      
+      try {
+        const { data, error } = await supabase
+          .from('ftp_credentials')
+          .select('*')
+          .eq('user_id', user.id)
+          .maybeSingle();
+        
+        if (error) {
+          console.error('Error loading FTP credentials:', error);
+          return;
+        }
+        
+        if (data) {
+          setFtpConfig({
+            host: data.ftp_host,
+            user: data.ftp_user,
+            password: data.ftp_password || '',
+            port: data.ftp_port,
+            folder: data.ftp_folder,
+          });
+          setSaveCredentials(true);
+          if (data.ftp_password) {
+            toast({
+              title: 'Credenciais carregadas',
+              description: 'Suas credenciais FTP foram carregadas automaticamente.',
+            });
+          }
+        }
+        setCredentialsLoaded(true);
+      } catch (err) {
+        console.error('Error loading FTP credentials:', err);
+      }
+    };
+    
+    if (open) {
+      loadCredentials();
+    }
+  }, [user, open, credentialsLoaded]);
+
+  // Save or update FTP credentials
+  const saveFTPCredentials = async () => {
+    if (!user) return;
+    
+    setSavingCredentials(true);
+    try {
+      const credentialsData = {
+        user_id: user.id,
+        ftp_host: ftpConfig.host,
+        ftp_user: ftpConfig.user,
+        ftp_password: ftpConfig.password,
+        ftp_port: ftpConfig.port,
+        ftp_folder: ftpConfig.folder,
+      };
+      
+      const { error } = await supabase
+        .from('ftp_credentials')
+        .upsert(credentialsData, { onConflict: 'user_id' });
+      
+      if (error) {
+        console.error('Error saving FTP credentials:', error);
+        toast({
+          title: 'Erro ao salvar',
+          description: 'Não foi possível salvar as credenciais.',
+          variant: 'destructive',
+        });
+      } else {
+        toast({
+          title: 'Credenciais salvas!',
+          description: 'Suas credenciais FTP foram salvas com segurança.',
+        });
+      }
+    } catch (err) {
+      console.error('Error saving FTP credentials:', err);
+    } finally {
+      setSavingCredentials(false);
+    }
+  };
+
+  // Delete FTP credentials
+  const deleteFTPCredentials = async () => {
+    if (!user) return;
+    
+    try {
+      const { error } = await supabase
+        .from('ftp_credentials')
+        .delete()
+        .eq('user_id', user.id);
+      
+      if (error) {
+        console.error('Error deleting FTP credentials:', error);
+      }
+    } catch (err) {
+      console.error('Error deleting FTP credentials:', err);
+    }
+  };
 
   const handleTestConnection = async (e?: MouseEvent<HTMLButtonElement>) => {
     e?.preventDefault();
@@ -547,11 +653,55 @@ export function ExportModal({ order, open, onClose, onSuccess }: ExportModalProp
                     />
                   </div>
                   
+                  {/* Save credentials checkbox */}
+                  <div className="flex items-center justify-between p-3 bg-accent/30 rounded-lg border border-border/50">
+                    <div className="flex items-center space-x-2">
+                      <Checkbox 
+                        id="saveCredentials" 
+                        checked={saveCredentials}
+                        onCheckedChange={async (checked) => {
+                          setSaveCredentials(checked === true);
+                          if (checked === false) {
+                            await deleteFTPCredentials();
+                            toast({
+                              title: 'Credenciais removidas',
+                              description: 'Suas credenciais FTP foram removidas.',
+                            });
+                          }
+                        }}
+                      />
+                      <Label htmlFor="saveCredentials" className="text-sm cursor-pointer flex items-center gap-2">
+                        <Save className="h-4 w-4" />
+                        Salvar credenciais para próxima vez
+                      </Label>
+                    </div>
+                    {saveCredentials && (
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        onClick={saveFTPCredentials}
+                        disabled={savingCredentials || !ftpValidation.isValid}
+                        className="h-7 text-xs"
+                      >
+                        {savingCredentials ? (
+                          <Loader2 className="h-3 w-3 animate-spin" />
+                        ) : (
+                          'Salvar Agora'
+                        )}
+                      </Button>
+                    )}
+                  </div>
+                  
                   <Button
                     type="button"
-                    onClick={(e) => {
+                    onClick={async (e) => {
                       e.preventDefault();
                       e.stopPropagation();
+                      // Save credentials before sending if checkbox is checked
+                      if (saveCredentials && ftpValidation.isValid) {
+                        await saveFTPCredentials();
+                      }
                       void handleExport();
                     }}
                     disabled={loading || sharing}
