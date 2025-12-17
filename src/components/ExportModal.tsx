@@ -581,44 +581,56 @@ export function ExportModal({ order, open, onClose, onSuccess }: ExportModalProp
               </div>
             </TabsContent>
 
-            <TabsContent value="ftp" className="mt-3 space-y-3">
+            <TabsContent value="ftp" className="mt-3 space-y-2">
               {loading && destination === 'ftp' ? (
-                <div className="py-8 space-y-4">
-                  <div className="flex flex-col items-center justify-center gap-3">
+                <div className="py-6 space-y-3">
+                  <div className="flex flex-col items-center justify-center gap-2">
                     {uploadProgress === 100 ? (
-                      <CheckCircle2 className="h-12 w-12 text-green-500" />
+                      <CheckCircle2 className="h-10 w-10 text-green-500" />
                     ) : (
-                      <Loader2 className="h-12 w-12 animate-spin text-primary" />
+                      <Loader2 className="h-10 w-10 animate-spin text-primary" />
                     )}
-                    <p className="text-lg font-medium text-center">{uploadStatus}</p>
+                    <p className="text-base font-medium text-center">{uploadStatus}</p>
                   </div>
                   <Progress value={uploadProgress} className="h-2 w-full" />
                   <p className="text-center text-sm text-muted-foreground">{uploadProgress}%</p>
                 </div>
               ) : (
                 <>
-                  <div className="grid grid-cols-3 gap-2">
-                    <div className="col-span-2">
+                  {/* Compact form layout */}
+                  <div className="grid grid-cols-4 gap-2">
+                    <div className="col-span-2 sm:col-span-2">
                       <Label htmlFor="ftpHost" className="text-xs">Host</Label>
                       <Input
                         id="ftpHost"
                         placeholder="ftp.exemplo.com.br"
                         value={ftpConfig.host}
                         onChange={(e) => setFtpConfig({ ...ftpConfig, host: e.target.value })}
-                        className={`h-9 text-sm ${showValidation && ftpValidation.errors.host ? 'border-destructive' : ''}`}
+                        className={`h-8 text-sm ${showValidation && ftpValidation.errors.host ? 'border-destructive' : ''}`}
                       />
                     </div>
-                    <div>
+                    <div className="col-span-1">
                       <Label htmlFor="ftpPort" className="text-xs">Porta</Label>
                       <Input
                         id="ftpPort"
                         type="number"
                         value={ftpConfig.port}
                         onChange={(e) => setFtpConfig({ ...ftpConfig, port: parseInt(e.target.value) || 21 })}
-                        className={`h-9 text-sm ${showValidation && ftpValidation.errors.port ? 'border-destructive' : ''}`}
+                        className={`h-8 text-sm ${showValidation && ftpValidation.errors.port ? 'border-destructive' : ''}`}
+                      />
+                    </div>
+                    <div className="col-span-1">
+                      <Label htmlFor="ftpFolder" className="text-xs">Pasta</Label>
+                      <Input
+                        id="ftpFolder"
+                        placeholder="/XML"
+                        value={ftpConfig.folder}
+                        onChange={(e) => setFtpConfig({ ...ftpConfig, folder: e.target.value })}
+                        className={`h-8 text-sm ${showValidation && ftpValidation.errors.folder ? 'border-destructive' : ''}`}
                       />
                     </div>
                   </div>
+                  
                   <div className="grid grid-cols-2 gap-2">
                     <div>
                       <Label htmlFor="ftpUser" className="text-xs">Usuário</Label>
@@ -627,7 +639,7 @@ export function ExportModal({ order, open, onClose, onSuccess }: ExportModalProp
                         placeholder="usuario"
                         value={ftpConfig.user}
                         onChange={(e) => setFtpConfig({ ...ftpConfig, user: e.target.value })}
-                        className={`h-9 text-sm ${showValidation && ftpValidation.errors.user ? 'border-destructive' : ''}`}
+                        className={`h-8 text-sm ${showValidation && ftpValidation.errors.user ? 'border-destructive' : ''}`}
                       />
                     </div>
                     <div>
@@ -638,23 +650,31 @@ export function ExportModal({ order, open, onClose, onSuccess }: ExportModalProp
                         placeholder="••••••••"
                         value={ftpConfig.password}
                         onChange={(e) => setFtpConfig({ ...ftpConfig, password: e.target.value })}
-                        className={`h-9 text-sm ${showValidation && ftpValidation.errors.password ? 'border-destructive' : ''}`}
+                        className={`h-8 text-sm ${showValidation && ftpValidation.errors.password ? 'border-destructive' : ''}`}
                       />
                     </div>
                   </div>
-                  <div>
-                    <Label htmlFor="ftpFolder" className="text-xs">Pasta destino</Label>
-                    <Input
-                      id="ftpFolder"
-                      placeholder="/pedidos"
-                      value={ftpConfig.folder}
-                      onChange={(e) => setFtpConfig({ ...ftpConfig, folder: e.target.value })}
-                      className={`h-9 text-sm ${showValidation && ftpValidation.errors.folder ? 'border-destructive' : ''}`}
-                    />
-                  </div>
                   
-                  {/* Save credentials checkbox */}
-                  <div className="flex items-center justify-between p-3 bg-accent/30 rounded-lg border border-border/50">
+                  {/* ENVIAR Button - prominent position */}
+                  <Button
+                    type="button"
+                    onClick={async (e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      if (saveCredentials && ftpValidation.isValid) {
+                        await saveFTPCredentials();
+                      }
+                      void handleExport();
+                    }}
+                    disabled={loading || sharing}
+                    className="w-full h-14 sm:h-12 flex items-center justify-center gap-2 text-xl sm:text-lg font-bold bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 hover:scale-[1.02] transition-all shadow-lg text-white mt-3"
+                  >
+                    <Upload className="h-6 w-6 sm:h-5 sm:w-5" />
+                    ENVIAR
+                  </Button>
+                  
+                  {/* Save credentials - compact */}
+                  <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 p-2 bg-accent/20 rounded-lg border border-border/30">
                     <div className="flex items-center space-x-2">
                       <Checkbox 
                         id="saveCredentials" 
@@ -670,9 +690,9 @@ export function ExportModal({ order, open, onClose, onSuccess }: ExportModalProp
                           }
                         }}
                       />
-                      <Label htmlFor="saveCredentials" className="text-sm cursor-pointer flex items-center gap-2">
-                        <Save className="h-4 w-4" />
-                        Salvar credenciais para próxima vez
+                      <Label htmlFor="saveCredentials" className="text-xs cursor-pointer flex items-center gap-1">
+                        <Save className="h-3 w-3" />
+                        Salvar credenciais
                       </Label>
                     </div>
                     {saveCredentials && (
@@ -682,36 +702,18 @@ export function ExportModal({ order, open, onClose, onSuccess }: ExportModalProp
                         size="sm"
                         onClick={saveFTPCredentials}
                         disabled={savingCredentials || !ftpValidation.isValid}
-                        className="h-7 text-xs"
+                        className="h-6 text-xs px-2"
                       >
                         {savingCredentials ? (
                           <Loader2 className="h-3 w-3 animate-spin" />
                         ) : (
-                          'Salvar Agora'
+                          'Salvar'
                         )}
                       </Button>
                     )}
                   </div>
                   
-                  <Button
-                    type="button"
-                    onClick={async (e) => {
-                      e.preventDefault();
-                      e.stopPropagation();
-                      // Save credentials before sending if checkbox is checked
-                      if (saveCredentials && ftpValidation.isValid) {
-                        await saveFTPCredentials();
-                      }
-                      void handleExport();
-                    }}
-                    disabled={loading || sharing}
-                    className="w-full h-12 flex items-center justify-center gap-2 text-lg font-bold bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 hover:scale-[1.02] transition-all shadow-lg text-white"
-                  >
-                    <Upload className="h-5 w-5" />
-                    ENVIAR
-                  </Button>
-                  
-                  {/* FTP History */}
+                  {/* FTP History - collapsible */}
                   <FTPHistoryList history={ftpHistory} loading={historyLoading} />
                 </>
               )}
