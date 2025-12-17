@@ -2,8 +2,13 @@ import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Product } from '@/types/order';
 
+export interface ProductWithCategory extends Product {
+  category_id?: string | null;
+  category_name?: string;
+}
+
 export function useProducts() {
-  const [products, setProducts] = useState<Product[]>([]);
+  const [products, setProducts] = useState<ProductWithCategory[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -14,7 +19,10 @@ export function useProducts() {
     setLoading(true);
     const { data, error } = await supabase
       .from('products')
-      .select('*')
+      .select(`
+        *,
+        categories(name)
+      `)
       .eq('active', true)
       .order('code');
 
@@ -25,6 +33,8 @@ export function useProducts() {
         description: p.description,
         default_price: Number(p.default_price),
         active: p.active,
+        category_id: p.category_id,
+        category_name: p.categories?.name || 'Sem categoria',
       })));
     }
     setLoading(false);
@@ -39,13 +49,14 @@ export function useProducts() {
     );
   };
 
-  const addProduct = async (product: Omit<Product, 'id' | 'active'>) => {
+  const addProduct = async (product: Omit<Product, 'id' | 'active'> & { category_id?: string }) => {
     const { error } = await supabase
       .from('products')
       .insert({
         code: product.code,
         description: product.description,
         default_price: product.default_price,
+        category_id: product.category_id || null,
       });
     
     if (!error) {
@@ -54,7 +65,7 @@ export function useProducts() {
     return { error };
   };
 
-  const updateProduct = async (id: string, product: Partial<Product>) => {
+  const updateProduct = async (id: string, product: Partial<Product> & { category_id?: string }) => {
     const { error } = await supabase
       .from('products')
       .update(product)
@@ -78,6 +89,20 @@ export function useProducts() {
     return { error };
   };
 
+  const getProductsByCategory = () => {
+    const grouped: { [key: string]: ProductWithCategory[] } = {};
+    
+    products.forEach(product => {
+      const categoryName = product.category_name || 'Sem categoria';
+      if (!grouped[categoryName]) {
+        grouped[categoryName] = [];
+      }
+      grouped[categoryName].push(product);
+    });
+
+    return grouped;
+  };
+
   return {
     products,
     loading,
@@ -85,6 +110,7 @@ export function useProducts() {
     addProduct,
     updateProduct,
     deleteProduct,
+    getProductsByCategory,
     refetch: fetchProducts,
   };
 }

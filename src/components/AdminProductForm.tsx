@@ -1,23 +1,37 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Plus, Save } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Product } from '@/types/order';
+import { useCategories } from '@/hooks/useCategories';
 import { toast } from '@/hooks/use-toast';
+import { ProductWithCategory } from '@/hooks/useProducts';
 
 interface AdminProductFormProps {
-  product?: Product;
-  onSave: (product: Omit<Product, 'id' | 'active'>) => Promise<{ error: Error | null }>;
+  product?: ProductWithCategory;
+  onSave: (product: Omit<Product, 'id' | 'active'> & { category_id?: string }) => Promise<{ error: Error | null }>;
   onCancel?: () => void;
 }
 
 export function AdminProductForm({ product, onSave, onCancel }: AdminProductFormProps) {
+  const { categories, loading: categoriesLoading } = useCategories();
   const [code, setCode] = useState(product?.code || '');
   const [description, setDescription] = useState(product?.description || '');
   const [defaultPrice, setDefaultPrice] = useState(product?.default_price || 0);
+  const [categoryId, setCategoryId] = useState<string | undefined>(product?.category_id || undefined);
   const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    if (product) {
+      setCode(product.code);
+      setDescription(product.description);
+      setDefaultPrice(product.default_price);
+      setCategoryId(product.category_id || undefined);
+    }
+  }, [product]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -31,7 +45,12 @@ export function AdminProductForm({ product, onSave, onCancel }: AdminProductForm
     }
 
     setLoading(true);
-    const { error } = await onSave({ code, description, default_price: defaultPrice });
+    const { error } = await onSave({ 
+      code, 
+      description, 
+      default_price: defaultPrice,
+      category_id: categoryId || undefined,
+    });
     setLoading(false);
 
     if (error) {
@@ -49,6 +68,7 @@ export function AdminProductForm({ product, onSave, onCancel }: AdminProductForm
         setCode('');
         setDescription('');
         setDefaultPrice(0);
+        setCategoryId(undefined);
       }
     }
   };
@@ -83,6 +103,22 @@ export function AdminProductForm({ product, onSave, onCancel }: AdminProductForm
           </div>
 
           <div>
+            <Label htmlFor="category">Categoria</Label>
+            <Select value={categoryId || ''} onValueChange={(value) => setCategoryId(value || undefined)}>
+              <SelectTrigger>
+                <SelectValue placeholder="Selecione uma categoria" />
+              </SelectTrigger>
+              <SelectContent>
+                {categories.map((cat) => (
+                  <SelectItem key={cat.id} value={cat.id}>
+                    {cat.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div>
             <Label htmlFor="price">Preço Padrão</Label>
             <div className="relative">
               <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground text-sm">R$</span>
@@ -104,7 +140,7 @@ export function AdminProductForm({ product, onSave, onCancel }: AdminProductForm
                 Cancelar
               </Button>
             )}
-            <Button type="submit" disabled={loading} className="flex-1">
+            <Button type="submit" disabled={loading || categoriesLoading} className="flex-1">
               {product ? <Save className="h-4 w-4 mr-2" /> : <Plus className="h-4 w-4 mr-2" />}
               {loading ? 'Salvando...' : product ? 'Salvar' : 'Cadastrar'}
             </Button>

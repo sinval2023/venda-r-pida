@@ -1,7 +1,8 @@
-import { Trash2, Edit2 } from 'lucide-react';
+import { Trash2, Edit2, FolderOpen } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Product } from '@/types/order';
+import { ProductWithCategory } from '@/hooks/useProducts';
+import { Badge } from '@/components/ui/badge';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -15,8 +16,8 @@ import {
 } from '@/components/ui/alert-dialog';
 
 interface AdminProductListProps {
-  products: Product[];
-  onEdit: (product: Product) => void;
+  products: ProductWithCategory[];
+  onEdit: (product: ProductWithCategory) => void;
   onDelete: (productId: string) => void;
   loading: boolean;
 }
@@ -63,7 +64,15 @@ export function AdminProductList({ products, onEdit, onDelete, loading }: AdminP
               style={{ animationDelay: `${index * 30}ms` }}
             >
               <div className="flex-1 min-w-0">
-                <div className="font-medium text-foreground">{product.code}</div>
+                <div className="flex items-center gap-2 flex-wrap">
+                  <span className="font-medium text-foreground">{product.code}</span>
+                  {product.category_name && (
+                    <Badge variant="secondary" className="text-xs">
+                      <FolderOpen className="h-3 w-3 mr-1" />
+                      {product.category_name}
+                    </Badge>
+                  )}
+                </div>
                 <div className="text-sm text-muted-foreground truncate">{product.description}</div>
                 <div className="text-sm font-medium text-primary mt-1">
                   {formatCurrency(product.default_price)}
