@@ -140,6 +140,7 @@ export type Database = {
           default_price: number
           description: string
           id: string
+          image_url: string | null
           updated_at: string
         }
         Insert: {
@@ -150,6 +151,7 @@ export type Database = {
           default_price?: number
           description: string
           id?: string
+          image_url?: string | null
           updated_at?: string
         }
         Update: {
@@ -160,6 +162,7 @@ export type Database = {
           default_price?: number
           description?: string
           id?: string
+          image_url?: string | null
           updated_at?: string
         }
         Relationships: [
