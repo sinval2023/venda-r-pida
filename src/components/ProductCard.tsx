@@ -2,8 +2,9 @@ import { useState } from 'react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Product } from '@/types/order';
-import { Plus, Minus, ShoppingCart, Package, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Plus, Minus, ShoppingCart, Package, ChevronLeft, ChevronRight, Maximize2 } from 'lucide-react';
 import { ProductWithCategory } from '@/hooks/useProducts';
+import { ImageLightbox } from './ImageLightbox';
 
 interface ProductCardProps {
   product: ProductWithCategory;
@@ -13,6 +14,7 @@ interface ProductCardProps {
 export function ProductCard({ product, onAddToOrder }: ProductCardProps) {
   const [quantity, setQuantity] = useState(1);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
+  const [lightboxOpen, setLightboxOpen] = useState(false);
 
   const images = product.images && product.images.length > 0 
     ? product.images 
@@ -54,6 +56,13 @@ export function ProductCard({ product, onAddToOrder }: ProductCardProps) {
     setCurrentImageIndex(prev => (prev + 1) % images.length);
   };
 
+  const handleOpenLightbox = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    setLightboxOpen(true);
+  };
+
+  const lightboxImages = images.map(img => ({ url: img.image_url, alt: product.description }));
+
   return (
     <Card 
       className="overflow-hidden cursor-pointer transition-all duration-200 hover:shadow-xl hover:scale-[1.02] hover:border-emerald-400 bg-gradient-to-br from-card to-muted/30 group"
@@ -66,8 +75,18 @@ export function ProductCard({ product, onAddToOrder }: ProductCardProps) {
             <img 
               src={images[currentImageIndex].image_url} 
               alt={product.description}
-              className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-110"
+              className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-110 cursor-zoom-in"
+              onClick={handleOpenLightbox}
             />
+            {/* Zoom button */}
+            <Button
+              variant="ghost"
+              size="icon"
+              className="absolute top-1 left-10 h-6 w-6 bg-black/30 hover:bg-black/50 text-white opacity-0 group-hover:opacity-100 transition-opacity"
+              onClick={handleOpenLightbox}
+            >
+              <Maximize2 className="h-3 w-3" />
+            </Button>
             {/* Navigation arrows */}
             {hasMultipleImages && (
               <>
@@ -158,6 +177,13 @@ export function ProductCard({ product, onAddToOrder }: ProductCardProps) {
           </Button>
         </div>
       </div>
+
+      <ImageLightbox
+        images={lightboxImages}
+        initialIndex={currentImageIndex}
+        isOpen={lightboxOpen}
+        onClose={() => setLightboxOpen(false)}
+      />
     </Card>
   );
 }

@@ -1,8 +1,9 @@
 import { useState, useRef } from 'react';
-import { Plus, X, Star, Loader2, GripVertical } from 'lucide-react';
+import { Plus, X, Star, Loader2, GripVertical, Maximize2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useProductImages, ProductImage } from '@/hooks/useProductImages';
 import { toast } from '@/hooks/use-toast';
+import { ImageLightbox } from './ImageLightbox';
 
 interface ProductImageGalleryProps {
   productId?: string;
@@ -24,6 +25,8 @@ export function ProductImageGallery({
   const [localUploading, setLocalUploading] = useState(false);
   const [draggedIndex, setDraggedIndex] = useState<number | null>(null);
   const [dragOverIndex, setDragOverIndex] = useState<number | null>(null);
+  const [lightboxOpen, setLightboxOpen] = useState(false);
+  const [lightboxIndex, setLightboxIndex] = useState(0);
 
   const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files || []);
@@ -195,6 +198,13 @@ export function ProductImageGallery({
 
   const isUploading = uploading || localUploading;
 
+  const openLightbox = (index: number) => {
+    setLightboxIndex(index);
+    setLightboxOpen(true);
+  };
+
+  const lightboxImages = images.map(img => ({ url: img.image_url, alt: 'Product image' }));
+
   return (
     <div className="space-y-3">
       <div className="flex flex-wrap gap-2">
@@ -220,7 +230,17 @@ export function ProductImageGallery({
               className="w-full h-full object-cover pointer-events-none"
             />
             <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-1">
-              <div className="absolute top-1 right-1">
+              <div className="absolute top-1 right-1 flex gap-0.5">
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon"
+                  className="h-5 w-5 text-white/80 hover:text-white"
+                  onClick={() => openLightbox(index)}
+                  title="Ver em tela cheia"
+                >
+                  <Maximize2 className="h-3 w-3" />
+                </Button>
                 <GripVertical className="h-4 w-4 text-white/70" />
               </div>
               {!image.is_primary && (
@@ -310,6 +330,13 @@ export function ProductImageGallery({
       <p className="text-xs text-muted-foreground">
         Arraste para reordenar. Clique na estrela para definir a imagem principal.
       </p>
+
+      <ImageLightbox
+        images={lightboxImages}
+        initialIndex={lightboxIndex}
+        isOpen={lightboxOpen}
+        onClose={() => setLightboxOpen(false)}
+      />
     </div>
   );
 }
