@@ -172,7 +172,13 @@ export function ProductCard({ product, onAddToOrder }: ProductCardProps) {
                   setQuantity(Math.max(1, val));
                 }}
                 onClick={(e) => e.stopPropagation()}
-                className="w-10 h-8 text-center text-sm font-bold text-foreground bg-background border border-border rounded focus:outline-none focus:ring-1 focus:ring-emerald-500 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') {
+                    e.stopPropagation();
+                    handleAddToOrder();
+                  }
+                }}
+                className="w-14 h-8 text-center text-sm font-bold text-foreground bg-background border border-border rounded focus:outline-none focus:ring-1 focus:ring-emerald-500 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
               />
               <Button
                 variant="ghost"

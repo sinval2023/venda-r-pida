@@ -1,8 +1,9 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { useOrder } from '@/hooks/useOrder';
 import { useFTPHistory } from '@/hooks/useFTPHistory';
+import { useProducts } from '@/hooks/useProducts';
 import { Header } from '@/components/Header';
 import { ProductGrid } from '@/components/ProductGrid';
 import { OrderTotal } from '@/components/OrderTotal';
@@ -11,6 +12,7 @@ import { ExportModal } from '@/components/ExportModal';
 import { FTPHistoryList } from '@/components/FTPHistoryList';
 import { ClientSearchInput } from '@/components/ClientSearchInput';
 import { SellerCodeInput } from '@/components/SellerCodeInput';
+import { XMLImportButtons } from '@/components/XMLImportButtons';
 import { Order, Product } from '@/types/order';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -24,12 +26,18 @@ const Index = () => {
   const navigate = useNavigate();
   const { items, addItem, removeItem, getTotal, clearOrder, finalizeOrder } = useOrder();
   const { history: ftpHistory, loading: historyLoading } = useFTPHistory();
+  const { products, refetch: refetchProducts } = useProducts();
   const [exportOrder, setExportOrder] = useState<Order | null>(null);
   const [showReview, setShowReview] = useState(false);
   const [showHistory, setShowHistory] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedClient, setSelectedClient] = useState<Client | null>(null);
   const [selectedSeller, setSelectedSeller] = useState<Seller | null>(null);
+
+  // Calculate total quantity of products in order
+  const totalProductQuantity = useMemo(() => {
+    return items.reduce((sum, item) => sum + item.quantity, 0);
+  }, [items]);
 
   useEffect(() => {
     if (!loading && !user) {
@@ -103,9 +111,9 @@ const Index = () => {
           />
         </div>
 
-        {/* Search Bar and History Button */}
-        <div className="flex gap-2 mb-2">
-          <div className="relative flex-1">
+        {/* Search Bar, XML Import and History Button */}
+        <div className="flex flex-wrap gap-2 mb-2">
+          <div className="relative flex-1 min-w-[200px]">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <Input
               placeholder="Buscar produto por código ou descrição..."
@@ -114,6 +122,9 @@ const Index = () => {
               className="pl-10 h-10 text-sm"
             />
           </div>
+          <XMLImportButtons 
+            onProductsImported={refetchProducts}
+          />
           <Button
             variant="outline"
             size="default"
@@ -136,6 +147,7 @@ const Index = () => {
       <OrderTotal 
         total={total} 
         itemCount={items.length}
+        productCount={totalProductQuantity}
         onReview={handleReview}
         onFinalize={handleFinalize}
         disabled={total === 0}
