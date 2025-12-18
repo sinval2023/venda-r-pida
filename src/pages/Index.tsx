@@ -9,11 +9,15 @@ import { OrderTotal } from '@/components/OrderTotal';
 import { OrderReviewModal } from '@/components/OrderReviewModal';
 import { ExportModal } from '@/components/ExportModal';
 import { FTPHistoryList } from '@/components/FTPHistoryList';
+import { ClientSearchInput } from '@/components/ClientSearchInput';
+import { SellerCodeInput } from '@/components/SellerCodeInput';
 import { Order, Product } from '@/types/order';
-import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { History } from 'lucide-react';
+import { History, Search } from 'lucide-react';
+import { Client } from '@/hooks/useClients';
+import { Seller } from '@/hooks/useSellers';
 
 const Index = () => {
   const { user, loading, isAdmin } = useAuth();
@@ -23,6 +27,9 @@ const Index = () => {
   const [exportOrder, setExportOrder] = useState<Order | null>(null);
   const [showReview, setShowReview] = useState(false);
   const [showHistory, setShowHistory] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [selectedClient, setSelectedClient] = useState<Client | null>(null);
+  const [selectedSeller, setSelectedSeller] = useState<Seller | null>(null);
 
   useEffect(() => {
     if (!loading && !user) {
@@ -49,6 +56,8 @@ const Index = () => {
   const handleExportSuccess = () => {
     setExportOrder(null);
     clearOrder();
+    setSelectedClient(null);
+    setSelectedSeller(null);
   };
 
   const handleExportBack = () => {
@@ -81,19 +90,47 @@ const Index = () => {
         onAdminClick={handleAdminClick}
       />
 
-      <main className="flex-1 container mx-auto px-3 sm:px-4 py-4 sm:py-6 flex flex-col mt-16 pb-28">
-        <div className="flex justify-end mb-4">
+      <main className="flex-1 container mx-auto px-2 sm:px-4 py-2 sm:py-3 flex flex-col mt-14 pb-24">
+        {/* Client and Seller Info - Compact */}
+        <div className="bg-card border border-border rounded-lg p-2 mb-2 space-y-2">
+          <ClientSearchInput 
+            onClientSelect={setSelectedClient}
+            selectedClient={selectedClient}
+          />
+          <SellerCodeInput
+            onSellerSelect={setSelectedSeller}
+            selectedSeller={selectedSeller}
+          />
+        </div>
+
+        {/* Search Bar and History Button */}
+        <div className="flex gap-2 mb-2">
+          <div className="relative flex-1">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <Input
+              placeholder="Buscar produto por código ou descrição..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="pl-10 h-10 text-sm"
+            />
+          </div>
           <Button
             variant="outline"
-            size="lg"
+            size="default"
             onClick={() => setShowHistory(true)}
-            className="gap-2 text-lg font-bold px-6 py-3 hover:bg-gradient-to-r hover:from-orange-400 hover:to-amber-500 hover:text-white hover:border-orange-400 transition-all duration-300 shadow-md hover:shadow-lg"
+            className="gap-1.5 text-sm font-semibold px-3 hover:bg-gradient-to-r hover:from-orange-400 hover:to-amber-500 hover:text-white hover:border-orange-400 transition-all duration-300 shadow-sm"
           >
-            <History className="h-5 w-5" />
-            Últimos Pedidos
+            <History className="h-4 w-4" />
+            <span className="hidden sm:inline">Histórico</span>
           </Button>
         </div>
-        <ProductGrid onAddToOrder={handleAddToOrder} />
+
+        {/* Product Grid - No categories, directly showing cards */}
+        <ProductGrid 
+          onAddToOrder={handleAddToOrder}
+          searchQuery={searchQuery}
+          onSearchChange={setSearchQuery}
+        />
       </main>
 
       <OrderTotal 
@@ -126,7 +163,7 @@ const Index = () => {
       <Dialog open={showHistory} onOpenChange={setShowHistory}>
         <DialogContent className="max-w-4xl max-h-[85vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle className="text-2xl font-bold">Últimos Pedidos Enviados</DialogTitle>
+            <DialogTitle className="text-xl font-bold">Últimos Pedidos Enviados</DialogTitle>
           </DialogHeader>
           <FTPHistoryList history={ftpHistory} loading={historyLoading} />
         </DialogContent>

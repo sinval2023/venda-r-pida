@@ -68,8 +68,8 @@ export function ProductCard({ product, onAddToOrder }: ProductCardProps) {
       className="overflow-hidden cursor-pointer transition-all duration-200 hover:shadow-xl hover:scale-[1.02] hover:border-emerald-400 bg-gradient-to-br from-card to-muted/30 group"
       onClick={handleAddToOrder}
     >
-      {/* Product Image Gallery */}
-      <div className="relative h-24 sm:h-28 bg-gradient-to-br from-slate-100 to-slate-200 dark:from-slate-800 dark:to-slate-900 flex items-center justify-center overflow-hidden">
+      {/* Product Image Gallery - Smaller */}
+      <div className="relative h-16 sm:h-20 bg-gradient-to-br from-slate-100 to-slate-200 dark:from-slate-800 dark:to-slate-900 flex items-center justify-center overflow-hidden">
         {images.length > 0 ? (
           <>
             <img 
@@ -82,10 +82,10 @@ export function ProductCard({ product, onAddToOrder }: ProductCardProps) {
             <Button
               variant="ghost"
               size="icon"
-              className="absolute top-1 left-10 h-6 w-6 bg-black/30 hover:bg-black/50 text-white opacity-0 group-hover:opacity-100 transition-opacity"
+              className="absolute top-0.5 left-8 h-5 w-5 bg-black/30 hover:bg-black/50 text-white opacity-0 group-hover:opacity-100 transition-opacity"
               onClick={handleOpenLightbox}
             >
-              <Maximize2 className="h-3 w-3" />
+              <Maximize2 className="h-2.5 w-2.5" />
             </Button>
             {/* Navigation arrows */}
             {hasMultipleImages && (
@@ -93,25 +93,25 @@ export function ProductCard({ product, onAddToOrder }: ProductCardProps) {
                 <Button
                   variant="ghost"
                   size="icon"
-                  className="absolute left-1 top-1/2 -translate-y-1/2 h-6 w-6 bg-black/30 hover:bg-black/50 text-white opacity-0 group-hover:opacity-100 transition-opacity"
+                  className="absolute left-0.5 top-1/2 -translate-y-1/2 h-5 w-5 bg-black/30 hover:bg-black/50 text-white opacity-0 group-hover:opacity-100 transition-opacity"
                   onClick={handlePrevImage}
                 >
-                  <ChevronLeft className="h-4 w-4" />
+                  <ChevronLeft className="h-3 w-3" />
                 </Button>
                 <Button
                   variant="ghost"
                   size="icon"
-                  className="absolute right-1 top-1/2 -translate-y-1/2 h-6 w-6 bg-black/30 hover:bg-black/50 text-white opacity-0 group-hover:opacity-100 transition-opacity"
+                  className="absolute right-0.5 top-1/2 -translate-y-1/2 h-5 w-5 bg-black/30 hover:bg-black/50 text-white opacity-0 group-hover:opacity-100 transition-opacity"
                   onClick={handleNextImage}
                 >
-                  <ChevronRight className="h-4 w-4" />
+                  <ChevronRight className="h-3 w-3" />
                 </Button>
                 {/* Dots indicator */}
-                <div className="absolute bottom-1 left-1/2 -translate-x-1/2 flex gap-1">
+                <div className="absolute bottom-0.5 left-1/2 -translate-x-1/2 flex gap-0.5">
                   {images.map((_, idx) => (
                     <button
                       key={idx}
-                      className={`w-1.5 h-1.5 rounded-full transition-colors ${
+                      className={`w-1 h-1 rounded-full transition-colors ${
                         idx === currentImageIndex ? 'bg-white' : 'bg-white/50'
                       }`}
                       onClick={(e) => {
@@ -125,36 +125,37 @@ export function ProductCard({ product, onAddToOrder }: ProductCardProps) {
             )}
           </>
         ) : (
-          <Package className="w-12 h-12 sm:w-16 sm:h-16 text-sky-500 dark:text-sky-400 opacity-60" />
+          <Package className="w-8 h-8 sm:w-10 sm:h-10 text-sky-500 dark:text-sky-400 opacity-60" />
         )}
-        <div className="absolute top-2 left-2 bg-primary text-primary-foreground text-xs font-bold px-2 py-1 rounded-md shadow">
+        <div className="absolute top-1 left-1 bg-primary text-primary-foreground text-[10px] font-bold px-1.5 py-0.5 rounded shadow">
           {product.code}
         </div>
-        <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity">
-          <ShoppingCart className="w-5 h-5 text-emerald-600 dark:text-emerald-400" />
+        <div className="absolute top-1 right-1 opacity-0 group-hover:opacity-100 transition-opacity">
+          <ShoppingCart className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
         </div>
       </div>
 
       {/* Product Info */}
-      <div className="p-2">
-        <h3 className="font-semibold text-sm text-foreground line-clamp-2 h-9 mb-1 group-hover:text-emerald-600 dark:group-hover:text-emerald-400 transition-colors duration-200">
+      <div className="p-1.5">
+        {/* Product Name - Larger and Black */}
+        <h3 className="font-bold text-sm text-foreground line-clamp-2 h-10 mb-0.5 group-hover:text-emerald-600 dark:group-hover:text-emerald-400 transition-colors duration-200">
           {product.description}
         </h3>
         
-        <div className="text-base font-bold text-emerald-600 dark:text-emerald-400 mb-1">
+        <div className="text-sm font-bold text-emerald-600 dark:text-emerald-400 mb-1">
           {formatCurrency(product.default_price)}
         </div>
 
         {/* Quantity Controls */}
         <div className="flex items-center justify-between gap-1" onClick={(e) => e.stopPropagation()}>
-          <div className="flex items-center gap-1 bg-muted rounded-lg p-1">
+          <div className="flex items-center gap-0.5 bg-muted rounded-md p-0.5">
             <Button
               variant="ghost"
               size="icon"
-              className="h-8 w-8 rounded-md bg-red-100 hover:bg-red-200 text-red-600 dark:bg-red-900/50 dark:hover:bg-red-900 dark:text-red-400"
+              className="h-7 w-7 rounded bg-red-100 hover:bg-red-200 text-red-600 dark:bg-red-900/50 dark:hover:bg-red-900 dark:text-red-400"
               onClick={handleDecrement}
             >
-              <Minus className="h-4 w-4" />
+              <Minus className="h-3 w-3" />
             </Button>
             <input
               type="number"
@@ -166,21 +167,21 @@ export function ProductCard({ product, onAddToOrder }: ProductCardProps) {
                 setQuantity(Math.max(1, val));
               }}
               onClick={(e) => e.stopPropagation()}
-              className="w-10 h-8 text-center text-sm font-bold text-foreground bg-background border border-border rounded focus:outline-none focus:ring-1 focus:ring-emerald-500 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+              className="w-8 h-7 text-center text-xs font-bold text-foreground bg-background border border-border rounded focus:outline-none focus:ring-1 focus:ring-emerald-500 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
             />
             <Button
               variant="ghost"
               size="icon"
-              className="h-8 w-8 rounded-md bg-emerald-100 hover:bg-emerald-200 text-emerald-600 dark:bg-emerald-900/50 dark:hover:bg-emerald-900 dark:text-emerald-400"
+              className="h-7 w-7 rounded bg-emerald-100 hover:bg-emerald-200 text-emerald-600 dark:bg-emerald-900/50 dark:hover:bg-emerald-900 dark:text-emerald-400"
               onClick={handleIncrement}
             >
-              <Plus className="h-4 w-4" />
+              <Plus className="h-3 w-3" />
             </Button>
           </div>
           
           <Button
             size="sm"
-            className="h-8 px-2 bg-gradient-to-r from-emerald-500 to-green-600 hover:from-emerald-600 hover:to-green-700 text-white font-bold shadow text-xs"
+            className="h-7 px-2 bg-gradient-to-r from-emerald-500 to-green-600 hover:from-emerald-600 hover:to-green-700 text-white font-bold shadow text-xs"
             onClick={handleAddToOrder}
           >
             <Plus className="h-3 w-3" />
