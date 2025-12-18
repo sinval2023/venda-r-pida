@@ -13,7 +13,7 @@ import { toast } from 'sonner';
 const Index = () => {
   const { user, loading, isAdmin } = useAuth();
   const navigate = useNavigate();
-  const { items, addItem, getTotal, clearOrder, finalizeOrder } = useOrder();
+  const { items, addItem, removeItem, getTotal, clearOrder, finalizeOrder } = useOrder();
   const [exportOrder, setExportOrder] = useState<Order | null>(null);
   const [showReview, setShowReview] = useState(false);
 
@@ -46,6 +46,10 @@ const Index = () => {
   const handleExportSuccess = () => {
     setExportOrder(null);
     clearOrder();
+  };
+
+  const handleExportBack = () => {
+    setExportOrder(null);
   };
 
   const handleAdminClick = () => {
@@ -82,6 +86,7 @@ const Index = () => {
         total={total} 
         itemCount={items.length}
         onReview={handleReview}
+        onFinalize={handleFinalize}
         disabled={total === 0}
       />
 
@@ -91,6 +96,7 @@ const Index = () => {
         open={showReview}
         onClose={() => setShowReview(false)}
         onConfirm={handleFinalize}
+        onRemoveItem={removeItem}
       />
 
       {exportOrder && (
@@ -99,6 +105,7 @@ const Index = () => {
           open={!!exportOrder}
           onClose={() => setExportOrder(null)}
           onSuccess={handleExportSuccess}
+          onBack={handleExportBack}
         />
       )}
     </div>
