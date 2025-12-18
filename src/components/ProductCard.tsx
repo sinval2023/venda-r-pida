@@ -69,13 +69,13 @@ export function ProductCard({ product, onAddToOrder }: ProductCardProps) {
       onClick={handleAddToOrder}
     >
       {/* Product Image Gallery */}
-      <div className="relative h-28 sm:h-32 bg-gradient-to-br from-sky-100 to-blue-200 dark:from-sky-900 dark:to-blue-800 flex items-center justify-center overflow-hidden">
+      <div className="relative h-32 sm:h-40 bg-gradient-to-br from-slate-100 to-slate-200 dark:from-slate-800 dark:to-slate-900 flex items-center justify-center overflow-hidden">
         {images.length > 0 ? (
           <>
             <img 
               src={images[currentImageIndex].image_url} 
               alt={product.description}
-              className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-110 cursor-zoom-in"
+              className="w-full h-full object-cover transition-all duration-500 group-hover:scale-110 group-hover:brightness-105 cursor-zoom-in shadow-inner"
               onClick={handleOpenLightbox}
             />
             {/* Zoom button */}
@@ -137,7 +137,7 @@ export function ProductCard({ product, onAddToOrder }: ProductCardProps) {
 
       {/* Product Info */}
       <div className="p-3">
-        <h3 className="font-medium text-sm text-foreground line-clamp-2 h-10 mb-2">
+        <h3 className="font-semibold text-base text-foreground line-clamp-2 h-12 mb-2 group-hover:text-emerald-600 dark:group-hover:text-emerald-400 transition-colors duration-200">
           {product.description}
         </h3>
         
@@ -156,7 +156,18 @@ export function ProductCard({ product, onAddToOrder }: ProductCardProps) {
             >
               <Minus className="h-4 w-4" />
             </Button>
-            <span className="w-8 text-center font-bold text-foreground">{quantity}</span>
+            <input
+              type="number"
+              min="1"
+              value={quantity}
+              onChange={(e) => {
+                e.stopPropagation();
+                const val = parseInt(e.target.value) || 1;
+                setQuantity(Math.max(1, val));
+              }}
+              onClick={(e) => e.stopPropagation()}
+              className="w-12 text-center font-bold text-foreground bg-transparent border-none focus:outline-none focus:ring-2 focus:ring-emerald-500 rounded [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+            />
             <Button
               variant="ghost"
               size="icon"

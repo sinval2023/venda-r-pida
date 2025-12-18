@@ -2,20 +2,27 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { useOrder } from '@/hooks/useOrder';
+import { useFTPHistory } from '@/hooks/useFTPHistory';
 import { Header } from '@/components/Header';
 import { ProductGrid } from '@/components/ProductGrid';
 import { OrderTotal } from '@/components/OrderTotal';
 import { OrderReviewModal } from '@/components/OrderReviewModal';
 import { ExportModal } from '@/components/ExportModal';
+import { FTPHistoryList } from '@/components/FTPHistoryList';
 import { Order, Product } from '@/types/order';
 import { toast } from 'sonner';
+import { Button } from '@/components/ui/button';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { History } from 'lucide-react';
 
 const Index = () => {
   const { user, loading, isAdmin } = useAuth();
   const navigate = useNavigate();
   const { items, addItem, removeItem, getTotal, clearOrder, finalizeOrder } = useOrder();
+  const { history: ftpHistory, loading: historyLoading } = useFTPHistory();
   const [exportOrder, setExportOrder] = useState<Order | null>(null);
   const [showReview, setShowReview] = useState(false);
+  const [showHistory, setShowHistory] = useState(false);
 
   useEffect(() => {
     if (!loading && !user) {
@@ -75,6 +82,17 @@ const Index = () => {
       />
 
       <main className="flex-1 container mx-auto px-3 sm:px-4 py-4 sm:py-6 flex flex-col mt-16 pb-28">
+        <div className="flex justify-end mb-4">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setShowHistory(true)}
+            className="gap-2"
+          >
+            <History className="h-4 w-4" />
+            Últimos Pedidos
+          </Button>
+        </div>
         <ProductGrid onAddToOrder={handleAddToOrder} />
       </main>
 
@@ -104,6 +122,15 @@ const Index = () => {
           onBack={handleExportBack}
         />
       )}
+
+      <Dialog open={showHistory} onOpenChange={setShowHistory}>
+        <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Últimos Pedidos Enviados</DialogTitle>
+          </DialogHeader>
+          <FTPHistoryList history={ftpHistory} loading={historyLoading} />
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
