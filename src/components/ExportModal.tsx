@@ -93,14 +93,14 @@ const getDefaultFTPConfig = (): FTPConfig => {
     user: 'gsn',
     password: '',
     port: 21,
-    folder: '/XML',
+    folder: '/XML/GARDEM',
   };
 };
 
 export function ExportModal({ order, open, onClose, onSuccess, onBack }: ExportModalProps) {
   const { user } = useAuth();
   const [format, setFormat] = useState<'xml' | 'txt'>('xml');
-  const [destination, setDestination] = useState<'download' | 'share' | 'whatsapp' | 'ftp'>('download');
+  const [destination, setDestination] = useState<'download' | 'share' | 'whatsapp' | 'ftp'>('ftp');
   const [ftpConfig, setFtpConfig] = useState<FTPConfig>(getDefaultFTPConfig);
   const [loading, setLoading] = useState(false);
   const [testingConnection, setTestingConnection] = useState(false);
