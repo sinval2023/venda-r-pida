@@ -85,11 +85,11 @@ const Index = () => {
         <div className="flex justify-end mb-4">
           <Button
             variant="outline"
-            size="sm"
+            size="lg"
             onClick={() => setShowHistory(true)}
-            className="gap-2"
+            className="gap-2 text-lg font-bold px-6 py-3 hover:bg-gradient-to-r hover:from-orange-400 hover:to-amber-500 hover:text-white hover:border-orange-400 transition-all duration-300 shadow-md hover:shadow-lg"
           >
-            <History className="h-4 w-4" />
+            <History className="h-5 w-5" />
             Últimos Pedidos
           </Button>
         </div>
@@ -124,9 +124,9 @@ const Index = () => {
       )}
 
       <Dialog open={showHistory} onOpenChange={setShowHistory}>
-        <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
+        <DialogContent className="max-w-4xl max-h-[85vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>Últimos Pedidos Enviados</DialogTitle>
+            <DialogTitle className="text-2xl font-bold">Últimos Pedidos Enviados</DialogTitle>
           </DialogHeader>
           <FTPHistoryList history={ftpHistory} loading={historyLoading} />
         </DialogContent>

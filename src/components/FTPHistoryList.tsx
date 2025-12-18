@@ -1,6 +1,7 @@
-import { History, FileCode, FileText, Server } from 'lucide-react';
+import { History, FileCode, FileText, Server, Calendar, DollarSign } from 'lucide-react';
 import { FTPHistoryEntry } from '@/hooks/useFTPHistory';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { Card } from '@/components/ui/card';
 
 interface FTPHistoryListProps {
   history: FTPHistoryEntry[];
@@ -10,7 +11,7 @@ interface FTPHistoryListProps {
 export function FTPHistoryList({ history, loading }: FTPHistoryListProps) {
   if (loading) {
     return (
-      <div className="text-center py-4 text-muted-foreground text-sm">
+      <div className="text-center py-8 text-muted-foreground text-lg">
         Carregando histórico...
       </div>
     );
@@ -18,8 +19,8 @@ export function FTPHistoryList({ history, loading }: FTPHistoryListProps) {
 
   if (history.length === 0) {
     return (
-      <div className="text-center py-4 text-muted-foreground text-sm flex flex-col items-center gap-2">
-        <History className="h-5 w-5 opacity-50" />
+      <div className="text-center py-8 text-muted-foreground text-lg flex flex-col items-center gap-3">
+        <History className="h-8 w-8 opacity-50" />
         Nenhum envio FTP registrado
       </div>
     );
@@ -44,39 +45,53 @@ export function FTPHistoryList({ history, loading }: FTPHistoryListProps) {
   };
 
   return (
-    <div className="space-y-2">
-      <div className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
-        <History className="h-4 w-4" />
+    <div className="space-y-4">
+      <div className="flex items-center gap-2 text-base font-medium text-muted-foreground">
+        <History className="h-5 w-5" />
         Últimos envios FTP
       </div>
-      <ScrollArea className="h-[140px]">
-        <div className="space-y-2 pr-3">
+      <ScrollArea className="h-[400px]">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 pr-3">
           {history.map((entry) => (
-            <div
+            <Card
               key={entry.id}
-              className="p-2 rounded-lg bg-accent/30 border border-border/50 text-xs space-y-1"
+              className="p-4 hover:shadow-lg transition-all duration-200 hover:scale-[1.02] bg-gradient-to-br from-card to-muted/30 border-border/50"
             >
-              <div className="flex items-center justify-between">
-                <span className="font-medium flex items-center gap-1">
-                  {entry.file_format === 'xml' ? (
-                    <FileCode className="h-3 w-3 text-blue-500" />
-                  ) : (
-                    <FileText className="h-3 w-3 text-green-500" />
-                  )}
-                  Pedido #{entry.order_number.toString().padStart(6, '0')}
+              {/* Order Number - Highlighted */}
+              <div className="flex items-center gap-2 mb-3">
+                {entry.file_format === 'xml' ? (
+                  <FileCode className="h-5 w-5 text-blue-500" />
+                ) : (
+                  <FileText className="h-5 w-5 text-green-500" />
+                )}
+                <span className="text-2xl font-bold text-primary">
+                  #{entry.order_number.toString().padStart(6, '0')}
                 </span>
-                <span className="text-muted-foreground">{formatDate(entry.created_at)}</span>
               </div>
-              <div className="flex items-center justify-between text-muted-foreground">
-                <span className="flex items-center gap-1 truncate max-w-[60%]">
-                  <Server className="h-3 w-3" />
-                  {entry.ftp_host}{entry.ftp_folder}
-                </span>
-                <span className="font-medium text-foreground">
+
+              {/* Date */}
+              <div className="flex items-center gap-2 text-base text-muted-foreground mb-2">
+                <Calendar className="h-4 w-4" />
+                <span>{formatDate(entry.created_at)}</span>
+              </div>
+
+              {/* FTP Server */}
+              <div className="flex items-center gap-2 text-base text-muted-foreground mb-3 truncate">
+                <Server className="h-4 w-4 flex-shrink-0" />
+                <span className="truncate">{entry.ftp_host}{entry.ftp_folder}</span>
+              </div>
+
+              {/* Total */}
+              <div className="flex items-center justify-between pt-3 border-t border-border/50">
+                <div className="flex items-center gap-2 text-muted-foreground">
+                  <DollarSign className="h-4 w-4" />
+                  <span className="text-base">Total</span>
+                </div>
+                <span className="text-xl font-bold text-emerald-600 dark:text-emerald-400">
                   {formatCurrency(entry.order_total)}
                 </span>
               </div>
-            </div>
+            </Card>
           ))}
         </div>
       </ScrollArea>
