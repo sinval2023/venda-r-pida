@@ -15,7 +15,7 @@ import {
   TableRow,
   TableFooter,
 } from '@/components/ui/table';
-import { ArrowLeft, Send } from 'lucide-react';
+import { ArrowLeft, Send, Trash2 } from 'lucide-react';
 
 interface OrderReviewModalProps {
   items: OrderItem[];
@@ -23,9 +23,10 @@ interface OrderReviewModalProps {
   open: boolean;
   onClose: () => void;
   onConfirm: () => void;
+  onRemoveItem: (itemId: string) => void;
 }
 
-export function OrderReviewModal({ items, total, open, onClose, onConfirm }: OrderReviewModalProps) {
+export function OrderReviewModal({ items, total, open, onClose, onConfirm, onRemoveItem }: OrderReviewModalProps) {
   const formatCurrency = (value: number) => {
     return value.toLocaleString('pt-BR', {
       style: 'currency',
@@ -44,11 +45,12 @@ export function OrderReviewModal({ items, total, open, onClose, onConfirm }: Ord
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead className="w-[100px]">Código</TableHead>
+                <TableHead className="w-[80px]">Código</TableHead>
                 <TableHead>Descrição</TableHead>
-                <TableHead className="text-center w-[60px]">Qtd</TableHead>
-                <TableHead className="text-right w-[100px]">Unit.</TableHead>
-                <TableHead className="text-right w-[100px]">Total</TableHead>
+                <TableHead className="text-center w-[50px]">Qtd</TableHead>
+                <TableHead className="text-right w-[80px]">Unit.</TableHead>
+                <TableHead className="text-right w-[80px]">Total</TableHead>
+                <TableHead className="w-[50px]"></TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -59,12 +61,22 @@ export function OrderReviewModal({ items, total, open, onClose, onConfirm }: Ord
                   <TableCell className="text-center">{item.quantity}</TableCell>
                   <TableCell className="text-right">{formatCurrency(item.unitPrice)}</TableCell>
                   <TableCell className="text-right font-medium">{formatCurrency(item.total)}</TableCell>
+                  <TableCell>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-8 w-8 text-destructive hover:text-destructive hover:bg-destructive/10"
+                      onClick={() => onRemoveItem(item.id)}
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  </TableCell>
                 </TableRow>
               ))}
             </TableBody>
             <TableFooter>
               <TableRow>
-                <TableCell colSpan={4} className="text-right font-bold text-lg">
+                <TableCell colSpan={5} className="text-right font-bold text-lg">
                   Total Geral:
                 </TableCell>
                 <TableCell className="text-right font-bold text-lg text-primary">

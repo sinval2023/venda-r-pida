@@ -21,6 +21,7 @@ interface ExportModalProps {
   open: boolean;
   onClose: () => void;
   onSuccess: () => void;
+  onBack?: () => void;
 }
 
 interface FTPValidation {
@@ -96,7 +97,7 @@ const getDefaultFTPConfig = (): FTPConfig => {
   };
 };
 
-export function ExportModal({ order, open, onClose, onSuccess }: ExportModalProps) {
+export function ExportModal({ order, open, onClose, onSuccess, onBack }: ExportModalProps) {
   const { user } = useAuth();
   const [format, setFormat] = useState<'xml' | 'txt'>('xml');
   const [destination, setDestination] = useState<'download' | 'share' | 'whatsapp' | 'ftp'>('download');
@@ -730,6 +731,17 @@ export function ExportModal({ order, open, onClose, onSuccess }: ExportModalProp
                 destination === 'whatsapp' ? 'Enviar via WhatsApp' :
                 destination === 'share' ? 'Compartilhar Arquivo' : 
                 'Exportar Pedido'}
+            </Button>
+          )}
+          
+          {onBack && (
+            <Button
+              type="button"
+              variant="outline"
+              onClick={onBack}
+              className="w-full h-9"
+            >
+              Voltar à Digitação
             </Button>
           )}
         </div>
