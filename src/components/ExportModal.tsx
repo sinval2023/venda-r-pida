@@ -485,7 +485,7 @@ export function ExportModal({ order, open, onClose, onSuccess, onBack }: ExportM
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent className="w-[95vw] max-w-xl mx-auto sm:max-h-[90vh]">
+      <DialogContent className="w-[95vw] max-w-3xl mx-auto sm:max-h-[90vh] overflow-y-auto">
         <DialogHeader className="pb-2">
           <DialogTitle className="text-base">Exportar Pedido #{order.number.toString().padStart(6, '0')}</DialogTitle>
         </DialogHeader>
@@ -739,9 +739,9 @@ export function ExportModal({ order, open, onClose, onSuccess, onBack }: ExportM
               type="button"
               variant="outline"
               onClick={onBack}
-              className="w-full h-9"
+              className="w-full h-12 text-base font-semibold border-2 border-primary/50 hover:bg-primary hover:text-primary-foreground hover:border-primary hover:scale-[1.02] transition-all duration-200 shadow-sm"
             >
-              Voltar à Digitação
+              ← Voltar à Digitação
             </Button>
           )}
         </div>
