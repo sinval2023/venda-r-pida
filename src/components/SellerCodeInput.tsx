@@ -1,8 +1,6 @@
-import { useState, useEffect } from 'react';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 import { useSellers, Seller } from '@/hooks/useSellers';
-import { UserCheck, AlertCircle } from 'lucide-react';
+import { UserCheck } from 'lucide-react';
+import { Label } from '@/components/ui/label';
 
 interface SellerCodeInputProps {
   onSellerSelect: (seller: Seller | null) => void;
@@ -11,73 +9,52 @@ interface SellerCodeInputProps {
 
 export function SellerCodeInput({ onSellerSelect, selectedSeller }: SellerCodeInputProps) {
   const { getSellerByCode } = useSellers();
-  const [code, setCode] = useState('');
-  const [sellerName, setSellerName] = useState('');
-  const [notFound, setNotFound] = useState(false);
 
-  useEffect(() => {
-    if (selectedSeller) {
-      setCode(selectedSeller.code);
-      setSellerName(selectedSeller.name);
-      setNotFound(false);
-    }
-  }, [selectedSeller]);
+  const sellerCodes = ['1', '2', '3', '4', '5'];
 
-  const handleCodeChange = (value: string) => {
-    setCode(value.toUpperCase());
-    setNotFound(false);
-    
-    if (value.length >= 1) {
-      const seller = getSellerByCode(value);
-      if (seller) {
-        setSellerName(seller.name);
-        onSellerSelect(seller);
-        setNotFound(false);
-      } else {
-        setSellerName('');
-        onSellerSelect(null);
-        if (value.length >= 2) {
-          setNotFound(true);
-        }
-      }
+  const handleSelectSeller = (code: string) => {
+    const seller = getSellerByCode(code);
+    if (seller) {
+      onSellerSelect(seller);
     } else {
-      setSellerName('');
       onSellerSelect(null);
     }
   };
 
   return (
-    <div className="grid grid-cols-3 gap-2">
-      <div>
-        <Label className="text-xs text-muted-foreground flex items-center gap-1">
-          <UserCheck className="h-3 w-3" /> Cód. Vendedor
-        </Label>
-        <Input
-          placeholder="Código"
-          value={code}
-          onChange={(e) => handleCodeChange(e.target.value)}
-          className={`h-9 text-sm font-medium ${notFound ? 'border-destructive' : ''}`}
-        />
-      </div>
-      <div className="col-span-2">
-        <Label className="text-xs text-muted-foreground">Nome do Vendedor</Label>
-        <div className={`h-9 px-3 flex items-center text-sm rounded-md border ${
-          sellerName 
-            ? 'bg-emerald-50 dark:bg-emerald-950/30 border-emerald-200 dark:border-emerald-800 text-emerald-700 dark:text-emerald-300 font-medium' 
-            : notFound 
-              ? 'bg-destructive/10 border-destructive/50 text-destructive'
-              : 'bg-muted/50 border-border text-muted-foreground'
-        }`}>
-          {sellerName ? (
-            sellerName
-          ) : notFound ? (
-            <span className="flex items-center gap-1">
-              <AlertCircle className="h-3 w-3" /> Vendedor não encontrado
-            </span>
-          ) : (
-            'Informe o código'
-          )}
-        </div>
+    <div>
+      <Label className="text-xs text-muted-foreground flex items-center gap-1 mb-1">
+        <UserCheck className="h-3 w-3" /> Vendedor
+      </Label>
+      <div className="flex gap-2">
+        {sellerCodes.map((code) => {
+          const seller = getSellerByCode(code);
+          const isSelected = selectedSeller?.code === code;
+          
+          return (
+            <button
+              key={code}
+              onClick={() => handleSelectSeller(code)}
+              className={`
+                flex flex-col items-center justify-center px-3 py-2 rounded-lg border text-sm
+                transition-all duration-200 min-w-[60px]
+                ${isSelected 
+                  ? 'bg-primary text-primary-foreground border-primary shadow-md scale-105' 
+                  : 'bg-card border-border hover:bg-accent hover:border-primary/50 hover:scale-105 hover:shadow-md'
+                }
+                ${!seller ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}
+              `}
+              disabled={!seller}
+            >
+              <span className="font-bold text-base">{code}</span>
+              {seller && (
+                <span className={`text-[10px] truncate max-w-[50px] ${isSelected ? 'text-primary-foreground/80' : 'text-muted-foreground'}`}>
+                  {seller.name.split(' ')[0]}
+                </span>
+              )}
+            </button>
+          );
+        })}
       </div>
     </div>
   );
