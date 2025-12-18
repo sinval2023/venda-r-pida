@@ -1,14 +1,14 @@
-import { ShoppingCart } from 'lucide-react';
+import { ClipboardCheck } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
 interface OrderTotalProps {
   total: number;
   itemCount: number;
-  onFinalize: () => void;
+  onReview: () => void;
   disabled: boolean;
 }
 
-export function OrderTotal({ total, itemCount, onFinalize, disabled }: OrderTotalProps) {
+export function OrderTotal({ total, itemCount, onReview, disabled }: OrderTotalProps) {
   const formatCurrency = (value: number) => {
     return value.toLocaleString('pt-BR', {
       style: 'currency',
@@ -30,13 +30,13 @@ export function OrderTotal({ total, itemCount, onFinalize, disabled }: OrderTota
           </div>
           
           <Button
-            onClick={onFinalize}
+            onClick={onReview}
             disabled={disabled}
             size="lg"
-            className="bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white font-bold px-8 shadow-lg hover:shadow-xl transition-all duration-200"
+            className="bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white font-bold px-8 shadow-lg hover:shadow-xl transition-all duration-200"
           >
-            <ShoppingCart className="h-5 w-5 mr-2" />
-            FINALIZAR PEDIDO
+            <ClipboardCheck className="h-5 w-5 mr-2" />
+            CONFERE PEDIDO
           </Button>
         </div>
       </div>

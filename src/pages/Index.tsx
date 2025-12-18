@@ -4,8 +4,8 @@ import { useAuth } from '@/hooks/useAuth';
 import { useOrder } from '@/hooks/useOrder';
 import { Header } from '@/components/Header';
 import { ProductGrid } from '@/components/ProductGrid';
-import { OrderItemsList } from '@/components/OrderItemsList';
 import { OrderTotal } from '@/components/OrderTotal';
+import { OrderReviewModal } from '@/components/OrderReviewModal';
 import { ExportModal } from '@/components/ExportModal';
 import { Order, Product } from '@/types/order';
 import { toast } from 'sonner';
@@ -13,8 +13,9 @@ import { toast } from 'sonner';
 const Index = () => {
   const { user, loading, isAdmin } = useAuth();
   const navigate = useNavigate();
-  const { items, addItem, removeItem, getTotal, clearOrder, finalizeOrder } = useOrder();
+  const { items, addItem, getTotal, clearOrder, finalizeOrder } = useOrder();
   const [exportOrder, setExportOrder] = useState<Order | null>(null);
+  const [showReview, setShowReview] = useState(false);
 
   useEffect(() => {
     if (!loading && !user) {
@@ -30,7 +31,12 @@ const Index = () => {
     });
   };
 
+  const handleReview = () => {
+    setShowReview(true);
+  };
+
   const handleFinalize = async () => {
+    setShowReview(false);
     const order = await finalizeOrder();
     if (order) {
       setExportOrder(order);
@@ -69,26 +75,22 @@ const Index = () => {
       />
 
       <main className="flex-1 container mx-auto px-3 sm:px-4 py-4 sm:py-6 flex flex-col mt-16 pb-28">
-        {/* Product Grid */}
         <ProductGrid onAddToOrder={handleAddToOrder} />
-
-        {/* Order Items List */}
-        {items.length > 0 && (
-          <div className="mt-6 border-t pt-6">
-            <h2 className="text-lg font-bold mb-4 text-foreground">Itens do Pedido ({items.length})</h2>
-            <OrderItemsList
-              items={items}
-              onRemoveItem={removeItem}
-            />
-          </div>
-        )}
       </main>
 
       <OrderTotal 
         total={total} 
         itemCount={items.length}
-        onFinalize={handleFinalize}
+        onReview={handleReview}
         disabled={total === 0}
+      />
+
+      <OrderReviewModal
+        items={items}
+        total={total}
+        open={showReview}
+        onClose={() => setShowReview(false)}
+        onConfirm={handleFinalize}
       />
 
       {exportOrder && (
