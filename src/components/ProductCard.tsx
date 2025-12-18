@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Product } from '@/types/order';
-import { Plus, Minus, ShoppingCart, Package } from 'lucide-react';
+import { Plus, Minus, ShoppingCart, Package, ChevronLeft, ChevronRight } from 'lucide-react';
 import { ProductWithCategory } from '@/hooks/useProducts';
 
 interface ProductCardProps {
@@ -12,6 +12,15 @@ interface ProductCardProps {
 
 export function ProductCard({ product, onAddToOrder }: ProductCardProps) {
   const [quantity, setQuantity] = useState(1);
+  const [currentImageIndex, setCurrentImageIndex] = useState(0);
+
+  const images = product.images && product.images.length > 0 
+    ? product.images 
+    : product.image_url 
+      ? [{ id: 'main', image_url: product.image_url, is_primary: true }]
+      : [];
+
+  const hasMultipleImages = images.length > 1;
 
   const formatCurrency = (value: number) => {
     return value.toLocaleString('pt-BR', {
@@ -35,19 +44,67 @@ export function ProductCard({ product, onAddToOrder }: ProductCardProps) {
     setQuantity(1);
   };
 
+  const handlePrevImage = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    setCurrentImageIndex(prev => (prev - 1 + images.length) % images.length);
+  };
+
+  const handleNextImage = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    setCurrentImageIndex(prev => (prev + 1) % images.length);
+  };
+
   return (
     <Card 
       className="overflow-hidden cursor-pointer transition-all duration-200 hover:shadow-xl hover:scale-[1.02] hover:border-emerald-400 bg-gradient-to-br from-card to-muted/30 group"
       onClick={handleAddToOrder}
     >
-      {/* Product Image */}
+      {/* Product Image Gallery */}
       <div className="relative h-28 sm:h-32 bg-gradient-to-br from-sky-100 to-blue-200 dark:from-sky-900 dark:to-blue-800 flex items-center justify-center overflow-hidden">
-        {product.image_url ? (
-          <img 
-            src={product.image_url} 
-            alt={product.description}
-            className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-110"
-          />
+        {images.length > 0 ? (
+          <>
+            <img 
+              src={images[currentImageIndex].image_url} 
+              alt={product.description}
+              className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-110"
+            />
+            {/* Navigation arrows */}
+            {hasMultipleImages && (
+              <>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="absolute left-1 top-1/2 -translate-y-1/2 h-6 w-6 bg-black/30 hover:bg-black/50 text-white opacity-0 group-hover:opacity-100 transition-opacity"
+                  onClick={handlePrevImage}
+                >
+                  <ChevronLeft className="h-4 w-4" />
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="absolute right-1 top-1/2 -translate-y-1/2 h-6 w-6 bg-black/30 hover:bg-black/50 text-white opacity-0 group-hover:opacity-100 transition-opacity"
+                  onClick={handleNextImage}
+                >
+                  <ChevronRight className="h-4 w-4" />
+                </Button>
+                {/* Dots indicator */}
+                <div className="absolute bottom-1 left-1/2 -translate-x-1/2 flex gap-1">
+                  {images.map((_, idx) => (
+                    <button
+                      key={idx}
+                      className={`w-1.5 h-1.5 rounded-full transition-colors ${
+                        idx === currentImageIndex ? 'bg-white' : 'bg-white/50'
+                      }`}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setCurrentImageIndex(idx);
+                      }}
+                    />
+                  ))}
+                </div>
+              </>
+            )}
+          </>
         ) : (
           <Package className="w-12 h-12 sm:w-16 sm:h-16 text-sky-500 dark:text-sky-400 opacity-60" />
         )}
