@@ -15,6 +15,7 @@ export function ProductCard({ product, onAddToOrder }: ProductCardProps) {
   const [quantity, setQuantity] = useState(1);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [lightboxOpen, setLightboxOpen] = useState(false);
+  const [isHovered, setIsHovered] = useState(false);
 
   const images = product.images && product.images.length > 0 
     ? product.images 
@@ -67,9 +68,11 @@ export function ProductCard({ product, onAddToOrder }: ProductCardProps) {
     <Card 
       className="overflow-hidden cursor-pointer transition-all duration-200 hover:shadow-xl hover:scale-[1.02] hover:border-emerald-400 bg-gradient-to-br from-card to-muted/30 group"
       onClick={handleAddToOrder}
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
     >
       {/* Product Image Gallery - Smaller */}
-      <div className="relative h-16 sm:h-20 bg-gradient-to-br from-slate-100 to-slate-200 dark:from-slate-800 dark:to-slate-900 flex items-center justify-center overflow-hidden">
+      <div className="relative h-12 sm:h-14 bg-gradient-to-br from-slate-100 to-slate-200 dark:from-slate-800 dark:to-slate-900 flex items-center justify-center overflow-hidden">
         {images.length > 0 ? (
           <>
             <img 
@@ -136,57 +139,52 @@ export function ProductCard({ product, onAddToOrder }: ProductCardProps) {
       </div>
 
       {/* Product Info */}
-      <div className="p-1.5">
-        {/* Product Name - Larger and Black */}
-        <h3 className="font-bold text-sm text-foreground line-clamp-2 h-10 mb-0.5 group-hover:text-emerald-600 dark:group-hover:text-emerald-400 transition-colors duration-200">
+      <div className="p-2">
+        {/* Product Name - Larger and Highlighted */}
+        <h3 className="font-extrabold text-base text-foreground line-clamp-2 h-12 mb-1 group-hover:text-emerald-600 dark:group-hover:text-emerald-400 transition-colors duration-200">
           {product.description}
         </h3>
         
-        <div className="text-sm font-bold text-emerald-600 dark:text-emerald-400 mb-1">
+        {/* Price - Centered, Black, Larger */}
+        <div className="text-lg font-bold text-black dark:text-white text-center mb-2">
           {formatCurrency(product.default_price)}
         </div>
 
-        {/* Quantity Controls */}
-        <div className="flex items-center justify-between gap-1" onClick={(e) => e.stopPropagation()}>
-          <div className="flex items-center gap-0.5 bg-muted rounded-md p-0.5">
-            <Button
-              variant="ghost"
-              size="icon"
-              className="h-7 w-7 rounded bg-red-100 hover:bg-red-200 text-red-600 dark:bg-red-900/50 dark:hover:bg-red-900 dark:text-red-400"
-              onClick={handleDecrement}
-            >
-              <Minus className="h-3 w-3" />
-            </Button>
-            <input
-              type="number"
-              min="1"
-              value={quantity}
-              onChange={(e) => {
-                e.stopPropagation();
-                const val = parseInt(e.target.value) || 1;
-                setQuantity(Math.max(1, val));
-              }}
-              onClick={(e) => e.stopPropagation()}
-              className="w-8 h-7 text-center text-xs font-bold text-foreground bg-background border border-border rounded focus:outline-none focus:ring-1 focus:ring-emerald-500 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
-            />
-            <Button
-              variant="ghost"
-              size="icon"
-              className="h-7 w-7 rounded bg-emerald-100 hover:bg-emerald-200 text-emerald-600 dark:bg-emerald-900/50 dark:hover:bg-emerald-900 dark:text-emerald-400"
-              onClick={handleIncrement}
-            >
-              <Plus className="h-3 w-3" />
-            </Button>
+        {/* Quantity Controls - Only visible on hover */}
+        {isHovered && (
+          <div className="flex items-center justify-center gap-1 animate-in fade-in duration-200" onClick={(e) => e.stopPropagation()}>
+            <div className="flex items-center gap-1 bg-muted rounded-md p-1">
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-8 w-8 rounded bg-red-100 hover:bg-red-200 text-red-600 dark:bg-red-900/50 dark:hover:bg-red-900 dark:text-red-400"
+                onClick={handleDecrement}
+              >
+                <Minus className="h-4 w-4" />
+              </Button>
+              <input
+                type="number"
+                min="1"
+                value={quantity}
+                onChange={(e) => {
+                  e.stopPropagation();
+                  const val = parseInt(e.target.value) || 1;
+                  setQuantity(Math.max(1, val));
+                }}
+                onClick={(e) => e.stopPropagation()}
+                className="w-10 h-8 text-center text-sm font-bold text-foreground bg-background border border-border rounded focus:outline-none focus:ring-1 focus:ring-emerald-500 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+              />
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-8 w-8 rounded bg-emerald-100 hover:bg-emerald-200 text-emerald-600 dark:bg-emerald-900/50 dark:hover:bg-emerald-900 dark:text-emerald-400"
+                onClick={handleIncrement}
+              >
+                <Plus className="h-4 w-4" />
+              </Button>
+            </div>
           </div>
-          
-          <Button
-            size="sm"
-            className="h-7 px-2 bg-gradient-to-r from-emerald-500 to-green-600 hover:from-emerald-600 hover:to-green-700 text-white font-bold shadow text-xs"
-            onClick={handleAddToOrder}
-          >
-            <Plus className="h-3 w-3" />
-          </Button>
-        </div>
+        )}
       </div>
 
       <ImageLightbox
