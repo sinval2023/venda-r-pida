@@ -1,5 +1,5 @@
-import { useState, useEffect, useRef } from 'react';
-import { Plus, X, Star, Image as ImageIcon, Loader2 } from 'lucide-react';
+import { useState, useRef } from 'react';
+import { Plus, X, Star, Loader2, GripVertical } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useProductImages, ProductImage } from '@/hooks/useProductImages';
 import { toast } from '@/hooks/use-toast';
@@ -20,8 +20,10 @@ export function ProductImageGallery({
   onPendingFilesChange,
 }: ProductImageGalleryProps) {
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const { uploading, uploadImage, deleteImage, setPrimaryImage } = useProductImages();
+  const { uploading, uploadImage, deleteImage, setPrimaryImage, reorderImages } = useProductImages();
   const [localUploading, setLocalUploading] = useState(false);
+  const [draggedIndex, setDraggedIndex] = useState<number | null>(null);
+  const [dragOverIndex, setDragOverIndex] = useState<number | null>(null);
 
   const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files || []);
@@ -125,23 +127,102 @@ export function ProductImageGallery({
     }
   };
 
+  // Drag and drop handlers
+  const handleDragStart = (e: React.DragEvent, index: number) => {
+    setDraggedIndex(index);
+    e.dataTransfer.effectAllowed = 'move';
+  };
+
+  const handleDragOver = (e: React.DragEvent, index: number) => {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = 'move';
+    if (draggedIndex !== null && draggedIndex !== index) {
+      setDragOverIndex(index);
+    }
+  };
+
+  const handleDragLeave = () => {
+    setDragOverIndex(null);
+  };
+
+  const handleDrop = async (e: React.DragEvent, dropIndex: number) => {
+    e.preventDefault();
+    if (draggedIndex === null || draggedIndex === dropIndex) {
+      setDraggedIndex(null);
+      setDragOverIndex(null);
+      return;
+    }
+
+    // Reorder images array
+    const newImages = [...images];
+    const [draggedImage] = newImages.splice(draggedIndex, 1);
+    newImages.splice(dropIndex, 0, draggedImage);
+
+    // Update display_order
+    const reorderedImages = newImages.map((img, idx) => ({
+      ...img,
+      display_order: idx,
+    }));
+
+    onImagesChange(reorderedImages);
+
+    // Persist to database if product exists
+    if (productId) {
+      const orderUpdates = reorderedImages
+        .filter(img => !img.id.startsWith('temp-'))
+        .map(img => ({ id: img.id, display_order: img.display_order }));
+      
+      if (orderUpdates.length > 0) {
+        const { error } = await reorderImages(orderUpdates);
+        if (error) {
+          toast({
+            title: 'Erro ao reordenar',
+            description: error.message,
+            variant: 'destructive',
+          });
+        }
+      }
+    }
+
+    setDraggedIndex(null);
+    setDragOverIndex(null);
+  };
+
+  const handleDragEnd = () => {
+    setDraggedIndex(null);
+    setDragOverIndex(null);
+  };
+
   const isUploading = uploading || localUploading;
 
   return (
     <div className="space-y-3">
       <div className="flex flex-wrap gap-2">
         {/* Existing images */}
-        {images.map((image) => (
+        {images.map((image, index) => (
           <div 
             key={image.id}
-            className={`relative w-20 h-20 rounded-lg overflow-hidden border-2 ${image.is_primary ? 'border-yellow-500' : 'border-transparent'} group`}
+            draggable
+            onDragStart={(e) => handleDragStart(e, index)}
+            onDragOver={(e) => handleDragOver(e, index)}
+            onDragLeave={handleDragLeave}
+            onDrop={(e) => handleDrop(e, index)}
+            onDragEnd={handleDragEnd}
+            className={`relative w-20 h-20 rounded-lg overflow-hidden border-2 group cursor-grab active:cursor-grabbing transition-all
+              ${image.is_primary ? 'border-yellow-500' : 'border-transparent'}
+              ${draggedIndex === index ? 'opacity-50 scale-95' : ''}
+              ${dragOverIndex === index ? 'border-primary ring-2 ring-primary/30' : ''}
+            `}
           >
             <img 
               src={image.image_url} 
               alt="Product" 
-              className="w-full h-full object-cover"
+              className="w-full h-full object-cover pointer-events-none"
             />
             <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-1">
+              <div className="absolute top-1 right-1">
+                <GripVertical className="h-4 w-4 text-white/70" />
+              </div>
               {!image.is_primary && (
                 <Button
                   type="button"
@@ -227,7 +308,7 @@ export function ProductImageGallery({
       />
 
       <p className="text-xs text-muted-foreground">
-        Clique na estrela para definir a imagem principal. Máximo 2MB por imagem.
+        Arraste para reordenar. Clique na estrela para definir a imagem principal.
       </p>
     </div>
   );
