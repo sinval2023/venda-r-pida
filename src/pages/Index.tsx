@@ -25,10 +25,6 @@ const Index = () => {
 
   const handleAddToOrder = (product: Product, quantity: number, unitPrice: number) => {
     addItem(product, quantity, unitPrice);
-    toast.success(`${product.code} adicionado ao pedido`, {
-      description: `${quantity}x ${product.description}`,
-      duration: 2000,
-    });
   };
 
   const handleReview = () => {
