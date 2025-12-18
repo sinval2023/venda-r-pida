@@ -14,8 +14,10 @@ export function ImageLightbox({ images, initialIndex = 0, isOpen, onClose }: Ima
   const [scale, setScale] = useState(1);
 
   useEffect(() => {
-    setCurrentIndex(initialIndex);
-    setScale(1);
+    if (isOpen) {
+      setCurrentIndex(initialIndex);
+      setScale(1);
+    }
   }, [initialIndex, isOpen]);
 
   useEffect(() => {
