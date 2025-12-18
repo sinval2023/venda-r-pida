@@ -6,6 +6,7 @@ export interface ProductWithCategory extends Product {
   category_id?: string | null;
   category_name?: string;
   image_url?: string | null;
+  images?: { id: string; image_url: string; is_primary: boolean }[];
 }
 
 export function useProducts() {
@@ -22,22 +23,34 @@ export function useProducts() {
       .from('products')
       .select(`
         *,
-        categories(name)
+        categories(name),
+        product_images(id, image_url, is_primary, display_order)
       `)
       .eq('active', true)
       .order('code');
 
     if (!error && data) {
-      setProducts(data.map(p => ({
-        id: p.id,
-        code: p.code,
-        description: p.description,
-        default_price: Number(p.default_price),
-        active: p.active,
-        category_id: p.category_id,
-        category_name: p.categories?.name || 'Sem categoria',
-        image_url: p.image_url,
-      })));
+      setProducts(data.map(p => {
+        // Sort images by display_order and get primary
+        const sortedImages = (p.product_images || []).sort((a: any, b: any) => a.display_order - b.display_order);
+        const primaryImage = sortedImages.find((img: any) => img.is_primary) || sortedImages[0];
+        
+        return {
+          id: p.id,
+          code: p.code,
+          description: p.description,
+          default_price: Number(p.default_price),
+          active: p.active,
+          category_id: p.category_id,
+          category_name: p.categories?.name || 'Sem categoria',
+          image_url: primaryImage?.image_url || p.image_url,
+          images: sortedImages.map((img: any) => ({
+            id: img.id,
+            image_url: img.image_url,
+            is_primary: img.is_primary,
+          })),
+        };
+      }));
     }
     setLoading(false);
   };
