@@ -69,7 +69,7 @@ export function ProductCard({ product, onAddToOrder }: ProductCardProps) {
       onClick={handleAddToOrder}
     >
       {/* Product Image Gallery */}
-      <div className="relative h-32 sm:h-40 bg-gradient-to-br from-slate-100 to-slate-200 dark:from-slate-800 dark:to-slate-900 flex items-center justify-center overflow-hidden">
+      <div className="relative h-24 sm:h-28 bg-gradient-to-br from-slate-100 to-slate-200 dark:from-slate-800 dark:to-slate-900 flex items-center justify-center overflow-hidden">
         {images.length > 0 ? (
           <>
             <img 
@@ -136,25 +136,25 @@ export function ProductCard({ product, onAddToOrder }: ProductCardProps) {
       </div>
 
       {/* Product Info */}
-      <div className="p-3">
-        <h3 className="font-semibold text-base text-foreground line-clamp-2 h-12 mb-2 group-hover:text-emerald-600 dark:group-hover:text-emerald-400 transition-colors duration-200">
+      <div className="p-2">
+        <h3 className="font-semibold text-sm text-foreground line-clamp-2 h-9 mb-1 group-hover:text-emerald-600 dark:group-hover:text-emerald-400 transition-colors duration-200">
           {product.description}
         </h3>
         
-        <div className="text-lg font-bold text-emerald-600 dark:text-emerald-400 mb-3">
+        <div className="text-base font-bold text-emerald-600 dark:text-emerald-400 mb-1">
           {formatCurrency(product.default_price)}
         </div>
 
         {/* Quantity Controls */}
-        <div className="flex items-center justify-between gap-3" onClick={(e) => e.stopPropagation()}>
-          <div className="flex items-center gap-2 bg-muted rounded-xl p-2">
+        <div className="flex items-center justify-between gap-2" onClick={(e) => e.stopPropagation()}>
+          <div className="flex items-center gap-1 bg-muted rounded-lg p-1">
             <Button
               variant="ghost"
               size="icon"
-              className="h-12 w-12 rounded-lg bg-red-100 hover:bg-red-200 text-red-600 dark:bg-red-900/50 dark:hover:bg-red-900 dark:text-red-400 shadow-sm"
+              className="h-10 w-10 rounded-lg bg-red-100 hover:bg-red-200 text-red-600 dark:bg-red-900/50 dark:hover:bg-red-900 dark:text-red-400 shadow-sm"
               onClick={handleDecrement}
             >
-              <Minus className="h-6 w-6" />
+              <Minus className="h-5 w-5" />
             </Button>
             <input
               type="number"
@@ -166,24 +166,24 @@ export function ProductCard({ product, onAddToOrder }: ProductCardProps) {
                 setQuantity(Math.max(1, val));
               }}
               onClick={(e) => e.stopPropagation()}
-              className="w-16 h-12 text-center text-xl font-bold text-foreground bg-background border-2 border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+              className="w-12 h-10 text-center text-lg font-bold text-foreground bg-background border-2 border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
             />
             <Button
               variant="ghost"
               size="icon"
-              className="h-12 w-12 rounded-lg bg-emerald-100 hover:bg-emerald-200 text-emerald-600 dark:bg-emerald-900/50 dark:hover:bg-emerald-900 dark:text-emerald-400 shadow-sm"
+              className="h-10 w-10 rounded-lg bg-emerald-100 hover:bg-emerald-200 text-emerald-600 dark:bg-emerald-900/50 dark:hover:bg-emerald-900 dark:text-emerald-400 shadow-sm"
               onClick={handleIncrement}
             >
-              <Plus className="h-6 w-6" />
+              <Plus className="h-5 w-5" />
             </Button>
           </div>
           
           <Button
-            size="lg"
-            className="h-12 px-4 bg-gradient-to-r from-emerald-500 to-green-600 hover:from-emerald-600 hover:to-green-700 text-white font-bold shadow-lg text-base"
+            size="default"
+            className="h-10 px-3 bg-gradient-to-r from-emerald-500 to-green-600 hover:from-emerald-600 hover:to-green-700 text-white font-bold shadow-lg text-sm"
             onClick={handleAddToOrder}
           >
-            <Plus className="h-5 w-5 mr-1" />
+            <Plus className="h-4 w-4 mr-1" />
             Add
           </Button>
         </div>
