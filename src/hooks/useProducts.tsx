@@ -5,6 +5,7 @@ import { Product } from '@/types/order';
 export interface ProductWithCategory extends Product {
   category_id?: string | null;
   category_name?: string;
+  image_url?: string | null;
 }
 
 export function useProducts() {
@@ -35,6 +36,7 @@ export function useProducts() {
         active: p.active,
         category_id: p.category_id,
         category_name: p.categories?.name || 'Sem categoria',
+        image_url: p.image_url,
       })));
     }
     setLoading(false);
@@ -49,7 +51,7 @@ export function useProducts() {
     );
   };
 
-  const addProduct = async (product: Omit<Product, 'id' | 'active'> & { category_id?: string }) => {
+  const addProduct = async (product: Omit<Product, 'id' | 'active'> & { category_id?: string; image_url?: string }) => {
     const { error } = await supabase
       .from('products')
       .insert({
@@ -57,6 +59,7 @@ export function useProducts() {
         description: product.description,
         default_price: product.default_price,
         category_id: product.category_id || null,
+        image_url: product.image_url || null,
       });
     
     if (!error) {
@@ -65,7 +68,7 @@ export function useProducts() {
     return { error };
   };
 
-  const updateProduct = async (id: string, product: Partial<Product> & { category_id?: string }) => {
+  const updateProduct = async (id: string, product: Partial<Product> & { category_id?: string; image_url?: string | null }) => {
     const { error } = await supabase
       .from('products')
       .update(product)

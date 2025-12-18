@@ -34,7 +34,7 @@ export default function Admin() {
     );
   }
 
-  const handleSave = async (productData: { code: string; description: string; default_price: number; category_id?: string }) => {
+  const handleSave = async (productData: { code: string; description: string; default_price: number; category_id?: string; image_url?: string }) => {
     if (editingProduct) {
       const result = await updateProduct(editingProduct.id, productData);
       if (!result.error) {

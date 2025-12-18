@@ -3,9 +3,10 @@ import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Product } from '@/types/order';
 import { Plus, Minus, ShoppingCart, Package } from 'lucide-react';
+import { ProductWithCategory } from '@/hooks/useProducts';
 
 interface ProductCardProps {
-  product: Product;
+  product: ProductWithCategory;
   onAddToOrder: (product: Product, quantity: number, unitPrice: number) => void;
 }
 
@@ -39,9 +40,17 @@ export function ProductCard({ product, onAddToOrder }: ProductCardProps) {
       className="overflow-hidden cursor-pointer transition-all duration-200 hover:shadow-xl hover:scale-[1.02] hover:border-emerald-400 bg-gradient-to-br from-card to-muted/30 group"
       onClick={handleAddToOrder}
     >
-      {/* Product Image Placeholder */}
-      <div className="relative h-28 sm:h-32 bg-gradient-to-br from-sky-100 to-blue-200 dark:from-sky-900 dark:to-blue-800 flex items-center justify-center">
-        <Package className="w-12 h-12 sm:w-16 sm:h-16 text-sky-500 dark:text-sky-400 opacity-60" />
+      {/* Product Image */}
+      <div className="relative h-28 sm:h-32 bg-gradient-to-br from-sky-100 to-blue-200 dark:from-sky-900 dark:to-blue-800 flex items-center justify-center overflow-hidden">
+        {product.image_url ? (
+          <img 
+            src={product.image_url} 
+            alt={product.description}
+            className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-110"
+          />
+        ) : (
+          <Package className="w-12 h-12 sm:w-16 sm:h-16 text-sky-500 dark:text-sky-400 opacity-60" />
+        )}
         <div className="absolute top-2 left-2 bg-primary text-primary-foreground text-xs font-bold px-2 py-1 rounded-md shadow">
           {product.code}
         </div>
