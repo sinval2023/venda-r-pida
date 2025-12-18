@@ -45,7 +45,7 @@ export function OrderTotal({ total, itemCount, onReview, onFinalize, disabled }:
               disabled={disabled}
               variant="outline"
               size="lg"
-              className="font-bold"
+              className="font-bold bg-sky-100 hover:bg-sky-200 border-sky-300 text-sky-700"
             >
               <ClipboardCheck className="h-5 w-5 mr-2" />
               CONFERE

@@ -16,7 +16,6 @@ export function ProductGrid({ onAddToOrder }: ProductGridProps) {
   const { products, loading, searchProducts, getProductsByCategory } = useProducts();
   const [searchQuery, setSearchQuery] = useState('');
   const [openCategories, setOpenCategories] = useState<Set<string>>(new Set());
-  const [categoriesInitialized, setCategoriesInitialized] = useState(false);
 
   const filteredProducts = searchQuery ? searchProducts(searchQuery) : products;
   
@@ -39,13 +38,12 @@ export function ProductGrid({ onAddToOrder }: ProductGridProps) {
     });
   };
 
-  // Initialize all categories as open only once when data loads
+  // Initialize all categories as open when data loads
   useEffect(() => {
-    if (groupedProducts && !categoriesInitialized) {
+    if (groupedProducts && Object.keys(groupedProducts).length > 0) {
       setOpenCategories(new Set(Object.keys(groupedProducts)));
-      setCategoriesInitialized(true);
     }
-  }, [groupedProducts, categoriesInitialized]);
+  }, [groupedProducts]);
 
   if (loading) {
     return (
