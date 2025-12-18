@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { useProducts } from '@/hooks/useProducts';
 import { ProductCard } from './ProductCard';
 import { Product } from '@/types/order';
@@ -16,12 +16,12 @@ export function ProductGrid({ onAddToOrder }: ProductGridProps) {
   const { products, loading, searchProducts, getProductsByCategory } = useProducts();
   const [searchQuery, setSearchQuery] = useState('');
   const [openCategories, setOpenCategories] = useState<Set<string>>(new Set());
+  const [categoriesInitialized, setCategoriesInitialized] = useState(false);
 
   const filteredProducts = searchQuery ? searchProducts(searchQuery) : products;
   
   const groupedProducts = useMemo(() => {
     if (searchQuery) {
-      // When searching, show flat list
       return null;
     }
     return getProductsByCategory();
@@ -39,12 +39,13 @@ export function ProductGrid({ onAddToOrder }: ProductGridProps) {
     });
   };
 
-  // Initialize all categories as open
-  useMemo(() => {
-    if (groupedProducts) {
+  // Initialize all categories as open only once when data loads
+  useEffect(() => {
+    if (groupedProducts && !categoriesInitialized) {
       setOpenCategories(new Set(Object.keys(groupedProducts)));
+      setCategoriesInitialized(true);
     }
-  }, [groupedProducts]);
+  }, [groupedProducts, categoriesInitialized]);
 
   if (loading) {
     return (
