@@ -146,15 +146,15 @@ export function ProductCard({ product, onAddToOrder }: ProductCardProps) {
         </div>
 
         {/* Quantity Controls */}
-        <div className="flex items-center justify-between gap-2" onClick={(e) => e.stopPropagation()}>
+        <div className="flex items-center justify-between gap-1" onClick={(e) => e.stopPropagation()}>
           <div className="flex items-center gap-1 bg-muted rounded-lg p-1">
             <Button
               variant="ghost"
               size="icon"
-              className="h-10 w-10 rounded-lg bg-red-100 hover:bg-red-200 text-red-600 dark:bg-red-900/50 dark:hover:bg-red-900 dark:text-red-400 shadow-sm"
+              className="h-8 w-8 rounded-md bg-red-100 hover:bg-red-200 text-red-600 dark:bg-red-900/50 dark:hover:bg-red-900 dark:text-red-400"
               onClick={handleDecrement}
             >
-              <Minus className="h-5 w-5" />
+              <Minus className="h-4 w-4" />
             </Button>
             <input
               type="number"
@@ -166,25 +166,24 @@ export function ProductCard({ product, onAddToOrder }: ProductCardProps) {
                 setQuantity(Math.max(1, val));
               }}
               onClick={(e) => e.stopPropagation()}
-              className="w-12 h-10 text-center text-lg font-bold text-foreground bg-background border-2 border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+              className="w-10 h-8 text-center text-sm font-bold text-foreground bg-background border border-border rounded focus:outline-none focus:ring-1 focus:ring-emerald-500 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
             />
             <Button
               variant="ghost"
               size="icon"
-              className="h-10 w-10 rounded-lg bg-emerald-100 hover:bg-emerald-200 text-emerald-600 dark:bg-emerald-900/50 dark:hover:bg-emerald-900 dark:text-emerald-400 shadow-sm"
+              className="h-8 w-8 rounded-md bg-emerald-100 hover:bg-emerald-200 text-emerald-600 dark:bg-emerald-900/50 dark:hover:bg-emerald-900 dark:text-emerald-400"
               onClick={handleIncrement}
             >
-              <Plus className="h-5 w-5" />
+              <Plus className="h-4 w-4" />
             </Button>
           </div>
           
           <Button
-            size="default"
-            className="h-10 px-3 bg-gradient-to-r from-emerald-500 to-green-600 hover:from-emerald-600 hover:to-green-700 text-white font-bold shadow-lg text-sm"
+            size="sm"
+            className="h-8 px-2 bg-gradient-to-r from-emerald-500 to-green-600 hover:from-emerald-600 hover:to-green-700 text-white font-bold shadow text-xs"
             onClick={handleAddToOrder}
           >
-            <Plus className="h-4 w-4 mr-1" />
-            Add
+            <Plus className="h-3 w-3" />
           </Button>
         </div>
       </div>
