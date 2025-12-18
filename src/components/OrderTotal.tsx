@@ -43,9 +43,8 @@ export function OrderTotal({ total, itemCount, onReview, onFinalize, disabled }:
             <Button
               onClick={onReview}
               disabled={disabled}
-              variant="outline"
               size="lg"
-              className="font-bold bg-sky-100 hover:bg-sky-200 border-sky-300 text-sky-700"
+              className="font-bold bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white shadow-lg hover:shadow-xl transition-all duration-200"
             >
               <ClipboardCheck className="h-5 w-5 mr-2" />
               CONFERE
