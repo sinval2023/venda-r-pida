@@ -64,10 +64,10 @@ export function ClientSearchInput({ onClientSelect, selectedClient }: ClientSear
       </Label>
       <div className="relative">
         <Input
-          placeholder="Buscar cliente por nome..."
-          value={search}
-          onChange={(e) => handleSearch(e.target.value)}
-          className="h-9 text-sm pr-8"
+          placeholder="BUSCAR CLIENTE POR NOME..."
+          value={search.toUpperCase()}
+          onChange={(e) => handleSearch(e.target.value.toUpperCase())}
+          className="h-11 text-base font-bold uppercase pr-8"
         />
         {search && (
           <Button
