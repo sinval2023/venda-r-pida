@@ -9,7 +9,7 @@ interface OrderTotalProps {
   disabled: boolean;
 }
 
-export function OrderTotal({ total, itemCount, onReview, onFinalize, disabled }: OrderTotalProps) {
+export function OrderTotal({ total, itemCount, productCount, onReview, onFinalize, disabled }: OrderTotalProps & { productCount?: number }) {
   const formatCurrency = (value: number) => {
     return value.toLocaleString('pt-BR', {
       style: 'currency',
@@ -30,6 +30,19 @@ export function OrderTotal({ total, itemCount, onReview, onFinalize, disabled }:
                 {itemCount === 1 ? 'item' : 'itens'}
               </div>
             </div>
+            {productCount !== undefined && (
+              <>
+                <div className="h-10 w-px bg-border" />
+                <div className="text-center">
+                  <div className="text-2xl font-bold text-muted-foreground">
+                    {productCount}
+                  </div>
+                  <div className="text-xs text-muted-foreground">
+                    {productCount === 1 ? 'produto' : 'produtos'}
+                  </div>
+                </div>
+              </>
+            )}
             <div className="h-10 w-px bg-border" />
             <div>
               <div className="text-xs text-muted-foreground">Total</div>
