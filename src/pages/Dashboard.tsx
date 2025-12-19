@@ -8,7 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Tooltip as UITooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { Tooltip as UITooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { useAuth } from '@/hooks/useAuth';
 import { useDashboard } from '@/hooks/useDashboard';
 import { useSellers } from '@/hooks/useSellers';
@@ -127,32 +127,36 @@ export default function Dashboard() {
       {/* Header */}
       <div className="bg-card border-b border-border p-4">
         <div className="max-w-7xl mx-auto flex items-center gap-4">
-          <TooltipProvider>
-            <UITooltip>
-              <TooltipTrigger asChild>
-                <Button 
-                  variant="ghost" 
-                  size="icon" 
-                  onClick={() => navigate('/', { replace: true })} 
-                  className="hidden md:flex transition-all duration-200 hover:scale-110 hover:-translate-x-1 active:scale-95"
-                >
-                  <ArrowLeft className="h-5 w-5" />
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent side="bottom">
-                <p>Voltar para pedidos</p>
-              </TooltipContent>
-            </UITooltip>
-          </TooltipProvider>
-          <Button 
-            variant="outline" 
-            size="sm" 
-            onClick={() => navigate('/', { replace: true })} 
+          <UITooltip>
+            <TooltipTrigger asChild>
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon"
+                aria-label="Voltar para pedidos"
+                title="Voltar para pedidos"
+                onClick={() => navigate('/', { replace: true })}
+                className="hidden md:flex transition-all duration-200 hover:scale-110 hover:-translate-x-1 active:scale-95"
+              >
+                <ArrowLeft className="h-5 w-5" />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent side="bottom">
+              <p>Voltar para pedidos</p>
+            </TooltipContent>
+          </UITooltip>
+
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            onClick={() => navigate('/', { replace: true })}
             className="md:hidden gap-2 transition-all duration-200 hover:scale-105 hover:-translate-x-1 active:scale-95 hover:shadow-md"
           >
             <ArrowLeft className="h-4 w-4 transition-transform duration-200 group-hover:-translate-x-1" />
             Voltar para Pedido
           </Button>
+
           <h1 className="text-xl font-bold text-foreground">Painel de Desempenho</h1>
         </div>
       </div>
