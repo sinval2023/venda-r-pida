@@ -133,55 +133,56 @@ export default function Dashboard() {
   }));
 
   return (
-    <div className="min-h-screen bg-background">
-      {/* Header */}
-      <div className="bg-card border-b border-border p-4">
-        <div className="max-w-7xl mx-auto flex items-center gap-4">
-          <UITooltip>
-            <TooltipTrigger asChild>
-              <Button
-                type="button"
-                variant="ghost"
-                size="icon"
-                aria-label="Voltar para pedidos"
-                title="Voltar para pedidos"
-                onClick={handleNavigateBack}
-                disabled={isNavigatingBack}
-                className="hidden md:flex transition-all duration-200 hover:scale-110 hover:-translate-x-1 active:scale-95"
-              >
-                {isNavigatingBack ? (
-                  <Loader2 className="h-5 w-5 animate-spin" />
-                ) : (
-                  <ArrowLeft className="h-5 w-5" />
-                )}
-              </Button>
-            </TooltipTrigger>
-            <TooltipContent side="bottom">
-              <p>Voltar para pedidos</p>
-            </TooltipContent>
-          </UITooltip>
-
+    <div className="min-h-screen bg-background flex flex-col">
+      {/* Header - Same style as main app */}
+      <header className="fixed top-0 left-0 right-0 z-50 bg-gradient-to-r from-sky-400 via-sky-500 to-cyan-400 text-white shadow-lg">
+        <div className="container mx-auto px-4 py-4 flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <UITooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon"
+                  aria-label="Voltar para pedidos"
+                  onClick={handleNavigateBack}
+                  disabled={isNavigatingBack}
+                  className="text-white hover:bg-white/20 transition-all duration-200 hover:scale-110 active:scale-95"
+                >
+                  {isNavigatingBack ? (
+                    <Loader2 className="h-5 w-5 animate-spin" />
+                  ) : (
+                    <ArrowLeft className="h-5 w-5" />
+                  )}
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent side="bottom">
+                <p>Voltar para pedidos</p>
+              </TooltipContent>
+            </UITooltip>
+            
+            <h1 className="text-xl font-bold truncate">Painel de Desempenho</h1>
+          </div>
+          
           <Button
             type="button"
-            variant="outline"
+            variant="ghost"
             size="sm"
             onClick={handleNavigateBack}
             disabled={isNavigatingBack}
-            className="md:hidden gap-2 transition-all duration-200 hover:scale-105 hover:-translate-x-1 active:scale-95 hover:shadow-md"
+            className="text-white hover:bg-white/20 gap-2 transition-all duration-200"
           >
             {isNavigatingBack ? (
               <Loader2 className="h-4 w-4 animate-spin" />
             ) : (
-              <ArrowLeft className="h-4 w-4 transition-transform duration-200 group-hover:-translate-x-1" />
+              <ArrowLeft className="h-4 w-4" />
             )}
-            {isNavigatingBack ? "Voltando..." : "Voltar para Pedido"}
+            <span className="hidden sm:inline">{isNavigatingBack ? "Voltando..." : "Voltar"}</span>
           </Button>
-
-          <h1 className="text-xl font-bold text-foreground">Painel de Desempenho</h1>
         </div>
-      </div>
+      </header>
 
-      <div className="max-w-7xl mx-auto p-4 space-y-6">
+      <div className="max-w-7xl mx-auto p-4 space-y-6 mt-16">
         {/* Filters */}
         <Card>
           <CardHeader>
