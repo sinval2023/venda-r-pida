@@ -17,7 +17,7 @@ import { Order, Product } from '@/types/order';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { History, Search, BarChart3 } from 'lucide-react';
+import { History, Search, BarChart3, TrendingUp } from 'lucide-react';
 import { Client } from '@/hooks/useClients';
 import { Seller } from '@/hooks/useSellers';
 
@@ -88,6 +88,10 @@ const Index = () => {
     navigate('/relatorios');
   };
 
+  const handleDashboardClick = () => {
+    navigate('/dashboard');
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
@@ -147,6 +151,15 @@ const Index = () => {
           <Button
             variant="outline"
             size="default"
+            onClick={handleDashboardClick}
+            className="gap-1.5 text-sm font-semibold px-3 hover:bg-gradient-to-r hover:from-emerald-400 hover:to-teal-500 hover:text-white hover:border-emerald-400 transition-all duration-300 shadow-sm"
+          >
+            <TrendingUp className="h-4 w-4" />
+            <span className="hidden sm:inline">Painel</span>
+          </Button>
+          <Button
+            variant="outline"
+            size="default"
             onClick={handleReportsClick}
             className="gap-1.5 text-sm font-semibold px-3 hover:bg-gradient-to-r hover:from-blue-400 hover:to-indigo-500 hover:text-white hover:border-blue-400 transition-all duration-300 shadow-sm"
           >
@@ -165,7 +178,7 @@ const Index = () => {
         </div>
 
         {/* Product Grid - No categories, directly showing cards */}
-        <ProductGrid 
+        <ProductGrid
           onAddToOrder={handleAddToOrder}
           searchQuery={searchQuery}
           onSearchChange={setSearchQuery}
