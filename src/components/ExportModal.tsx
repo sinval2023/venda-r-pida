@@ -1,6 +1,6 @@
 import { useState, useMemo, useEffect } from 'react';
 import type { MouseEvent } from 'react';
-import { Download, Upload, FileText, FileCode, AlertCircle, Loader2, Share2, MessageCircle, CheckCircle2, Save } from 'lucide-react';
+import { Download, Upload, FileText, FileCode, AlertCircle, Loader2, Share2, MessageCircle, CheckCircle2, Save, Database } from 'lucide-react';
 import { Progress } from '@/components/ui/progress';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -117,6 +117,104 @@ export function ExportModal({ order, open, onClose, onSuccess, onBack }: ExportM
   const { history: ftpHistory, loading: historyLoading, addEntry: addFTPHistoryEntry } = useFTPHistory();
   const ftpValidation = useMemo(() => validateFTPConfig(ftpConfig), [ftpConfig]);
   const canShare = typeof navigator !== 'undefined' && navigator.share && navigator.canShare;
+  const [savingToDatabase, setSavingToDatabase] = useState(false);
+  const [savedToDatabase, setSavedToDatabase] = useState(false);
+
+  // Check if order exists in database
+  useEffect(() => {
+    const checkOrderExists = async () => {
+      if (!open || !order.number) return;
+      
+      try {
+        const { data, error } = await supabase
+          .from('orders')
+          .select('id')
+          .eq('order_number', order.number)
+          .maybeSingle();
+        
+        if (!error && data) {
+          setSavedToDatabase(true);
+        } else {
+          setSavedToDatabase(false);
+        }
+      } catch (err) {
+        console.error('Error checking order:', err);
+      }
+    };
+    
+    checkOrderExists();
+  }, [open, order.number]);
+
+  // Save order to database
+  const handleSaveToDatabase = async () => {
+    if (!user || savedToDatabase) return;
+    
+    setSavingToDatabase(true);
+    try {
+      // Save order
+      const { data: savedOrder, error: orderError } = await supabase
+        .from('orders')
+        .insert({
+          order_number: order.number,
+          seller_id: null,
+          seller_name: order.vendorName,
+          client_id: null,
+          client_name: null,
+          user_id: user.id,
+          total: order.total,
+          observations: null
+        })
+        .select()
+        .single();
+
+      if (orderError) {
+        console.error('Error saving order:', orderError);
+        toast({
+          title: 'Erro ao salvar',
+          description: orderError.message || 'Não foi possível salvar o pedido.',
+          variant: 'destructive',
+        });
+        setSavingToDatabase(false);
+        return;
+      }
+
+      // Save order items
+      if (savedOrder) {
+        const orderItems = order.items.map(item => ({
+          order_id: savedOrder.id,
+          product_id: item.productId,
+          product_code: item.code,
+          product_description: item.description,
+          quantity: item.quantity,
+          unit_price: item.unitPrice,
+          total: item.total
+        }));
+
+        const { error: itemsError } = await supabase
+          .from('order_items')
+          .insert(orderItems);
+
+        if (itemsError) {
+          console.error('Error saving order items:', itemsError);
+        }
+      }
+
+      setSavedToDatabase(true);
+      toast({
+        title: 'Pedido salvo!',
+        description: 'O pedido foi salvo no banco de dados para relatórios.',
+      });
+    } catch (err) {
+      console.error('Error saving order:', err);
+      toast({
+        title: 'Erro ao salvar',
+        description: 'Não foi possível salvar o pedido.',
+        variant: 'destructive',
+      });
+    } finally {
+      setSavingToDatabase(false);
+    }
+  };
 
   // Load saved FTP credentials from database
   useEffect(() => {
@@ -501,6 +599,35 @@ export function ExportModal({ order, open, onClose, onSuccess, onBack }: ExportM
               <span>{order.items.length}</span>
             </div>
           </Card>
+
+          {/* Save to Database Button */}
+          <Button
+            type="button"
+            onClick={handleSaveToDatabase}
+            disabled={savingToDatabase || savedToDatabase}
+            className={`w-full h-10 flex items-center justify-center gap-2 font-semibold transition-all ${
+              savedToDatabase 
+                ? 'bg-green-600 hover:bg-green-600 text-white cursor-default' 
+                : 'bg-blue-600 hover:bg-blue-700 text-white'
+            }`}
+          >
+            {savingToDatabase ? (
+              <>
+                <Loader2 className="h-4 w-4 animate-spin" />
+                Salvando...
+              </>
+            ) : savedToDatabase ? (
+              <>
+                <CheckCircle2 className="h-4 w-4" />
+                Salvo no Banco de Dados
+              </>
+            ) : (
+              <>
+                <Database className="h-4 w-4" />
+                SALVAR PARA RELATÓRIOS
+              </>
+            )}
+          </Button>
 
           <div>
             <Label className="mb-1 block text-sm">Formato</Label>
