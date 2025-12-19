@@ -126,16 +126,21 @@ export default function Dashboard() {
       {/* Header */}
       <div className="bg-card border-b border-border p-4">
         <div className="max-w-7xl mx-auto flex items-center gap-4">
-          <Button variant="ghost" size="icon" onClick={() => navigate('/', { replace: true })} className="hidden md:flex">
+          <Button 
+            variant="ghost" 
+            size="icon" 
+            onClick={() => navigate('/', { replace: true })} 
+            className="hidden md:flex transition-all duration-200 hover:scale-110 hover:-translate-x-1 active:scale-95"
+          >
             <ArrowLeft className="h-5 w-5" />
           </Button>
           <Button 
             variant="outline" 
             size="sm" 
             onClick={() => navigate('/', { replace: true })} 
-            className="md:hidden gap-2"
+            className="md:hidden gap-2 transition-all duration-200 hover:scale-105 hover:-translate-x-1 active:scale-95 hover:shadow-md"
           >
-            <ArrowLeft className="h-4 w-4" />
+            <ArrowLeft className="h-4 w-4 transition-transform duration-200 group-hover:-translate-x-1" />
             Voltar para Pedido
           </Button>
           <h1 className="text-xl font-bold text-foreground">Painel de Desempenho</h1>
