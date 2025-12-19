@@ -162,8 +162,8 @@ export function ProductCard({ product, onAddToOrder }: ProductCardProps) {
 
       {/* Product Info */}
       <div className="p-2">
-        {/* Product Name - Larger and Highlighted */}
-        <h3 className="font-extrabold text-base text-foreground line-clamp-2 h-12 mb-1 group-hover:text-emerald-600 dark:group-hover:text-emerald-400 transition-colors duration-200">
+        {/* Product Name - Centered, Roboto, Responsive */}
+        <h3 className="font-roboto font-bold text-sm sm:text-base md:text-lg lg:text-xl text-foreground line-clamp-2 h-12 sm:h-14 mb-1 text-center group-hover:text-emerald-600 dark:group-hover:text-emerald-400 transition-colors duration-200">
           {product.description}
         </h3>
         
