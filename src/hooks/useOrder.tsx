@@ -8,25 +8,35 @@ export function useOrder() {
   const { user } = useAuth();
 
   const addItem = (product: Product, quantity: number, unitPrice: number) => {
-    const existingIndex = items.findIndex(item => item.productId === product.id);
-    
+    // Se o mesmo produto for adicionado com preços diferentes,
+    // criamos linhas separadas no pedido (evita “grudar” no último preço editado).
+    const priceCents = Math.round(unitPrice * 100);
+
+    const existingIndex = items.findIndex(
+      (item) =>
+        item.productId === product.id && Math.round(item.unitPrice * 100) === priceCents
+    );
+
     if (existingIndex >= 0) {
       const updatedItems = [...items];
       updatedItems[existingIndex].quantity += quantity;
-      updatedItems[existingIndex].total = updatedItems[existingIndex].quantity * updatedItems[existingIndex].unitPrice;
+      updatedItems[existingIndex].total =
+        updatedItems[existingIndex].quantity * updatedItems[existingIndex].unitPrice;
       setItems(updatedItems);
-    } else {
-      const newItem: OrderItem = {
-        id: crypto.randomUUID(),
-        productId: product.id,
-        code: product.code,
-        description: product.description,
-        quantity,
-        unitPrice,
-        total: quantity * unitPrice,
-      };
-      setItems([...items, newItem]);
+      return;
     }
+
+    const newItem: OrderItem = {
+      id: crypto.randomUUID(),
+      productId: product.id,
+      code: product.code,
+      description: product.description,
+      quantity,
+      unitPrice,
+      total: quantity * unitPrice,
+    };
+
+    setItems([...items, newItem]);
   };
 
   const removeItem = (itemId: string) => {
