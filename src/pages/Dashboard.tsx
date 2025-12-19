@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { format, subDays } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import { ArrowLeft, Search, RefreshCw, TrendingUp, ShoppingCart, Users, Package, DollarSign } from 'lucide-react';
+import { ArrowLeft, Search, RefreshCw, TrendingUp, ShoppingCart, Users, Package, DollarSign, ClipboardList } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -595,6 +595,16 @@ export default function Dashboard() {
           </Card>
         </div>
       </div>
+
+      {/* Botão flutuante para voltar ao pedido (mobile) */}
+      <Button
+        onClick={() => navigate('/', { replace: true })}
+        className="fixed bottom-6 right-6 md:hidden shadow-lg z-50 gap-2"
+        size="lg"
+      >
+        <ClipboardList className="h-5 w-5" />
+        Voltar para Pedido
+      </Button>
     </div>
   );
 }
