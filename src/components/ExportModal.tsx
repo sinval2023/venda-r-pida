@@ -476,6 +476,46 @@ export function ExportModal({ order, open, onClose, onSuccess, onBack }: ExportM
   const handleExport = async () => {
     console.log('handleExport called, destination:', destination);
     
+    // Auto-save to database before any export
+    if (!savedToDatabase && user) {
+      setSavingToDatabase(true);
+      try {
+        const { data: savedOrder, error: orderError } = await supabase
+          .from('orders')
+          .insert({
+            order_number: order.number,
+            seller_id: null,
+            seller_name: order.vendorName,
+            client_id: null,
+            client_name: null,
+            user_id: user.id,
+            total: order.total,
+            observations: null
+          })
+          .select()
+          .single();
+
+        if (!orderError && savedOrder) {
+          const orderItems = order.items.map(item => ({
+            order_id: savedOrder.id,
+            product_id: item.productId,
+            product_code: item.code,
+            product_description: item.description,
+            quantity: item.quantity,
+            unit_price: item.unitPrice,
+            total: item.total
+          }));
+
+          await supabase.from('order_items').insert(orderItems);
+          setSavedToDatabase(true);
+        }
+      } catch (err) {
+        console.error('Error auto-saving order:', err);
+      } finally {
+        setSavingToDatabase(false);
+      }
+    }
+    
     if (destination === 'share') {
       await handleShare();
       return;
