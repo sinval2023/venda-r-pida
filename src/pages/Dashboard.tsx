@@ -85,12 +85,16 @@ export default function Dashboard() {
     }
   }, [user, authLoading, navigate]);
 
-  const formatCurrency = (value: number) => {
-    return value.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+  const formatCurrency = (value: unknown) => {
+    const n = Number(value);
+    const safe = Number.isFinite(n) ? n : 0;
+    return safe.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
   };
 
-  const formatDateLabel = (dateStr: string) => {
+  const formatDateLabel = (dateStr: unknown) => {
+    if (typeof dateStr !== 'string' || !dateStr) return '';
     const date = new Date(dateStr + 'T12:00:00');
+    if (Number.isNaN(date.getTime())) return dateStr;
     return format(date, 'dd/MM', { locale: ptBR });
   };
 
@@ -303,10 +307,12 @@ export default function Dashboard() {
                       <Tooltip
                         content={({ active, payload }) => {
                           if (active && payload && payload.length) {
+                            const date = payload?.[0]?.payload?.date;
+                            const value = payload?.[0]?.value;
                             return (
                               <div className="bg-popover border border-border rounded-lg p-3 shadow-lg">
-                                <p className="text-sm font-medium">{formatDateLabel(payload[0].payload.date)}</p>
-                                <p className="text-sm text-emerald-600">{formatCurrency(payload[0].value as number)}</p>
+                                <p className="text-sm font-medium">{formatDateLabel(date)}</p>
+                                <p className="text-sm text-emerald-600">{formatCurrency(value)}</p>
                               </div>
                             );
                           }
@@ -466,10 +472,12 @@ export default function Dashboard() {
                       <Tooltip
                         content={({ active, payload }) => {
                           if (active && payload && payload.length) {
+                            const name = payload?.[0]?.name;
+                            const value = payload?.[0]?.value;
                             return (
                               <div className="bg-popover border border-border rounded-lg p-3 shadow-lg">
-                                <p className="text-sm font-medium">{payload[0].name}</p>
-                                <p className="text-sm text-emerald-600">{formatCurrency(payload[0].value as number)}</p>
+                                <p className="text-sm font-medium">{String(name ?? '')}</p>
+                                <p className="text-sm text-emerald-600">{formatCurrency(value)}</p>
                               </div>
                             );
                           }

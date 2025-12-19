@@ -56,6 +56,10 @@ export function useDashboard() {
       const startDateAdjusted = new Date(filters.startDate + 'T00:00:00');
       const endDateAdjusted = new Date(filters.endDate + 'T23:59:59.999');
 
+      const toNum = (v: unknown) => {
+        const n = Number(v);
+        return Number.isFinite(n) ? n : 0;
+      };
       // Build orders query
       let ordersQuery = supabase
         .from('orders')
@@ -101,10 +105,10 @@ export function useDashboard() {
       // Calculate sales over time (grouped by day)
       const salesByDate = new Map<string, { total: number; count: number }>();
       filteredOrders.forEach(order => {
-        const date = order.created_at.split('T')[0];
+        const date = String(order.created_at || '').split('T')[0];
         const current = salesByDate.get(date) || { total: 0, count: 0 };
         salesByDate.set(date, {
-          total: current.total + Number(order.total),
+          total: current.total + toNum(order.total),
           count: current.count + 1
         });
       });
@@ -122,9 +126,10 @@ export function useDashboard() {
       // Calculate seller performance
       const sellerMap = new Map<string, { total: number; count: number }>();
       filteredOrders.forEach(order => {
-        const current = sellerMap.get(order.seller_name) || { total: 0, count: 0 };
-        sellerMap.set(order.seller_name, {
-          total: current.total + Number(order.total),
+        const sellerName = order.seller_name || 'Sem vendedor';
+        const current = sellerMap.get(sellerName) || { total: 0, count: 0 };
+        sellerMap.set(sellerName, {
+          total: current.total + toNum(order.total),
           count: current.count + 1
         });
       });
@@ -143,15 +148,16 @@ export function useDashboard() {
       // Calculate product performance
       const productMap = new Map<string, { description: string; quantity: number; value: number }>();
       itemsData.forEach(item => {
-        const current = productMap.get(item.product_code) || {
+        const code = String(item.product_code || '');
+        const current = productMap.get(code) || {
           description: item.product_description,
           quantity: 0,
           value: 0
         };
-        productMap.set(item.product_code, {
+        productMap.set(code, {
           description: item.product_description,
-          quantity: current.quantity + item.quantity,
-          value: current.value + Number(item.total)
+          quantity: current.quantity + toNum(item.quantity),
+          value: current.value + toNum(item.total)
         });
       });
 
@@ -167,9 +173,9 @@ export function useDashboard() {
       setTopProductsByQuantity([...productData].sort((a, b) => b.total_quantity - a.total_quantity).slice(0, 10));
 
       // Calculate summary
-      const totalSales = filteredOrders.reduce((sum, o) => sum + Number(o.total), 0);
+      const totalSales = filteredOrders.reduce((sum, o) => sum + toNum(o.total), 0);
       const totalOrders = filteredOrders.length;
-      const uniqueSellers = new Set(filteredOrders.map(o => o.seller_name)).size;
+      const uniqueSellers = new Set(filteredOrders.map(o => o.seller_name || 'Sem vendedor')).size;
       const uniqueProducts = productMap.size;
 
       setSummary({
