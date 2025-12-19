@@ -144,11 +144,11 @@ export function ProductCard({ product, onAddToOrder }: ProductCardProps) {
             )}
           </>
         ) : categoryIcon ? (
-          <div className="p-1.5 rounded-lg border-2 border-sky-300 hover:border-sky-500 bg-gradient-to-br from-sky-50 via-blue-100 to-sky-200 dark:from-sky-900/40 dark:via-blue-900/30 dark:to-sky-800/40 transition-all duration-300 hover:shadow-lg hover:scale-105">
-            <img src={categoryIcon} alt="Categoria" className="w-8 h-8 sm:w-10 sm:h-10 object-contain" />
+          <div className="p-1.5 rounded-lg border-2 border-sky-300 hover:border-sky-500 bg-gradient-to-br from-sky-50 via-blue-100 to-sky-200 dark:from-sky-900/40 dark:via-blue-900/30 dark:to-sky-800/40 transition-all duration-300 hover:shadow-lg hover:scale-105 animate-fade-in">
+            <img src={categoryIcon} alt="Categoria" className="w-8 h-8 sm:w-10 sm:h-10 object-contain animate-fade-in" />
           </div>
         ) : (
-          <div className="p-1.5 rounded-lg border-2 border-sky-300 bg-gradient-to-br from-sky-50 via-blue-100 to-sky-200 dark:from-sky-900/40 dark:via-blue-900/30 dark:to-sky-800/40">
+          <div className="p-1.5 rounded-lg border-2 border-sky-300 bg-gradient-to-br from-sky-50 via-blue-100 to-sky-200 dark:from-sky-900/40 dark:via-blue-900/30 dark:to-sky-800/40 animate-fade-in">
             <Package className="w-8 h-8 sm:w-10 sm:h-10 text-sky-500 dark:text-sky-400" />
           </div>
         )}
