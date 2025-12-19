@@ -1,8 +1,8 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { format, subDays } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import { ArrowLeft, Search, RefreshCw, TrendingUp, ShoppingCart, Users, Package, DollarSign, ClipboardList } from 'lucide-react';
+import { ArrowLeft, Search, RefreshCw, TrendingUp, ShoppingCart, Users, Package, DollarSign, ClipboardList, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -62,7 +62,16 @@ export default function Dashboard() {
   const [endDate, setEndDate] = useState(format(new Date(), 'yyyy-MM-dd'));
   const [selectedSeller, setSelectedSeller] = useState<string>('all');
   const [selectedProduct, setSelectedProduct] = useState<string>('all');
+  const [isNavigatingBack, setIsNavigatingBack] = useState(false);
   const hasAutoLoadedRef = useRef(false);
+
+  const handleNavigateBack = useCallback(() => {
+    setIsNavigatingBack(true);
+    toast({ title: "Voltando para pedidos…", duration: 1500 });
+    setTimeout(() => {
+      navigate('/', { replace: true });
+    }, 300);
+  }, [navigate]);
 
   const handleSearch = () => {
     fetchDashboardData({
@@ -136,13 +145,15 @@ export default function Dashboard() {
                 size="icon"
                 aria-label="Voltar para pedidos"
                 title="Voltar para pedidos"
-                onClick={() => {
-                  toast({ title: "Voltando para pedidos…", duration: 1500 });
-                  navigate('/', { replace: true });
-                }}
+                onClick={handleNavigateBack}
+                disabled={isNavigatingBack}
                 className="hidden md:flex transition-all duration-200 hover:scale-110 hover:-translate-x-1 active:scale-95"
               >
-                <ArrowLeft className="h-5 w-5" />
+                {isNavigatingBack ? (
+                  <Loader2 className="h-5 w-5 animate-spin" />
+                ) : (
+                  <ArrowLeft className="h-5 w-5" />
+                )}
               </Button>
             </TooltipTrigger>
             <TooltipContent side="bottom">
@@ -154,14 +165,16 @@ export default function Dashboard() {
             type="button"
             variant="outline"
             size="sm"
-            onClick={() => {
-              toast({ title: "Voltando para pedidos…", duration: 1500 });
-              navigate('/', { replace: true });
-            }}
+            onClick={handleNavigateBack}
+            disabled={isNavigatingBack}
             className="md:hidden gap-2 transition-all duration-200 hover:scale-105 hover:-translate-x-1 active:scale-95 hover:shadow-md"
           >
-            <ArrowLeft className="h-4 w-4 transition-transform duration-200 group-hover:-translate-x-1" />
-            Voltar para Pedido
+            {isNavigatingBack ? (
+              <Loader2 className="h-4 w-4 animate-spin" />
+            ) : (
+              <ArrowLeft className="h-4 w-4 transition-transform duration-200 group-hover:-translate-x-1" />
+            )}
+            {isNavigatingBack ? "Voltando..." : "Voltar para Pedido"}
           </Button>
 
           <h1 className="text-xl font-bold text-foreground">Painel de Desempenho</h1>
