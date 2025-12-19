@@ -32,15 +32,19 @@ export function useSalesReport() {
   const fetchReport = async (startDate: string, endDate: string) => {
     setLoading(true);
     try {
+      // Adjust start date to include from the beginning of the day
+      const startDateAdjusted = new Date(startDate + 'T00:00:00');
+      
       // Adjust end date to include the full day
-      const endDateAdjusted = new Date(endDate);
-      endDateAdjusted.setHours(23, 59, 59, 999);
+      const endDateAdjusted = new Date(endDate + 'T23:59:59.999');
+
+      console.log('Fetching orders from:', startDateAdjusted.toISOString(), 'to:', endDateAdjusted.toISOString());
 
       // Fetch orders
       const { data: ordersData, error: ordersError } = await supabase
         .from('orders')
         .select('id, order_number, seller_name, client_name, total, created_at')
-        .gte('created_at', startDate)
+        .gte('created_at', startDateAdjusted.toISOString())
         .lte('created_at', endDateAdjusted.toISOString())
         .order('created_at', { ascending: false });
 
