@@ -126,8 +126,17 @@ export default function Dashboard() {
       {/* Header */}
       <div className="bg-card border-b border-border p-4">
         <div className="max-w-7xl mx-auto flex items-center gap-4">
-          <Button variant="ghost" size="icon" onClick={() => navigate('/', { replace: true })}>
+          <Button variant="ghost" size="icon" onClick={() => navigate('/', { replace: true })} className="hidden md:flex">
             <ArrowLeft className="h-5 w-5" />
+          </Button>
+          <Button 
+            variant="outline" 
+            size="sm" 
+            onClick={() => navigate('/', { replace: true })} 
+            className="md:hidden gap-2"
+          >
+            <ArrowLeft className="h-4 w-4" />
+            Voltar para Pedido
           </Button>
           <h1 className="text-xl font-bold text-foreground">Painel de Desempenho</h1>
         </div>
@@ -596,15 +605,6 @@ export default function Dashboard() {
         </div>
       </div>
 
-      {/* Botão flutuante para voltar ao pedido (mobile) */}
-      <Button
-        onClick={() => navigate('/', { replace: true })}
-        className="fixed bottom-6 right-6 md:hidden shadow-lg z-50 gap-2"
-        size="lg"
-      >
-        <ClipboardList className="h-5 w-5" />
-        Voltar para Pedido
-      </Button>
     </div>
   );
 }
