@@ -33,6 +33,7 @@ const Index = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedClient, setSelectedClient] = useState<Client | null>(null);
   const [selectedSeller, setSelectedSeller] = useState<Seller | null>(null);
+  const [observations, setObservations] = useState('');
 
   // Calculate total quantity of products in order
   const totalProductQuantity = useMemo(() => {
@@ -66,6 +67,7 @@ const Index = () => {
     clearOrder();
     setSelectedClient(null);
     setSelectedSeller(null);
+    setObservations('');
   };
 
   const handleExportBack = () => {
@@ -108,6 +110,13 @@ const Index = () => {
           <SellerCodeInput
             onSellerSelect={setSelectedSeller}
             selectedSeller={selectedSeller}
+          />
+          <Input
+            placeholder="OBSERVAÇÕES..."
+            value={observations}
+            onChange={(e) => setObservations(e.target.value.toUpperCase())}
+            className="h-8 text-xs sm:text-sm font-bold uppercase placeholder:font-bold placeholder:uppercase border-2 hover:border-primary hover:shadow-md transition-all duration-200 focus:ring-2 focus:ring-primary"
+            maxLength={100}
           />
         </div>
 
