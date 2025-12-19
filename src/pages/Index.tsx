@@ -159,7 +159,9 @@ const Index = () => {
         productCount={totalProductQuantity}
         onReview={handleReview}
         onFinalize={handleFinalize}
+        onCancelOrder={clearOrder}
         disabled={total === 0}
+        items={items}
       />
 
       <OrderReviewModal
