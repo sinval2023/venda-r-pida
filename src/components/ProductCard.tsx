@@ -6,7 +6,7 @@ import { Plus, Minus, ShoppingCart, Package, ChevronLeft, ChevronRight, Maximize
 import { ProductWithCategory } from '@/hooks/useProducts';
 import { ImageLightbox } from './ImageLightbox';
 import plantIcon from '@/assets/plant-icon.png';
-import fertilizerIcon from '@/assets/fertilizer-icon.png';
+import fertilizerIcon from '@/assets/fertilizer-icon-2.png';
 import vaseIcon from '@/assets/vase-icon.png';
 
 interface ProductCardProps {
@@ -144,9 +144,13 @@ export function ProductCard({ product, onAddToOrder }: ProductCardProps) {
             )}
           </>
         ) : categoryIcon ? (
-          <img src={categoryIcon} alt="Categoria" className="w-10 h-10 sm:w-12 sm:h-12 object-contain opacity-80" />
+          <div className="p-1.5 rounded-lg border-2 border-sky-300 hover:border-sky-500 bg-gradient-to-br from-sky-50 via-blue-100 to-sky-200 dark:from-sky-900/40 dark:via-blue-900/30 dark:to-sky-800/40 transition-all duration-300 hover:shadow-lg hover:scale-105">
+            <img src={categoryIcon} alt="Categoria" className="w-8 h-8 sm:w-10 sm:h-10 object-contain" />
+          </div>
         ) : (
-          <Package className="w-8 h-8 sm:w-10 sm:h-10 text-emerald-500 dark:text-emerald-400 opacity-60" />
+          <div className="p-1.5 rounded-lg border-2 border-sky-300 bg-gradient-to-br from-sky-50 via-blue-100 to-sky-200 dark:from-sky-900/40 dark:via-blue-900/30 dark:to-sky-800/40">
+            <Package className="w-8 h-8 sm:w-10 sm:h-10 text-sky-500 dark:text-sky-400" />
+          </div>
         )}
         <div className="absolute top-1 left-1 bg-primary text-primary-foreground text-[10px] font-bold px-1.5 py-0.5 rounded shadow">
           {product.code}
