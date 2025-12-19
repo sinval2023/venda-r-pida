@@ -9,6 +9,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Tooltip as UITooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
+import { toast } from '@/hooks/use-toast';
 import { useAuth } from '@/hooks/useAuth';
 import { useDashboard } from '@/hooks/useDashboard';
 import { useSellers } from '@/hooks/useSellers';
@@ -135,7 +136,10 @@ export default function Dashboard() {
                 size="icon"
                 aria-label="Voltar para pedidos"
                 title="Voltar para pedidos"
-                onClick={() => navigate('/', { replace: true })}
+                onClick={() => {
+                  toast({ title: "Voltando para pedidos…", duration: 1500 });
+                  navigate('/', { replace: true });
+                }}
                 className="hidden md:flex transition-all duration-200 hover:scale-110 hover:-translate-x-1 active:scale-95"
               >
                 <ArrowLeft className="h-5 w-5" />
@@ -150,7 +154,10 @@ export default function Dashboard() {
             type="button"
             variant="outline"
             size="sm"
-            onClick={() => navigate('/', { replace: true })}
+            onClick={() => {
+              toast({ title: "Voltando para pedidos…", duration: 1500 });
+              navigate('/', { replace: true });
+            }}
             className="md:hidden gap-2 transition-all duration-200 hover:scale-105 hover:-translate-x-1 active:scale-95 hover:shadow-md"
           >
             <ArrowLeft className="h-4 w-4 transition-transform duration-200 group-hover:-translate-x-1" />
