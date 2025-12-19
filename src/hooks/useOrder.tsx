@@ -3,13 +3,21 @@ import { supabase } from '@/integrations/supabase/client';
 import { OrderItem, Order, Product } from '@/types/order';
 import { useAuth } from './useAuth';
 
+interface FinalizeOrderParams {
+  sellerId?: string;
+  sellerName?: string;
+  clientId?: string;
+  clientName?: string;
+  observations?: string;
+}
+
 export function useOrder() {
   const [items, setItems] = useState<OrderItem[]>([]);
   const { user } = useAuth();
 
   const addItem = (product: Product, quantity: number, unitPrice: number) => {
     // Se o mesmo produto for adicionado com preços diferentes,
-    // criamos linhas separadas no pedido (evita “grudar” no último preço editado).
+    // criamos linhas separadas no pedido (evita "grudar" no último preço editado).
     const priceCents = Math.round(unitPrice * 100);
 
     const existingIndex = items.findIndex(
@@ -60,7 +68,7 @@ export function useOrder() {
     setItems([]);
   };
 
-  const finalizeOrder = async (): Promise<Order | null> => {
+  const finalizeOrder = async (params?: FinalizeOrderParams): Promise<Order | null> => {
     if (items.length === 0 || !user) return null;
 
     const { data: nextNumber, error } = await supabase.rpc('get_next_order_number');
@@ -70,13 +78,55 @@ export function useOrder() {
       return null;
     }
 
+    const orderTotal = getTotal();
+    const sellerName = params?.sellerName || user.user_metadata?.full_name || user.email || 'Vendedor';
+
+    // Save order to database
+    const { data: savedOrder, error: orderError } = await supabase
+      .from('orders')
+      .insert({
+        order_number: nextNumber,
+        seller_id: params?.sellerId || null,
+        seller_name: sellerName,
+        client_id: params?.clientId || null,
+        client_name: params?.clientName || null,
+        user_id: user.id,
+        total: orderTotal,
+        observations: params?.observations || null
+      })
+      .select()
+      .single();
+
+    if (orderError) {
+      console.error('Error saving order:', orderError);
+    } else if (savedOrder) {
+      // Save order items
+      const orderItems = items.map(item => ({
+        order_id: savedOrder.id,
+        product_id: item.productId,
+        product_code: item.code,
+        product_description: item.description,
+        quantity: item.quantity,
+        unit_price: item.unitPrice,
+        total: item.total
+      }));
+
+      const { error: itemsError } = await supabase
+        .from('order_items')
+        .insert(orderItems);
+
+      if (itemsError) {
+        console.error('Error saving order items:', itemsError);
+      }
+    }
+
     const order: Order = {
       number: nextNumber,
       date: new Date().toISOString(),
       vendorId: user.id,
-      vendorName: user.user_metadata?.full_name || user.email || 'Vendedor',
+      vendorName: sellerName,
       items: [...items],
-      total: getTotal(),
+      total: orderTotal,
     };
 
     return order;

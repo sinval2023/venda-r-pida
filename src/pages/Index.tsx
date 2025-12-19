@@ -17,7 +17,7 @@ import { Order, Product } from '@/types/order';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { History, Search } from 'lucide-react';
+import { History, Search, BarChart3 } from 'lucide-react';
 import { Client } from '@/hooks/useClients';
 import { Seller } from '@/hooks/useSellers';
 
@@ -56,7 +56,13 @@ const Index = () => {
 
   const handleFinalize = async () => {
     setShowReview(false);
-    const order = await finalizeOrder();
+    const order = await finalizeOrder({
+      sellerId: selectedSeller?.id,
+      sellerName: selectedSeller?.name,
+      clientId: selectedClient?.id,
+      clientName: selectedClient?.name,
+      observations
+    });
     if (order) {
       setExportOrder(order);
     }
@@ -76,6 +82,10 @@ const Index = () => {
 
   const handleAdminClick = () => {
     navigate('/admin');
+  };
+
+  const handleReportsClick = () => {
+    navigate('/relatorios');
   };
 
   if (loading) {
@@ -134,6 +144,15 @@ const Index = () => {
           <XMLImportButtons 
             onProductsImported={refetchProducts}
           />
+          <Button
+            variant="outline"
+            size="default"
+            onClick={handleReportsClick}
+            className="gap-1.5 text-sm font-semibold px-3 hover:bg-gradient-to-r hover:from-blue-400 hover:to-indigo-500 hover:text-white hover:border-blue-400 transition-all duration-300 shadow-sm"
+          >
+            <BarChart3 className="h-4 w-4" />
+            <span className="hidden sm:inline">Relatórios</span>
+          </Button>
           <Button
             variant="outline"
             size="default"
