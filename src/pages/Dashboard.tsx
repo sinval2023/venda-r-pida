@@ -8,6 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Tooltip as UITooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { useAuth } from '@/hooks/useAuth';
 import { useDashboard } from '@/hooks/useDashboard';
 import { useSellers } from '@/hooks/useSellers';
@@ -126,14 +127,23 @@ export default function Dashboard() {
       {/* Header */}
       <div className="bg-card border-b border-border p-4">
         <div className="max-w-7xl mx-auto flex items-center gap-4">
-          <Button 
-            variant="ghost" 
-            size="icon" 
-            onClick={() => navigate('/', { replace: true })} 
-            className="hidden md:flex transition-all duration-200 hover:scale-110 hover:-translate-x-1 active:scale-95"
-          >
-            <ArrowLeft className="h-5 w-5" />
-          </Button>
+          <TooltipProvider>
+            <UITooltip>
+              <TooltipTrigger asChild>
+                <Button 
+                  variant="ghost" 
+                  size="icon" 
+                  onClick={() => navigate('/', { replace: true })} 
+                  className="hidden md:flex transition-all duration-200 hover:scale-110 hover:-translate-x-1 active:scale-95"
+                >
+                  <ArrowLeft className="h-5 w-5" />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent side="bottom">
+                <p>Voltar para pedidos</p>
+              </TooltipContent>
+            </UITooltip>
+          </TooltipProvider>
           <Button 
             variant="outline" 
             size="sm" 
