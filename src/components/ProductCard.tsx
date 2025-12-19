@@ -18,13 +18,16 @@ export function ProductCard({ product, onAddToOrder }: ProductCardProps) {
   const [customPrice, setCustomPrice] = useState(product.default_price);
   const priceInputRef = useRef<HTMLInputElement>(null);
 
-  // Focus no campo de preço quando editPrice muda para true
+  // Focus no campo de preço e reset para preço original quando editPrice muda para true
   useEffect(() => {
-    if (editPrice && priceInputRef.current) {
-      priceInputRef.current.focus();
-      priceInputRef.current.select();
+    if (editPrice) {
+      setCustomPrice(product.default_price);
+      if (priceInputRef.current) {
+        priceInputRef.current.focus();
+        priceInputRef.current.select();
+      }
     }
-  }, [editPrice]);
+  }, [editPrice, product.default_price]);
 
   const formatCurrency = (value: number) => {
     return value.toLocaleString('pt-BR', {
