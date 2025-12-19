@@ -56,18 +56,7 @@ export default function Dashboard() {
   const [endDate, setEndDate] = useState(format(new Date(), 'yyyy-MM-dd'));
   const [selectedSeller, setSelectedSeller] = useState<string>('all');
   const [selectedProduct, setSelectedProduct] = useState<string>('all');
-
-  useEffect(() => {
-    if (!authLoading && !user) {
-      navigate('/auth');
-    }
-  }, [user, authLoading, navigate]);
-
-  useEffect(() => {
-    if (user) {
-      handleSearch();
-    }
-  }, [user]);
+  const [initialized, setInitialized] = useState(false);
 
   const handleSearch = () => {
     fetchDashboardData({
@@ -77,6 +66,25 @@ export default function Dashboard() {
       productCode: selectedProduct !== 'all' ? selectedProduct : undefined
     });
   };
+
+  useEffect(() => {
+    if (authLoading) return;
+    
+    if (!user) {
+      navigate('/auth');
+      return;
+    }
+    
+    if (!initialized) {
+      setInitialized(true);
+    }
+  }, [user, authLoading, navigate, initialized]);
+
+  useEffect(() => {
+    if (user && initialized) {
+      handleSearch();
+    }
+  }, [initialized]);
 
   const formatCurrency = (value: number) => {
     return value.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
