@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -16,6 +16,15 @@ export function ProductCard({ product, onAddToOrder }: ProductCardProps) {
   const [isHovered, setIsHovered] = useState(false);
   const [editPrice, setEditPrice] = useState(false);
   const [customPrice, setCustomPrice] = useState(product.default_price);
+  const priceInputRef = useRef<HTMLInputElement>(null);
+
+  // Focus no campo de preço quando editPrice muda para true
+  useEffect(() => {
+    if (editPrice && priceInputRef.current) {
+      priceInputRef.current.focus();
+      priceInputRef.current.select();
+    }
+  }, [editPrice]);
 
   const formatCurrency = (value: number) => {
     return value.toLocaleString('pt-BR', {
@@ -40,6 +49,14 @@ export function ProductCard({ product, onAddToOrder }: ProductCardProps) {
     setQuantity(1);
     setEditPrice(false);
     setCustomPrice(product.default_price);
+  };
+
+  const handlePriceKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter') {
+      e.stopPropagation();
+      e.preventDefault();
+      handleAddToOrder();
+    }
   };
 
   return (
@@ -72,13 +89,15 @@ export function ProductCard({ product, onAddToOrder }: ProductCardProps) {
         ) : (
           <div className="flex justify-center mb-0.5 sm:mb-1" onClick={(e) => e.stopPropagation()}>
             <input
+              ref={priceInputRef}
               type="number"
               step="0.01"
               min="0"
               value={customPrice}
               onChange={(e) => setCustomPrice(parseFloat(e.target.value) || 0)}
               onClick={(e) => e.stopPropagation()}
-              className="w-16 sm:w-20 h-5 sm:h-6 text-center text-xs sm:text-sm font-bold text-foreground bg-background border-2 border-emerald-500 rounded focus:outline-none focus:ring-2 focus:ring-emerald-500 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+              onKeyDown={handlePriceKeyDown}
+              className="w-16 sm:w-20 h-5 sm:h-6 text-center text-xs sm:text-sm font-bold text-foreground bg-background border-2 border-emerald-500 rounded focus:outline-none focus:ring-2 focus:ring-emerald-500 hover:border-emerald-600 hover:shadow-md transition-all duration-200 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
             />
           </div>
         )}
