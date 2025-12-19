@@ -406,11 +406,15 @@ export default function Dashboard() {
                       <YAxis className="text-xs" />
                       <Tooltip
                         content={({ active, payload }) => {
-                          if (active && payload && payload.length) {
+                          const p0 = payload?.[0];
+                          const date = (p0 as any)?.payload?.date;
+                          const value = p0?.value;
+
+                          if (active && typeof value !== 'undefined') {
                             return (
                               <div className="bg-popover border border-border rounded-lg p-3 shadow-lg">
-                                <p className="text-sm font-medium">{formatDateLabel(payload[0].payload.date)}</p>
-                                <p className="text-sm text-blue-600">{payload[0].value} pedidos</p>
+                                <p className="text-sm font-medium">{formatDateLabel(date)}</p>
+                                <p className="text-sm text-blue-600">{Number(value) || 0} pedidos</p>
                               </div>
                             );
                           }
@@ -463,18 +467,17 @@ export default function Dashboard() {
                       />
                       <Tooltip
                         content={({ active, payload }) => {
-                          if (active && payload && payload.length) {
-                            const data = payload[0].payload;
-                            return (
-                              <div className="bg-popover border border-border rounded-lg p-3 shadow-lg">
-                                <p className="text-sm font-medium">{data.seller_name}</p>
-                                <p className="text-sm text-emerald-600">Total: {formatCurrency(data.total_sales)}</p>
-                                <p className="text-sm text-muted-foreground">Pedidos: {data.order_count}</p>
-                                <p className="text-sm text-muted-foreground">Ticket Médio: {formatCurrency(data.average_ticket)}</p>
-                              </div>
-                            );
-                          }
-                          return null;
+                          const data = (payload?.[0] as any)?.payload;
+                          if (!active || !data) return null;
+
+                          return (
+                            <div className="bg-popover border border-border rounded-lg p-3 shadow-lg">
+                              <p className="text-sm font-medium">{String(data.seller_name ?? '')}</p>
+                              <p className="text-sm text-emerald-600">Total: {formatCurrency(data.total_sales)}</p>
+                              <p className="text-sm text-muted-foreground">Pedidos: {Number(data.order_count) || 0}</p>
+                              <p className="text-sm text-muted-foreground">Ticket Médio: {formatCurrency(data.average_ticket)}</p>
+                            </div>
+                          );
                         }}
                       />
                       <Bar dataKey="total_sales" fill="#10b981" radius={[0, 4, 4, 0]} />
@@ -571,18 +574,19 @@ export default function Dashboard() {
                       />
                       <Tooltip
                         content={({ active, payload }) => {
-                          if (active && payload && payload.length) {
-                            const data = payload[0].payload;
-                            return (
-                              <div className="bg-popover border border-border rounded-lg p-3 shadow-lg">
-                                <p className="text-sm font-medium">{data.product_code}</p>
-                                <p className="text-xs text-muted-foreground mb-1">{data.product_description}</p>
-                                <p className="text-sm text-blue-600">Valor: {formatCurrency(data.total_value)}</p>
-                                <p className="text-sm text-muted-foreground">Qtd: {data.total_quantity}</p>
-                              </div>
-                            );
-                          }
-                          return null;
+                          const data = (payload?.[0] as any)?.payload;
+                          if (!active || !data) return null;
+
+                          return (
+                            <div className="bg-popover border border-border rounded-lg p-3 shadow-lg">
+                              <p className="text-sm font-medium">{String(data.product_code ?? '')}</p>
+                              <p className="text-xs text-muted-foreground mb-1">
+                                {String(data.product_description ?? '')}
+                              </p>
+                              <p className="text-sm text-blue-600">Valor: {formatCurrency(data.total_value)}</p>
+                              <p className="text-sm text-muted-foreground">Qtd: {Number(data.total_quantity) || 0}</p>
+                            </div>
+                          );
                         }}
                       />
                       <Bar dataKey="total_value" fill="#3b82f6" radius={[0, 4, 4, 0]} />
@@ -617,18 +621,19 @@ export default function Dashboard() {
                       />
                       <Tooltip
                         content={({ active, payload }) => {
-                          if (active && payload && payload.length) {
-                            const data = payload[0].payload;
-                            return (
-                              <div className="bg-popover border border-border rounded-lg p-3 shadow-lg">
-                                <p className="text-sm font-medium">{data.product_code}</p>
-                                <p className="text-xs text-muted-foreground mb-1">{data.product_description}</p>
-                                <p className="text-sm text-amber-600">Qtd: {data.total_quantity}</p>
-                                <p className="text-sm text-muted-foreground">Valor: {formatCurrency(data.total_value)}</p>
-                              </div>
-                            );
-                          }
-                          return null;
+                          const data = (payload?.[0] as any)?.payload;
+                          if (!active || !data) return null;
+
+                          return (
+                            <div className="bg-popover border border-border rounded-lg p-3 shadow-lg">
+                              <p className="text-sm font-medium">{String(data.product_code ?? '')}</p>
+                              <p className="text-xs text-muted-foreground mb-1">
+                                {String(data.product_description ?? '')}
+                              </p>
+                              <p className="text-sm text-amber-600">Qtd: {Number(data.total_quantity) || 0}</p>
+                              <p className="text-sm text-muted-foreground">Valor: {formatCurrency(data.total_value)}</p>
+                            </div>
+                          );
                         }}
                       />
                       <Bar dataKey="total_quantity" fill="#f59e0b" radius={[0, 4, 4, 0]} />
