@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { format, subDays } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
@@ -12,11 +12,6 @@ import { useAuth } from '@/hooks/useAuth';
 import { useDashboard } from '@/hooks/useDashboard';
 import { useSellers } from '@/hooks/useSellers';
 import { useProducts } from '@/hooks/useProducts';
-import {
-  ChartContainer,
-  ChartTooltip,
-  ChartTooltipContent,
-} from '@/components/ui/chart';
 import {
   LineChart,
   Line,
@@ -35,7 +30,16 @@ import {
   Tooltip
 } from 'recharts';
 
-const COLORS = ['#10b981', '#3b82f6', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899', '#06b6d4', '#84cc16'];
+const COLORS = [
+  'hsl(var(--primary))',
+  'hsl(var(--secondary))',
+  'hsl(var(--accent))',
+  'hsl(var(--destructive))',
+  'hsl(var(--muted-foreground))',
+  'hsl(var(--ring))',
+  'hsl(var(--border))',
+  'hsl(var(--foreground))',
+];
 
 export default function Dashboard() {
   const navigate = useNavigate();
@@ -56,35 +60,30 @@ export default function Dashboard() {
   const [endDate, setEndDate] = useState(format(new Date(), 'yyyy-MM-dd'));
   const [selectedSeller, setSelectedSeller] = useState<string>('all');
   const [selectedProduct, setSelectedProduct] = useState<string>('all');
-  const [initialized, setInitialized] = useState(false);
+  const hasAutoLoadedRef = useRef(false);
 
   const handleSearch = () => {
     fetchDashboardData({
       startDate,
       endDate,
       sellerId: selectedSeller !== 'all' ? selectedSeller : undefined,
-      productCode: selectedProduct !== 'all' ? selectedProduct : undefined
+      productCode: selectedProduct !== 'all' ? selectedProduct : undefined,
     });
   };
 
   useEffect(() => {
     if (authLoading) return;
-    
+
     if (!user) {
       navigate('/auth');
       return;
     }
-    
-    if (!initialized) {
-      setInitialized(true);
-    }
-  }, [user, authLoading, navigate, initialized]);
 
-  useEffect(() => {
-    if (user && initialized) {
+    if (!hasAutoLoadedRef.current) {
+      hasAutoLoadedRef.current = true;
       handleSearch();
     }
-  }, [initialized]);
+  }, [user, authLoading, navigate]);
 
   const formatCurrency = (value: number) => {
     return value.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
@@ -103,7 +102,13 @@ export default function Dashboard() {
     );
   }
 
-  if (!user) return null;
+  if (!user) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-muted-foreground">Redirecionando para login...</div>
+      </div>
+    );
+  }
 
   // Prepare pie chart data for seller distribution
   const sellerPieData = sellerPerformance.slice(0, 5).map((seller, index) => ({
@@ -281,8 +286,8 @@ export default function Dashboard() {
                     <AreaChart data={salesOverTime}>
                       <defs>
                         <linearGradient id="colorTotal" x1="0" y1="0" x2="0" y2="1">
-                          <stop offset="5%" stopColor="#10b981" stopOpacity={0.3} />
-                          <stop offset="95%" stopColor="#10b981" stopOpacity={0} />
+                          <stop offset="5%" stopColor="hsl(var(--primary))" stopOpacity={0.3} />
+                          <stop offset="95%" stopColor="hsl(var(--primary))" stopOpacity={0} />
                         </linearGradient>
                       </defs>
                       <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
@@ -311,7 +316,7 @@ export default function Dashboard() {
                       <Area
                         type="monotone"
                         dataKey="total"
-                        stroke="#10b981"
+                        stroke="hsl(var(--primary))"
                         fillOpacity={1}
                         fill="url(#colorTotal)"
                         strokeWidth={2}
@@ -447,7 +452,11 @@ export default function Dashboard() {
                         outerRadius={100}
                         paddingAngle={2}
                         dataKey="value"
-                        label={({ name, percent }) => `${name} (${(percent * 100).toFixed(0)}%)`}
+                        label={({ name, percent }) =>
+                          typeof percent === 'number'
+                            ? `${name} (${(percent * 100).toFixed(0)}%)`
+                            : String(name)
+                        }
                         labelLine={false}
                       >
                         {sellerPieData.map((entry, index) => (
