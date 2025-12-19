@@ -45,8 +45,8 @@ export function OrderTotal({ total, itemCount, productCount, onReview, onFinaliz
             )}
             <div className="h-10 w-px bg-border" />
             <div>
-              <div className="text-xs text-muted-foreground">Total</div>
-              <div className="text-xl font-bold text-foreground">
+              <div className="text-sm text-muted-foreground font-medium">Total</div>
+              <div className="text-3xl font-extrabold text-foreground">
                 {formatCurrency(total)}
               </div>
             </div>
