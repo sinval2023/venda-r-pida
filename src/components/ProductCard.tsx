@@ -2,12 +2,8 @@ import { useState } from 'react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Product } from '@/types/order';
-import { Plus, Minus, ShoppingCart, Package, ChevronLeft, ChevronRight, Maximize2 } from 'lucide-react';
+import { Plus, Minus, ShoppingCart } from 'lucide-react';
 import { ProductWithCategory } from '@/hooks/useProducts';
-import { ImageLightbox } from './ImageLightbox';
-import plantIcon from '@/assets/plant-icon.png';
-import fertilizerIcon from '@/assets/fertilizer-icon-2.png';
-import vaseIcon from '@/assets/vase-icon.png';
 
 interface ProductCardProps {
   product: ProductWithCategory;
@@ -16,17 +12,7 @@ interface ProductCardProps {
 
 export function ProductCard({ product, onAddToOrder }: ProductCardProps) {
   const [quantity, setQuantity] = useState(1);
-  const [currentImageIndex, setCurrentImageIndex] = useState(0);
-  const [lightboxOpen, setLightboxOpen] = useState(false);
   const [isHovered, setIsHovered] = useState(false);
-
-  const images = product.images && product.images.length > 0 
-    ? product.images 
-    : product.image_url 
-      ? [{ id: 'main', image_url: product.image_url, is_primary: true }]
-      : [];
-
-  const hasMultipleImages = images.length > 1;
 
   const formatCurrency = (value: number) => {
     return value.toLocaleString('pt-BR', {
@@ -50,36 +36,6 @@ export function ProductCard({ product, onAddToOrder }: ProductCardProps) {
     setQuantity(1);
   };
 
-  const handlePrevImage = (e: React.MouseEvent) => {
-    e.stopPropagation();
-    setCurrentImageIndex(prev => (prev - 1 + images.length) % images.length);
-  };
-
-  const handleNextImage = (e: React.MouseEvent) => {
-    e.stopPropagation();
-    setCurrentImageIndex(prev => (prev + 1) % images.length);
-  };
-
-  const handleOpenLightbox = (e: React.MouseEvent) => {
-    e.stopPropagation();
-    setLightboxOpen(true);
-  };
-
-  const lightboxImages = images.map(img => ({ url: img.image_url, alt: product.description }));
-
-  // Get category icon based on product code
-  const getCategoryIcon = () => {
-    const codeNum = parseInt(product.code);
-    if (!isNaN(codeNum)) {
-      if (codeNum >= 1 && codeNum <= 100) return plantIcon;
-      if (codeNum >= 101 && codeNum <= 200) return fertilizerIcon;
-      if (codeNum >= 201) return vaseIcon;
-    }
-    return null;
-  };
-
-  const categoryIcon = getCategoryIcon();
-
   return (
     <Card 
       className="overflow-hidden cursor-pointer transition-all duration-300 hover:shadow-2xl hover:scale-[1.03] border-2 border-emerald-300 hover:border-emerald-500 bg-gradient-to-br from-emerald-50 via-green-100 to-emerald-200 dark:from-emerald-900/40 dark:via-green-900/30 dark:to-emerald-800/40 group"
@@ -87,77 +43,12 @@ export function ProductCard({ product, onAddToOrder }: ProductCardProps) {
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
     >
-      {/* Product Image Gallery - Smaller */}
-      <div className="relative h-12 sm:h-14 bg-gradient-to-br from-slate-100 to-slate-200 dark:from-slate-800 dark:to-slate-900 flex items-center justify-center overflow-hidden">
-        {images.length > 0 ? (
-          <>
-            <img 
-              src={images[currentImageIndex].image_url} 
-              alt={product.description}
-              className="w-full h-full object-cover transition-all duration-500 group-hover:scale-110 group-hover:brightness-105 cursor-zoom-in shadow-inner"
-              onClick={handleOpenLightbox}
-            />
-            {/* Zoom button */}
-            <Button
-              variant="ghost"
-              size="icon"
-              className="absolute top-0.5 left-8 h-5 w-5 bg-black/30 hover:bg-black/50 text-white opacity-0 group-hover:opacity-100 transition-opacity"
-              onClick={handleOpenLightbox}
-            >
-              <Maximize2 className="h-2.5 w-2.5" />
-            </Button>
-            {/* Navigation arrows */}
-            {hasMultipleImages && (
-              <>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="absolute left-0.5 top-1/2 -translate-y-1/2 h-5 w-5 bg-black/30 hover:bg-black/50 text-white opacity-0 group-hover:opacity-100 transition-opacity"
-                  onClick={handlePrevImage}
-                >
-                  <ChevronLeft className="h-3 w-3" />
-                </Button>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="absolute right-0.5 top-1/2 -translate-y-1/2 h-5 w-5 bg-black/30 hover:bg-black/50 text-white opacity-0 group-hover:opacity-100 transition-opacity"
-                  onClick={handleNextImage}
-                >
-                  <ChevronRight className="h-3 w-3" />
-                </Button>
-                {/* Dots indicator */}
-                <div className="absolute bottom-0.5 left-1/2 -translate-x-1/2 flex gap-0.5">
-                  {images.map((_, idx) => (
-                    <button
-                      key={idx}
-                      className={`w-1 h-1 rounded-full transition-colors ${
-                        idx === currentImageIndex ? 'bg-white' : 'bg-white/50'
-                      }`}
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        setCurrentImageIndex(idx);
-                      }}
-                    />
-                  ))}
-                </div>
-              </>
-            )}
-          </>
-        ) : categoryIcon ? (
-          <div className="p-1.5 rounded-lg border-2 border-sky-300 hover:border-sky-500 bg-gradient-to-br from-sky-50 via-blue-100 to-sky-200 dark:from-sky-900/40 dark:via-blue-900/30 dark:to-sky-800/40 transition-all duration-300 hover:shadow-lg hover:scale-105 animate-fade-in">
-            <img src={categoryIcon} alt="Categoria" className="w-8 h-8 sm:w-10 sm:h-10 object-contain animate-fade-in" />
-          </div>
-        ) : (
-          <div className="p-1.5 rounded-lg border-2 border-sky-300 bg-gradient-to-br from-sky-50 via-blue-100 to-sky-200 dark:from-sky-900/40 dark:via-blue-900/30 dark:to-sky-800/40 animate-fade-in">
-            <Package className="w-8 h-8 sm:w-10 sm:h-10 text-sky-500 dark:text-sky-400" />
-          </div>
-        )}
-        <div className="absolute top-1 left-1 bg-primary text-primary-foreground text-[10px] font-bold px-1.5 py-0.5 rounded shadow">
+      {/* Product Code Badge and Cart Icon */}
+      <div className="flex items-center justify-between px-2 pt-2">
+        <div className="bg-primary text-primary-foreground text-[10px] font-bold px-1.5 py-0.5 rounded shadow">
           {product.code}
         </div>
-        <div className="absolute top-1 right-1 opacity-0 group-hover:opacity-100 transition-opacity">
-          <ShoppingCart className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
-        </div>
+        <ShoppingCart className="w-6 h-6 sm:w-8 sm:h-8 text-emerald-600 dark:text-emerald-400 transition-transform duration-200 group-hover:scale-110" />
       </div>
 
       {/* Product Info */}
@@ -215,12 +106,6 @@ export function ProductCard({ product, onAddToOrder }: ProductCardProps) {
         )}
       </div>
 
-      <ImageLightbox
-        images={lightboxImages}
-        initialIndex={currentImageIndex}
-        isOpen={lightboxOpen}
-        onClose={() => setLightboxOpen(false)}
-      />
     </Card>
   );
 }
