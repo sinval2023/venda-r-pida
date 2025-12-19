@@ -5,6 +5,9 @@ import { Product } from '@/types/order';
 import { Plus, Minus, ShoppingCart, Package, ChevronLeft, ChevronRight, Maximize2 } from 'lucide-react';
 import { ProductWithCategory } from '@/hooks/useProducts';
 import { ImageLightbox } from './ImageLightbox';
+import plantIcon from '@/assets/plant-icon.png';
+import fertilizerIcon from '@/assets/fertilizer-icon.png';
+import vaseIcon from '@/assets/vase-icon.png';
 
 interface ProductCardProps {
   product: ProductWithCategory;
@@ -64,9 +67,22 @@ export function ProductCard({ product, onAddToOrder }: ProductCardProps) {
 
   const lightboxImages = images.map(img => ({ url: img.image_url, alt: product.description }));
 
+  // Get category icon based on product code
+  const getCategoryIcon = () => {
+    const codeNum = parseInt(product.code);
+    if (!isNaN(codeNum)) {
+      if (codeNum >= 1 && codeNum <= 100) return plantIcon;
+      if (codeNum >= 101 && codeNum <= 200) return fertilizerIcon;
+      if (codeNum >= 201) return vaseIcon;
+    }
+    return null;
+  };
+
+  const categoryIcon = getCategoryIcon();
+
   return (
     <Card 
-      className="overflow-hidden cursor-pointer transition-all duration-200 hover:shadow-xl hover:scale-[1.02] hover:border-emerald-400 bg-gradient-to-br from-card to-muted/30 group"
+      className="overflow-hidden cursor-pointer transition-all duration-300 hover:shadow-2xl hover:scale-[1.03] border-2 border-emerald-300 hover:border-emerald-500 bg-gradient-to-br from-emerald-50 via-green-100 to-emerald-200 dark:from-emerald-900/40 dark:via-green-900/30 dark:to-emerald-800/40 group"
       onClick={handleAddToOrder}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
@@ -127,8 +143,10 @@ export function ProductCard({ product, onAddToOrder }: ProductCardProps) {
               </>
             )}
           </>
+        ) : categoryIcon ? (
+          <img src={categoryIcon} alt="Categoria" className="w-10 h-10 sm:w-12 sm:h-12 object-contain opacity-80" />
         ) : (
-          <Package className="w-8 h-8 sm:w-10 sm:h-10 text-sky-500 dark:text-sky-400 opacity-60" />
+          <Package className="w-8 h-8 sm:w-10 sm:h-10 text-emerald-500 dark:text-emerald-400 opacity-60" />
         )}
         <div className="absolute top-1 left-1 bg-primary text-primary-foreground text-[10px] font-bold px-1.5 py-0.5 rounded shadow">
           {product.code}
