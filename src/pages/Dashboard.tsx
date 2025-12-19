@@ -75,7 +75,7 @@ export default function Dashboard() {
     if (authLoading) return;
 
     if (!user) {
-      navigate('/auth');
+      navigate('/auth', { replace: true });
       return;
     }
 
@@ -126,7 +126,7 @@ export default function Dashboard() {
       {/* Header */}
       <div className="bg-card border-b border-border p-4">
         <div className="max-w-7xl mx-auto flex items-center gap-4">
-          <Button variant="ghost" size="icon" onClick={() => navigate('/')}>
+          <Button variant="ghost" size="icon" onClick={() => navigate('/', { replace: true })}>
             <ArrowLeft className="h-5 w-5" />
           </Button>
           <h1 className="text-xl font-bold text-foreground">Painel de Desempenho</h1>
