@@ -16,16 +16,38 @@ export function ProductCard({ product, onAddToOrder }: ProductCardProps) {
   const [isHovered, setIsHovered] = useState(false);
   const [editPrice, setEditPrice] = useState(false);
   const [customPrice, setCustomPrice] = useState(product.default_price);
-  const priceInputRef = useRef<HTMLInputElement>(null);
 
-  // Focus no campo de preço e reset para preço original quando editPrice muda para true
+  const priceInputRef = useRef<HTMLInputElement>(null);
+  const editPriceRef = useRef(false);
+  const customPriceRef = useRef(product.default_price);
+
+  // Mantém refs sincronizadas para evitar usar valores antigos em cliques rápidos
+  useEffect(() => {
+    editPriceRef.current = editPrice;
+    customPriceRef.current = customPrice;
+  }, [editPrice, customPrice]);
+
+  // Sempre que não estiver editando, garante que o preço editável volte ao original
+  useEffect(() => {
+    if (!editPrice) {
+      setCustomPrice(product.default_price);
+      customPriceRef.current = product.default_price;
+    }
+  }, [editPrice, product.default_price]);
+
+  // Ao entrar no modo edição, reseta para o preço original e foca no input
   useEffect(() => {
     if (editPrice) {
       setCustomPrice(product.default_price);
-      if (priceInputRef.current) {
-        priceInputRef.current.focus();
-        priceInputRef.current.select();
-      }
+      customPriceRef.current = product.default_price;
+
+      // Deixa o DOM renderizar o input antes de focar
+      requestAnimationFrame(() => {
+        if (priceInputRef.current) {
+          priceInputRef.current.focus();
+          priceInputRef.current.select();
+        }
+      });
     }
   }, [editPrice, product.default_price]);
 
@@ -47,11 +69,17 @@ export function ProductCard({ product, onAddToOrder }: ProductCardProps) {
   };
 
   const handleAddToOrder = () => {
-    const finalPrice = editPrice ? customPrice : product.default_price;
-    onAddToOrder(product, quantity, finalPrice);
+    const finalPrice = editPriceRef.current ? customPriceRef.current : product.default_price;
+
+    // Reseta imediatamente (sincrono) para que o próximo clique use sempre o preço original
+    editPriceRef.current = false;
+    customPriceRef.current = product.default_price;
+
     setQuantity(1);
     setEditPrice(false);
     setCustomPrice(product.default_price);
+
+    onAddToOrder(product, quantity, finalPrice);
   };
 
   const handlePriceKeyDown = (e: React.KeyboardEvent) => {
@@ -110,16 +138,21 @@ export function ProductCard({ product, onAddToOrder }: ProductCardProps) {
           <div className="space-y-0.5 sm:space-y-1 animate-in fade-in duration-200" onClick={(e) => e.stopPropagation()}>
             {/* Edit Price Checkbox */}
             <div 
-              className="flex items-center justify-center gap-1 sm:gap-2 p-1 rounded-md hover:bg-emerald-100 dark:hover:bg-emerald-900/50 transition-colors duration-200 cursor-pointer"
-              onClick={(e) => {
-                e.stopPropagation();
-                setEditPrice(!editPrice);
-              }}
+              className="flex items-center justify-center gap-1 sm:gap-2 p-1 rounded-md hover:bg-emerald-100 dark:hover:bg-emerald-900/50 transition-colors duration-200"
             >
               <Checkbox
                 id={`edit-price-${product.id}`}
                 checked={editPrice}
-                onCheckedChange={(checked) => setEditPrice(checked as boolean)}
+                onCheckedChange={(checked) => {
+                  const next = checked === true;
+                  setEditPrice(next);
+                  editPriceRef.current = next;
+
+                  if (!next) {
+                    setCustomPrice(product.default_price);
+                    customPriceRef.current = product.default_price;
+                  }
+                }}
                 onClick={(e) => e.stopPropagation()}
                 className="h-3 w-3 sm:h-4 sm:w-4 border-emerald-500 data-[state=checked]:bg-emerald-600 data-[state=checked]:border-emerald-600"
               />
