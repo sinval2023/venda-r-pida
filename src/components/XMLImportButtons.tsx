@@ -10,18 +10,6 @@ interface XMLImportButtonsProps {
   onProductsImported?: () => void;
 }
 
-interface ClientXMLData {
-  codigo: string;
-  nome: string;
-  cpf: string;
-}
-
-interface ProductXMLData {
-  code: string;
-  description: string;
-  default_price: number;
-}
-
 interface ImportProgress {
   current: number;
   total: number;
@@ -74,104 +62,49 @@ export function XMLImportButtons({ onClientsImported, onProductsImported }: XMLI
 
     setNotice(null);
     setLoadingClients(true);
-    setProgress(null);
+    setProgress({ current: 0, total: 1, type: "clients" });
     cancelRef.current = false;
 
-    let shouldNotify = false;
-
     try {
-      let text = "";
-      try {
-        text = await file.text();
-      } catch (readError) {
-        console.error("Error reading file:", readError);
-        setNotice({
-          variant: "destructive",
-          title: "Erro ao ler arquivo",
-          description: "Não foi possível ler o arquivo selecionado.",
-        });
-        return;
-      }
+      const text = await file.text();
+      setProgress({ current: 1, total: 1, type: "clients" });
 
-      const xml = parseXML(text);
-      ensureValidXML(xml);
-
-      const clients: ClientXMLData[] = [];
-      const clientNodes = xml.querySelectorAll("cliente, CLIENTE, Client, CLIENT");
-
-      clientNodes.forEach((node) => {
-        const codigo = node.querySelector("codigo, CODIGO, Codigo")?.textContent?.trim() || "";
-        const nome = node.querySelector("nome, NOME, Nome")?.textContent?.trim() || "";
-        const cpf = node.querySelector("cpf, CPF, Cpf")?.textContent?.trim() || "";
-
-        if (nome && cpf) {
-          clients.push({ codigo, nome: nome.toUpperCase(), cpf });
-        }
+      const { data, error } = await supabase.functions.invoke("import-xml", {
+        body: { type: "clients", xml: text },
       });
 
-      if (clients.length === 0) {
+      if (error) {
+        console.error("Import clients function error:", error);
+        throw error;
+      }
+
+      if (!data?.success) {
         setNotice({
           variant: "destructive",
-          title: "Nenhum cliente encontrado",
-          description: "O arquivo XML não contém clientes válidos.",
+          title: "Erro ao importar",
+          description: data?.error || "Não foi possível importar os clientes.",
         });
         return;
       }
 
-      const chunkSize = 200;
-      let successCount = 0;
+      setNotice({
+        title: "Clientes importados",
+        description: `${data.total ?? 0} cliente(s) processado(s) com sucesso.`,
+      });
 
-      for (let start = 0; start < clients.length; start += chunkSize) {
-        if (cancelRef.current) {
-          setNotice({
-            title: "Importação cancelada",
-            description: `${successCount} cliente(s) importado(s) antes do cancelamento.`,
-          });
-          break;
-        }
-
-        const end = Math.min(start + chunkSize, clients.length);
-        setProgress({ current: end, total: clients.length, type: "clients" });
-
-        const batch = clients.slice(start, end).map((c) => ({
-          cpf: c.cpf,
-          name: c.nome,
-        }));
-
-        const { error } = await supabase.from("clients").upsert(batch, { onConflict: "cpf" });
-
-        if (error) {
-          console.error("Error inserting clients batch:", error);
-          throw error;
-        }
-
-        successCount += batch.length;
-      }
-
-      if (!cancelRef.current) {
-        setNotice({
-          title: "Clientes importados",
-          description: `${successCount} cliente(s) importado(s) com sucesso.`,
-        });
-        shouldNotify = successCount > 0;
-      }
-    } catch (error) {
-      console.error("Error importing clients XML:", error);
+      setTimeout(() => onClientsImported?.(), 0);
+    } catch (err) {
+      console.error("Error importing clients XML:", err);
       setNotice({
         variant: "destructive",
         title: "Erro ao importar",
-        description: error instanceof Error ? error.message : "Não foi possível ler o arquivo XML.",
+        description: err instanceof Error ? err.message : "Não foi possível importar os clientes.",
       });
     } finally {
       setLoadingClients(false);
       setProgress(null);
       cancelRef.current = false;
       resetClientsInput();
-
-      if (shouldNotify) {
-        // Deixa a UI assentar antes do refetch
-        setTimeout(() => onClientsImported?.(), 0);
-      }
     }
   };
 
@@ -181,155 +114,49 @@ export function XMLImportButtons({ onClientsImported, onProductsImported }: XMLI
 
     setNotice(null);
     setLoadingProducts(true);
-    setProgress(null);
+    setProgress({ current: 0, total: 1, type: "products" });
     cancelRef.current = false;
 
-    let shouldNotify = false;
-
     try {
-      let text = "";
-      try {
-        text = await file.text();
-      } catch (readError) {
-        console.error("Error reading file:", readError);
+      const text = await file.text();
+      setProgress({ current: 1, total: 1, type: "products" });
+
+      const { data, error } = await supabase.functions.invoke("import-xml", {
+        body: { type: "products", xml: text },
+      });
+
+      if (error) {
+        console.error("Import products function error:", error);
+        throw error;
+      }
+
+      if (!data?.success) {
         setNotice({
           variant: "destructive",
-          title: "Erro ao ler arquivo",
-          description: "Não foi possível ler o arquivo selecionado.",
+          title: "Erro ao importar",
+          description: data?.error || "Não foi possível importar os produtos.",
         });
         return;
       }
 
-      const xml = parseXML(text);
-      ensureValidXML(xml);
+      setNotice({
+        title: "Produtos importados",
+        description: `${data.total ?? 0} produto(s) processado(s) com sucesso.`,
+      });
 
-      const products: ProductXMLData[] = [];
-
-      // Try DATAPACKET format first (ROW elements with attributes)
-      const rowNodes = xml.querySelectorAll("ROW, Row, row");
-
-      if (rowNodes.length > 0) {
-        rowNodes.forEach((node) => {
-          const code =
-            node.getAttribute("CODIGO") ||
-            node.getAttribute("Codigo") ||
-            node.getAttribute("codigo") ||
-            node.getAttribute("COD_BARRA") ||
-            node.getAttribute("cod_barra") ||
-            "";
-
-          const description =
-            node.getAttribute("DESCRICAO") || node.getAttribute("Descricao") || node.getAttribute("descricao") || "";
-
-          const priceStr =
-            node.getAttribute("PRECO_VENDA") ||
-            node.getAttribute("preco_venda") ||
-            node.getAttribute("PRECO") ||
-            node.getAttribute("preco") ||
-            node.getAttribute("VALOR") ||
-            node.getAttribute("valor") ||
-            "0";
-
-          const default_price = parseFloat(priceStr.replace(",", ".")) || 0;
-
-          if (code && description) {
-            products.push({
-              code: code.trim(),
-              description: description.trim().toUpperCase(),
-              default_price,
-            });
-          }
-        });
-      } else {
-        // Traditional format - try produto/PRODUTO nodes with child elements
-        const productNodes = xml.querySelectorAll("produto, PRODUTO, Product, PRODUCT");
-
-        productNodes.forEach((node) => {
-          const code =
-            node.querySelector("codigo, CODIGO, Codigo, code, CODE, Code")?.textContent?.trim() || "";
-
-          const description =
-            node
-              .querySelector(
-                "descricao, DESCRICAO, Descricao, description, DESCRIPTION, Description, nome, NOME, Nome",
-              )
-              ?.textContent?.trim() || "";
-
-          const priceStr =
-            node.querySelector("preco, PRECO, Preco, price, PRICE, Price, valor, VALOR, Valor")?.textContent?.trim() ||
-            "0";
-
-          const default_price = parseFloat(priceStr.replace(",", ".")) || 0;
-
-          if (code && description) {
-            products.push({ code, description: description.toUpperCase(), default_price });
-          }
-        });
-      }
-
-      if (products.length === 0) {
-        setNotice({
-          variant: "destructive",
-          title: "Nenhum produto encontrado",
-          description: "O arquivo XML não contém produtos válidos. Verifique a estrutura do arquivo.",
-        });
-        return;
-      }
-
-      const chunkSize = 200;
-      let successCount = 0;
-
-      for (let start = 0; start < products.length; start += chunkSize) {
-        if (cancelRef.current) {
-          setNotice({
-            title: "Importação cancelada",
-            description: `${successCount} produto(s) importado(s) antes do cancelamento.`,
-          });
-          break;
-        }
-
-        const end = Math.min(start + chunkSize, products.length);
-        setProgress({ current: end, total: products.length, type: "products" });
-
-        const batch = products.slice(start, end).map((p) => ({
-          code: p.code,
-          description: p.description,
-          default_price: p.default_price,
-        }));
-
-        const { error } = await supabase.from("products").upsert(batch, { onConflict: "code" });
-
-        if (error) {
-          console.error("Error inserting products batch:", error);
-          throw error;
-        }
-
-        successCount += batch.length;
-      }
-
-      if (!cancelRef.current) {
-        setNotice({
-          title: "Produtos importados",
-          description: `${successCount} produto(s) importado(s) com sucesso.`,
-        });
-        shouldNotify = successCount > 0;
-      }
-    } catch (error) {
-      console.error("Error importing products XML:", error);
+      setTimeout(() => onProductsImported?.(), 0);
+    } catch (err) {
+      console.error("Error importing products XML:", err);
       setNotice({
         variant: "destructive",
         title: "Erro ao importar",
-        description: error instanceof Error ? error.message : "Não foi possível ler o arquivo XML.",
+        description: err instanceof Error ? err.message : "Não foi possível importar os produtos.",
       });
     } finally {
       setLoadingProducts(false);
       setProgress(null);
       cancelRef.current = false;
       resetProductsInput();
-
-      if (shouldNotify) {
-        setTimeout(() => onProductsImported?.(), 0);
-      }
     }
   };
 
