@@ -1,7 +1,7 @@
 import { useState, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
-import { Users, Package, Loader2 } from 'lucide-react';
+import { Users, Package, Loader2, X } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/hooks/use-toast';
 
@@ -34,10 +34,15 @@ export function XMLImportButtons({ onClientsImported, onProductsImported }: XMLI
   const [progress, setProgress] = useState<ImportProgress | null>(null);
   const clientsInputRef = useRef<HTMLInputElement>(null);
   const productsInputRef = useRef<HTMLInputElement>(null);
+  const cancelRef = useRef(false);
 
   const parseXML = (xmlString: string): Document => {
     const parser = new DOMParser();
     return parser.parseFromString(xmlString, 'text/xml');
+  };
+
+  const handleCancel = () => {
+    cancelRef.current = true;
   };
 
   const handleClientsXML = async (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -46,6 +51,7 @@ export function XMLImportButtons({ onClientsImported, onProductsImported }: XMLI
 
     setLoadingClients(true);
     setProgress(null);
+    cancelRef.current = false;
     try {
       const text = await file.text();
       const xml = parseXML(text);
@@ -77,6 +83,14 @@ export function XMLImportButtons({ onClientsImported, onProductsImported }: XMLI
       let errorCount = 0;
       
       for (let i = 0; i < clients.length; i++) {
+        if (cancelRef.current) {
+          toast({
+            title: 'Importação cancelada',
+            description: `${successCount} cliente(s) importado(s) antes do cancelamento.`,
+          });
+          break;
+        }
+        
         const client = clients[i];
         setProgress({ current: i + 1, total: clients.length, type: 'clients' });
         
@@ -95,10 +109,12 @@ export function XMLImportButtons({ onClientsImported, onProductsImported }: XMLI
         }
       }
 
-      toast({
-        title: 'Clientes importados',
-        description: `${successCount} cliente(s) importado(s) com sucesso.${errorCount > 0 ? ` ${errorCount} erro(s).` : ''}`,
-      });
+      if (!cancelRef.current) {
+        toast({
+          title: 'Clientes importados',
+          description: `${successCount} cliente(s) importado(s) com sucesso.${errorCount > 0 ? ` ${errorCount} erro(s).` : ''}`,
+        });
+      }
       
       onClientsImported?.();
     } catch (error) {
@@ -111,6 +127,7 @@ export function XMLImportButtons({ onClientsImported, onProductsImported }: XMLI
     } finally {
       setLoadingClients(false);
       setProgress(null);
+      cancelRef.current = false;
       if (clientsInputRef.current) {
         clientsInputRef.current.value = '';
       }
@@ -123,6 +140,7 @@ export function XMLImportButtons({ onClientsImported, onProductsImported }: XMLI
 
     setLoadingProducts(true);
     setProgress(null);
+    cancelRef.current = false;
     try {
       const text = await file.text();
       const xml = parseXML(text);
@@ -177,6 +195,14 @@ export function XMLImportButtons({ onClientsImported, onProductsImported }: XMLI
       let errorCount = 0;
       
       for (let i = 0; i < products.length; i++) {
+        if (cancelRef.current) {
+          toast({
+            title: 'Importação cancelada',
+            description: `${successCount} produto(s) importado(s) antes do cancelamento.`,
+          });
+          break;
+        }
+        
         const product = products[i];
         setProgress({ current: i + 1, total: products.length, type: 'products' });
         
@@ -196,10 +222,12 @@ export function XMLImportButtons({ onClientsImported, onProductsImported }: XMLI
         }
       }
 
-      toast({
-        title: 'Produtos importados',
-        description: `${successCount} produto(s) importado(s) com sucesso.${errorCount > 0 ? ` ${errorCount} erro(s).` : ''}`,
-      });
+      if (!cancelRef.current) {
+        toast({
+          title: 'Produtos importados',
+          description: `${successCount} produto(s) importado(s) com sucesso.${errorCount > 0 ? ` ${errorCount} erro(s).` : ''}`,
+        });
+      }
       
       onProductsImported?.();
     } catch (error) {
@@ -212,6 +240,7 @@ export function XMLImportButtons({ onClientsImported, onProductsImported }: XMLI
     } finally {
       setLoadingProducts(false);
       setProgress(null);
+      cancelRef.current = false;
       if (productsInputRef.current) {
         productsInputRef.current.value = '';
       }
@@ -275,9 +304,20 @@ export function XMLImportButtons({ onClientsImported, onProductsImported }: XMLI
             <span>
               Importando {progress.type === 'products' ? 'produtos' : 'clientes'}...
             </span>
-            <span className="font-medium">
-              {progress.current} / {progress.total} ({progressPercentage}%)
-            </span>
+            <div className="flex items-center gap-2">
+              <span className="font-medium">
+                {progress.current} / {progress.total} ({progressPercentage}%)
+              </span>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={handleCancel}
+                className="h-6 px-2 text-xs text-destructive hover:text-destructive hover:bg-destructive/10"
+              >
+                <X className="h-3 w-3 mr-1" />
+                Cancelar
+              </Button>
+            </div>
           </div>
           <Progress value={progressPercentage} className="h-2" />
         </div>
