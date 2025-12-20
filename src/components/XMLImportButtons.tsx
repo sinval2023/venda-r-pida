@@ -32,13 +32,28 @@ export function XMLImportButtons({ onClientsImported, onProductsImported }: XMLI
   const [loadingClients, setLoadingClients] = useState(false);
   const [loadingProducts, setLoadingProducts] = useState(false);
   const [progress, setProgress] = useState<ImportProgress | null>(null);
+
+  // Re-monta o <input type="file" /> após cada import (evita mexer em input.value e reduz bugs de DOM)
+  const [clientsInputKey, setClientsInputKey] = useState(0);
+  const [productsInputKey, setProductsInputKey] = useState(0);
+
   const clientsInputRef = useRef<HTMLInputElement>(null);
   const productsInputRef = useRef<HTMLInputElement>(null);
   const cancelRef = useRef(false);
 
+  const resetClientsInput = () => setClientsInputKey((k) => k + 1);
+  const resetProductsInput = () => setProductsInputKey((k) => k + 1);
+
   const parseXML = (xmlString: string): Document => {
     const parser = new DOMParser();
-    return parser.parseFromString(xmlString, 'text/xml');
+    return parser.parseFromString(xmlString, "text/xml");
+  };
+
+  const ensureValidXML = (xml: Document) => {
+    const parserError = xml.querySelector("parsererror");
+    if (parserError) {
+      throw new Error("XML inválido: verifique o arquivo selecionado.");
+    }
   };
 
   const handleCancel = () => {
@@ -52,102 +67,103 @@ export function XMLImportButtons({ onClientsImported, onProductsImported }: XMLI
     setLoadingClients(true);
     setProgress(null);
     cancelRef.current = false;
-    
-    let text = '';
+
+    let shouldNotify = false;
+
     try {
-      text = await file.text();
-    } catch (readError) {
-      console.error('Error reading file:', readError);
-      setLoadingClients(false);
-      toast({
-        title: 'Erro ao ler arquivo',
-        description: 'Não foi possível ler o arquivo selecionado.',
-        variant: 'destructive',
-      });
-      if (clientsInputRef.current) clientsInputRef.current.value = '';
-      return;
-    }
-    
-    try {
+      let text = "";
+      try {
+        text = await file.text();
+      } catch (readError) {
+        console.error("Error reading file:", readError);
+        toast({
+          title: "Erro ao ler arquivo",
+          description: "Não foi possível ler o arquivo selecionado.",
+          variant: "destructive",
+        });
+        return;
+      }
+
       const xml = parseXML(text);
-      
+      ensureValidXML(xml);
+
       const clients: ClientXMLData[] = [];
-      const clientNodes = xml.querySelectorAll('cliente, CLIENTE, Client, CLIENT');
-      
-      clientNodes.forEach(node => {
-        const codigo = node.querySelector('codigo, CODIGO, Codigo')?.textContent?.trim() || '';
-        const nome = node.querySelector('nome, NOME, Nome')?.textContent?.trim() || '';
-        const cpf = node.querySelector('cpf, CPF, Cpf')?.textContent?.trim() || '';
-        
+      const clientNodes = xml.querySelectorAll("cliente, CLIENTE, Client, CLIENT");
+
+      clientNodes.forEach((node) => {
+        const codigo = node.querySelector("codigo, CODIGO, Codigo")?.textContent?.trim() || "";
+        const nome = node.querySelector("nome, NOME, Nome")?.textContent?.trim() || "";
+        const cpf = node.querySelector("cpf, CPF, Cpf")?.textContent?.trim() || "";
+
         if (nome && cpf) {
           clients.push({ codigo, nome: nome.toUpperCase(), cpf });
         }
       });
 
       if (clients.length === 0) {
-        setLoadingClients(false);
-        setProgress(null);
         toast({
-          title: 'Nenhum cliente encontrado',
-          description: 'O arquivo XML não contém clientes válidos.',
-          variant: 'destructive',
+          title: "Nenhum cliente encontrado",
+          description: "O arquivo XML não contém clientes válidos.",
+          variant: "destructive",
         });
-        if (clientsInputRef.current) clientsInputRef.current.value = '';
         return;
       }
 
-      // Insert clients into database with progress
+      // Upsert em lotes para reduzir re-renders e chamadas (mais estável)
+      const chunkSize = 200;
       let successCount = 0;
       let errorCount = 0;
-      
-      for (let i = 0; i < clients.length; i++) {
+
+      for (let start = 0; start < clients.length; start += chunkSize) {
         if (cancelRef.current) {
           toast({
-            title: 'Importação cancelada',
+            title: "Importação cancelada",
             description: `${successCount} cliente(s) importado(s) antes do cancelamento.`,
           });
           break;
         }
-        
-        const client = clients[i];
-        setProgress({ current: i + 1, total: clients.length, type: 'clients' });
-        
-        const { error } = await supabase
-          .from('clients')
-          .upsert({
-            cpf: client.cpf,
-            name: client.nome,
-          }, { onConflict: 'cpf' });
+
+        const end = Math.min(start + chunkSize, clients.length);
+        setProgress({ current: end, total: clients.length, type: "clients" });
+
+        const batch = clients.slice(start, end).map((c) => ({
+          cpf: c.cpf,
+          name: c.nome,
+        }));
+
+        const { error } = await supabase.from("clients").upsert(batch, { onConflict: "cpf" });
 
         if (error) {
-          console.error('Error inserting client:', error);
-          errorCount++;
+          console.error("Error inserting clients batch:", error);
+          errorCount += batch.length;
         } else {
-          successCount++;
+          successCount += batch.length;
         }
       }
 
       if (!cancelRef.current) {
         toast({
-          title: 'Clientes importados',
-          description: `${successCount} cliente(s) importado(s) com sucesso.${errorCount > 0 ? ` ${errorCount} erro(s).` : ''}`,
+          title: "Clientes importados",
+          description: `${successCount} cliente(s) importado(s) com sucesso.${errorCount > 0 ? ` ${errorCount} erro(s).` : ""}`,
         });
+        shouldNotify = successCount > 0;
       }
-      
-      onClientsImported?.();
     } catch (error) {
-      console.error('Error parsing XML:', error);
+      console.error("Error importing clients XML:", error);
       toast({
-        title: 'Erro ao importar',
-        description: 'Não foi possível ler o arquivo XML.',
-        variant: 'destructive',
+        title: "Erro ao importar",
+        description: error instanceof Error ? error.message : "Não foi possível ler o arquivo XML.",
+        variant: "destructive",
       });
     } finally {
       setLoadingClients(false);
       setProgress(null);
       cancelRef.current = false;
-      if (clientsInputRef.current) {
-        clientsInputRef.current.value = '';
+      resetClientsInput();
+
+      if (shouldNotify) {
+        // Deixa a UI assentar antes do refetch (reduz chance de erro de DOM em portais)
+        setTimeout(() => onClientsImported?.(), 0);
       }
     }
   };
@@ -159,55 +175,84 @@ export function XMLImportButtons({ onClientsImported, onProductsImported }: XMLI
     setLoadingProducts(true);
     setProgress(null);
     cancelRef.current = false;
-    
-    let text = '';
+
+    let shouldNotify = false;
+
     try {
-      text = await file.text();
-    } catch (readError) {
-      console.error('Error reading file:', readError);
-      setLoadingProducts(false);
-      toast({
-        title: 'Erro ao ler arquivo',
-        description: 'Não foi possível ler o arquivo selecionado.',
-        variant: 'destructive',
-      });
-      if (productsInputRef.current) productsInputRef.current.value = '';
-      return;
-    }
-    
-    try {
+      let text = "";
+      try {
+        text = await file.text();
+      } catch (readError) {
+        console.error("Error reading file:", readError);
+        toast({
+          title: "Erro ao ler arquivo",
+          description: "Não foi possível ler o arquivo selecionado.",
+          variant: "destructive",
+        });
+        return;
+      }
+
       const xml = parseXML(text);
-      
+      ensureValidXML(xml);
+
       const products: ProductXMLData[] = [];
-      
+
       // Try DATAPACKET format first (ROW elements with attributes)
-      const rowNodes = xml.querySelectorAll('ROW, Row, row');
-      
+      const rowNodes = xml.querySelectorAll("ROW, Row, row");
+
       if (rowNodes.length > 0) {
-        // DATAPACKET format - data is in ROW attributes
-        rowNodes.forEach(node => {
-          const code = node.getAttribute('CODIGO') || node.getAttribute('Codigo') || node.getAttribute('codigo') || 
-                       node.getAttribute('COD_BARRA') || node.getAttribute('cod_barra') || '';
-          const description = node.getAttribute('DESCRICAO') || node.getAttribute('Descricao') || node.getAttribute('descricao') || '';
-          const priceStr = node.getAttribute('PRECO_VENDA') || node.getAttribute('preco_venda') || 
-                           node.getAttribute('PRECO') || node.getAttribute('preco') || 
-                           node.getAttribute('VALOR') || node.getAttribute('valor') || '0';
-          const default_price = parseFloat(priceStr.replace(',', '.')) || 0;
-          
+        rowNodes.forEach((node) => {
+          const code =
+            node.getAttribute("CODIGO") ||
+            node.getAttribute("Codigo") ||
+            node.getAttribute("codigo") ||
+            node.getAttribute("COD_BARRA") ||
+            node.getAttribute("cod_barra") ||
+            "";
+
+          const description =
+            node.getAttribute("DESCRICAO") ||
+            node.getAttribute("Descricao") ||
+            node.getAttribute("descricao") ||
+            "";
+
+          const priceStr =
+            node.getAttribute("PRECO_VENDA") ||
+            node.getAttribute("preco_venda") ||
+            node.getAttribute("PRECO") ||
+            node.getAttribute("preco") ||
+            node.getAttribute("VALOR") ||
+            node.getAttribute("valor") ||
+            "0";
+
+          const default_price = parseFloat(priceStr.replace(",", ".")) || 0;
+
           if (code && description) {
-            products.push({ code: code.trim(), description: description.trim().toUpperCase(), default_price });
+            products.push({
+              code: code.trim(),
+              description: description.trim().toUpperCase(),
+              default_price,
+            });
           }
         });
       } else {
         // Traditional format - try produto/PRODUTO nodes with child elements
-        const productNodes = xml.querySelectorAll('produto, PRODUTO, Product, PRODUCT');
-        
-        productNodes.forEach(node => {
-          const code = node.querySelector('codigo, CODIGO, Codigo, code, CODE, Code')?.textContent?.trim() || '';
-          const description = node.querySelector('descricao, DESCRICAO, Descricao, description, DESCRIPTION, Description, nome, NOME, Nome')?.textContent?.trim() || '';
-          const priceStr = node.querySelector('preco, PRECO, Preco, price, PRICE, Price, valor, VALOR, Valor')?.textContent?.trim() || '0';
-          const default_price = parseFloat(priceStr.replace(',', '.')) || 0;
-          
+        const productNodes = xml.querySelectorAll("produto, PRODUTO, Product, PRODUCT");
+
+        productNodes.forEach((node) => {
+          const code =
+            node.querySelector("codigo, CODIGO, Codigo, code, CODE, Code")?.textContent?.trim() || "";
+          const description =
+            node
+              .querySelector(
+                "descricao, DESCRICAO, Descricao, description, DESCRIPTION, Description, nome, NOME, Nome",
+              )
+              ?.textContent?.trim() || "";
+          const priceStr =
+            node.querySelector("preco, PRECO, Preco, price, PRICE, Price, valor, VALOR, Valor")?.textContent?.trim() ||
+            "0";
+          const default_price = parseFloat(priceStr.replace(",", ".")) || 0;
+
           if (code && description) {
             products.push({ code, description: description.toUpperCase(), default_price });
           }
@@ -215,70 +260,70 @@ export function XMLImportButtons({ onClientsImported, onProductsImported }: XMLI
       }
 
       if (products.length === 0) {
-        setLoadingProducts(false);
-        setProgress(null);
         toast({
-          title: 'Nenhum produto encontrado',
-          description: 'O arquivo XML não contém produtos válidos. Verifique a estrutura do arquivo.',
-          variant: 'destructive',
+          title: "Nenhum produto encontrado",
+          description: "O arquivo XML não contém produtos válidos. Verifique a estrutura do arquivo.",
+          variant: "destructive",
         });
-        if (productsInputRef.current) productsInputRef.current.value = '';
         return;
       }
 
-      // Insert products into database with progress
+      // Upsert em lotes para reduzir re-renders e chamadas (mais estável)
+      const chunkSize = 200;
       let successCount = 0;
       let errorCount = 0;
-      
-      for (let i = 0; i < products.length; i++) {
+
+      for (let start = 0; start < products.length; start += chunkSize) {
         if (cancelRef.current) {
           toast({
-            title: 'Importação cancelada',
+            title: "Importação cancelada",
             description: `${successCount} produto(s) importado(s) antes do cancelamento.`,
           });
           break;
         }
-        
-        const product = products[i];
-        setProgress({ current: i + 1, total: products.length, type: 'products' });
-        
-        const { error } = await supabase
-          .from('products')
-          .upsert({
-            code: product.code,
-            description: product.description,
-            default_price: product.default_price,
-          }, { onConflict: 'code' });
+
+        const end = Math.min(start + chunkSize, products.length);
+        setProgress({ current: end, total: products.length, type: "products" });
+
+        const batch = products.slice(start, end).map((p) => ({
+          code: p.code,
+          description: p.description,
+          default_price: p.default_price,
+        }));
+
+        const { error } = await supabase.from("products").upsert(batch, { onConflict: "code" });
 
         if (error) {
-          console.error('Error inserting product:', error);
-          errorCount++;
+          console.error("Error inserting products batch:", error);
+          errorCount += batch.length;
         } else {
-          successCount++;
+          successCount += batch.length;
         }
       }
 
       if (!cancelRef.current) {
         toast({
-          title: 'Produtos importados',
-          description: `${successCount} produto(s) importado(s) com sucesso.${errorCount > 0 ? ` ${errorCount} erro(s).` : ''}`,
+          title: "Produtos importados",
+          description: `${successCount} produto(s) importado(s) com sucesso.${errorCount > 0 ? ` ${errorCount} erro(s).` : ""}`,
         });
+        shouldNotify = successCount > 0;
       }
-      
-      onProductsImported?.();
     } catch (error) {
-      console.error('Error parsing XML:', error);
+      console.error("Error importing products XML:", error);
       toast({
-        title: 'Erro ao importar',
-        description: 'Não foi possível ler o arquivo XML.',
-        variant: 'destructive',
+        title: "Erro ao importar",
+        description: error instanceof Error ? error.message : "Não foi possível ler o arquivo XML.",
+        variant: "destructive",
       });
     } finally {
       setLoadingProducts(false);
       setProgress(null);
       cancelRef.current = false;
-      if (productsInputRef.current) {
-        productsInputRef.current.value = '';
+      resetProductsInput();
+
+      if (shouldNotify) {
+        // Deixa a UI assentar antes do refetch (reduz chance de erro de DOM em portais)
+        setTimeout(() => onProductsImported?.(), 0);
       }
     }
   };
@@ -289,6 +334,7 @@ export function XMLImportButtons({ onClientsImported, onProductsImported }: XMLI
     <div className="flex flex-col gap-2">
       <div className="flex gap-2">
         <input
+          key={clientsInputKey}
           ref={clientsInputRef}
           type="file"
           accept=".xml"
@@ -296,13 +342,14 @@ export function XMLImportButtons({ onClientsImported, onProductsImported }: XMLI
           className="hidden"
         />
         <input
+          key={productsInputKey}
           ref={productsInputRef}
           type="file"
           accept=".xml"
           onChange={handleProductsXML}
           className="hidden"
         />
-        
+
         <Button
           variant="outline"
           size="sm"
@@ -310,14 +357,10 @@ export function XMLImportButtons({ onClientsImported, onProductsImported }: XMLI
           disabled={loadingClients || loadingProducts}
           className="gap-1.5 text-xs font-semibold hover:bg-gradient-to-r hover:from-blue-400 hover:to-blue-500 hover:text-white hover:border-blue-400 transition-all duration-300"
         >
-          {loadingClients ? (
-            <Loader2 className="h-3.5 w-3.5 animate-spin" />
-          ) : (
-            <Users className="h-3.5 w-3.5" />
-          )}
-          {loadingClients ? 'Importando...' : 'XML Clientes'}
+          {loadingClients ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Users className="h-3.5 w-3.5" />}
+          {loadingClients ? "Importando..." : "XML Clientes"}
         </Button>
-        
+
         <Button
           variant="outline"
           size="sm"
@@ -325,21 +368,15 @@ export function XMLImportButtons({ onClientsImported, onProductsImported }: XMLI
           disabled={loadingProducts || loadingClients}
           className="gap-1.5 text-xs font-semibold hover:bg-gradient-to-r hover:from-purple-400 hover:to-purple-500 hover:text-white hover:border-purple-400 transition-all duration-300"
         >
-          {loadingProducts ? (
-            <Loader2 className="h-3.5 w-3.5 animate-spin" />
-          ) : (
-            <Package className="h-3.5 w-3.5" />
-          )}
-          {loadingProducts ? 'Importando...' : 'XML Produtos'}
+          {loadingProducts ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Package className="h-3.5 w-3.5" />}
+          {loadingProducts ? "Importando..." : "XML Produtos"}
         </Button>
       </div>
-      
+
       {progress && (
         <div className="animate-fade-in space-y-1">
           <div className="flex items-center justify-between text-xs text-muted-foreground">
-            <span>
-              Importando {progress.type === 'products' ? 'produtos' : 'clientes'}...
-            </span>
+            <span>Importando {progress.type === "products" ? "produtos" : "clientes"}...</span>
             <div className="flex items-center gap-2">
               <span className="font-medium">
                 {progress.current} / {progress.total} ({progressPercentage}%)
@@ -361,3 +398,4 @@ export function XMLImportButtons({ onClientsImported, onProductsImported }: XMLI
     </div>
   );
 }
+
