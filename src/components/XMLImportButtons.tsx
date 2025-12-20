@@ -70,6 +70,7 @@ export function XMLImportButtons({ onClientsImported, onProductsImported }: XMLI
       });
 
       if (clients.length === 0) {
+        setLoadingClients(false);
         toast({
           title: 'Nenhum cliente encontrado',
           description: 'O arquivo XML não contém clientes válidos.',
@@ -182,6 +183,7 @@ export function XMLImportButtons({ onClientsImported, onProductsImported }: XMLI
       }
 
       if (products.length === 0) {
+        setLoadingProducts(false);
         toast({
           title: 'Nenhum produto encontrado',
           description: 'O arquivo XML não contém produtos válidos. Verifique a estrutura do arquivo.',
