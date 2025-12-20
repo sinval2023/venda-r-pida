@@ -44,9 +44,10 @@ export function XMLImportButtons({ onClientsImported, onProductsImported }: XMLI
   const [clientsInputKey, setClientsInputKey] = useState(0);
   const [productsInputKey, setProductsInputKey] = useState(0);
 
-  const clientsInputRef = useRef<HTMLInputElement>(null);
-  const productsInputRef = useRef<HTMLInputElement>(null);
   const cancelRef = useRef(false);
+
+  const clientsInputId = `xml-clients-${clientsInputKey}`;
+  const productsInputId = `xml-products-${productsInputKey}`;
 
   const resetClientsInput = () => setClientsInputKey((k) => k + 1);
   const resetProductsInput = () => setProductsInputKey((k) => k + 1);
@@ -117,10 +118,8 @@ export function XMLImportButtons({ onClientsImported, onProductsImported }: XMLI
         return;
       }
 
-      // Upsert em lotes para reduzir re-renders e chamadas (mais estável)
       const chunkSize = 200;
       let successCount = 0;
-      let errorCount = 0;
 
       for (let start = 0; start < clients.length; start += chunkSize) {
         if (cancelRef.current) {
@@ -143,16 +142,16 @@ export function XMLImportButtons({ onClientsImported, onProductsImported }: XMLI
 
         if (error) {
           console.error("Error inserting clients batch:", error);
-          errorCount += batch.length;
-        } else {
-          successCount += batch.length;
+          throw error;
         }
+
+        successCount += batch.length;
       }
 
       if (!cancelRef.current) {
         setNotice({
           title: "Clientes importados",
-          description: `${successCount} cliente(s) importado(s) com sucesso.${errorCount > 0 ? ` ${errorCount} erro(s).` : ""}`,
+          description: `${successCount} cliente(s) importado(s) com sucesso.`,
         });
         shouldNotify = successCount > 0;
       }
@@ -279,7 +278,6 @@ export function XMLImportButtons({ onClientsImported, onProductsImported }: XMLI
 
       const chunkSize = 200;
       let successCount = 0;
-      let errorCount = 0;
 
       for (let start = 0; start < products.length; start += chunkSize) {
         if (cancelRef.current) {
@@ -303,16 +301,16 @@ export function XMLImportButtons({ onClientsImported, onProductsImported }: XMLI
 
         if (error) {
           console.error("Error inserting products batch:", error);
-          errorCount += batch.length;
-        } else {
-          successCount += batch.length;
+          throw error;
         }
+
+        successCount += batch.length;
       }
 
       if (!cancelRef.current) {
         setNotice({
           title: "Produtos importados",
-          description: `${successCount} produto(s) importado(s) com sucesso.${errorCount > 0 ? ` ${errorCount} erro(s).` : ""}`,
+          description: `${successCount} produto(s) importado(s) com sucesso.`,
         });
         shouldNotify = successCount > 0;
       }
@@ -342,7 +340,7 @@ export function XMLImportButtons({ onClientsImported, onProductsImported }: XMLI
       <div className="flex gap-2">
         <input
           key={clientsInputKey}
-          ref={clientsInputRef}
+          id={clientsInputId}
           type="file"
           accept=".xml"
           onChange={handleClientsXML}
@@ -350,7 +348,7 @@ export function XMLImportButtons({ onClientsImported, onProductsImported }: XMLI
         />
         <input
           key={productsInputKey}
-          ref={productsInputRef}
+          id={productsInputId}
           type="file"
           accept=".xml"
           onChange={handleProductsXML}
@@ -358,25 +356,47 @@ export function XMLImportButtons({ onClientsImported, onProductsImported }: XMLI
         />
 
         <Button
+          asChild
           variant="outline"
           size="sm"
-          onClick={() => clientsInputRef.current?.click()}
-          disabled={loadingClients || loadingProducts}
           className="gap-1.5 text-xs font-semibold hover:bg-gradient-to-r hover:from-blue-400 hover:to-blue-500 hover:text-white hover:border-blue-400 transition-all duration-300"
         >
-          {loadingClients ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Users className="h-3.5 w-3.5" />}
-          {loadingClients ? "Importando..." : "XML Clientes"}
+          <label
+            htmlFor={clientsInputId}
+            onClick={(e) => {
+              if (loadingClients || loadingProducts) {
+                e.preventDefault();
+                e.stopPropagation();
+              }
+            }}
+            className={loadingClients || loadingProducts ? "pointer-events-none opacity-50" : "cursor-pointer"}
+            aria-disabled={loadingClients || loadingProducts}
+          >
+            {loadingClients ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Users className="h-3.5 w-3.5" />}
+            {loadingClients ? "Importando..." : "XML Clientes"}
+          </label>
         </Button>
 
         <Button
+          asChild
           variant="outline"
           size="sm"
-          onClick={() => productsInputRef.current?.click()}
-          disabled={loadingProducts || loadingClients}
           className="gap-1.5 text-xs font-semibold hover:bg-gradient-to-r hover:from-purple-400 hover:to-purple-500 hover:text-white hover:border-purple-400 transition-all duration-300"
         >
-          {loadingProducts ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Package className="h-3.5 w-3.5" />}
-          {loadingProducts ? "Importando..." : "XML Produtos"}
+          <label
+            htmlFor={productsInputId}
+            onClick={(e) => {
+              if (loadingProducts || loadingClients) {
+                e.preventDefault();
+                e.stopPropagation();
+              }
+            }}
+            className={loadingProducts || loadingClients ? "pointer-events-none opacity-50" : "cursor-pointer"}
+            aria-disabled={loadingProducts || loadingClients}
+          >
+            {loadingProducts ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Package className="h-3.5 w-3.5" />}
+            {loadingProducts ? "Importando..." : "XML Produtos"}
+          </label>
         </Button>
       </div>
 
