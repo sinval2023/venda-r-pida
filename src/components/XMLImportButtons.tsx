@@ -108,29 +108,54 @@ export function XMLImportButtons({ onClientsImported, onProductsImported }: XMLI
       const xml = parseXML(text);
       
       const products: ProductXMLData[] = [];
-      const productNodes = xml.querySelectorAll('produto, PRODUTO, Product, PRODUCT');
       
-      productNodes.forEach(node => {
-        const code = node.querySelector('codigo, CODIGO, Codigo, code, CODE, Code')?.textContent?.trim() || '';
-        const description = node.querySelector('descricao, DESCRICAO, Descricao, description, DESCRIPTION, Description, nome, NOME, Nome')?.textContent?.trim() || '';
-        const priceStr = node.querySelector('preco, PRECO, Preco, price, PRICE, Price, valor, VALOR, Valor')?.textContent?.trim() || '0';
-        const default_price = parseFloat(priceStr.replace(',', '.')) || 0;
+      // Try DATAPACKET format first (ROW elements with attributes)
+      const rowNodes = xml.querySelectorAll('ROW, Row, row');
+      
+      if (rowNodes.length > 0) {
+        // DATAPACKET format - data is in ROW attributes
+        rowNodes.forEach(node => {
+          const code = node.getAttribute('CODIGO') || node.getAttribute('Codigo') || node.getAttribute('codigo') || 
+                       node.getAttribute('COD_BARRA') || node.getAttribute('cod_barra') || '';
+          const description = node.getAttribute('DESCRICAO') || node.getAttribute('Descricao') || node.getAttribute('descricao') || '';
+          const priceStr = node.getAttribute('PRECO_VENDA') || node.getAttribute('preco_venda') || 
+                           node.getAttribute('PRECO') || node.getAttribute('preco') || 
+                           node.getAttribute('VALOR') || node.getAttribute('valor') || '0';
+          const default_price = parseFloat(priceStr.replace(',', '.')) || 0;
+          
+          if (code && description) {
+            products.push({ code: code.trim(), description: description.trim().toUpperCase(), default_price });
+          }
+        });
+      } else {
+        // Traditional format - try produto/PRODUTO nodes with child elements
+        const productNodes = xml.querySelectorAll('produto, PRODUTO, Product, PRODUCT');
         
-        if (code && description) {
-          products.push({ code, description, default_price });
-        }
-      });
+        productNodes.forEach(node => {
+          const code = node.querySelector('codigo, CODIGO, Codigo, code, CODE, Code')?.textContent?.trim() || '';
+          const description = node.querySelector('descricao, DESCRICAO, Descricao, description, DESCRIPTION, Description, nome, NOME, Nome')?.textContent?.trim() || '';
+          const priceStr = node.querySelector('preco, PRECO, Preco, price, PRICE, Price, valor, VALOR, Valor')?.textContent?.trim() || '0';
+          const default_price = parseFloat(priceStr.replace(',', '.')) || 0;
+          
+          if (code && description) {
+            products.push({ code, description: description.toUpperCase(), default_price });
+          }
+        });
+      }
 
       if (products.length === 0) {
         toast({
           title: 'Nenhum produto encontrado',
-          description: 'O arquivo XML não contém produtos válidos.',
+          description: 'O arquivo XML não contém produtos válidos. Verifique a estrutura do arquivo.',
           variant: 'destructive',
         });
         return;
       }
 
-      // Insert products into database
+      // Insert products into database in batches
+      let successCount = 0;
+      let errorCount = 0;
+      
       for (const product of products) {
         const { error } = await supabase
           .from('products')
@@ -142,12 +167,15 @@ export function XMLImportButtons({ onClientsImported, onProductsImported }: XMLI
 
         if (error) {
           console.error('Error inserting product:', error);
+          errorCount++;
+        } else {
+          successCount++;
         }
       }
 
       toast({
         title: 'Produtos importados',
-        description: `${products.length} produto(s) importado(s) com sucesso.`,
+        description: `${successCount} produto(s) importado(s) com sucesso.${errorCount > 0 ? ` ${errorCount} erro(s).` : ''}`,
       });
       
       onProductsImported?.();
