@@ -1,6 +1,7 @@
 import { useState, useRef } from 'react';
 import { Button } from '@/components/ui/button';
-import { Upload, Users, Package } from 'lucide-react';
+import { Progress } from '@/components/ui/progress';
+import { Users, Package, Loader2 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/hooks/use-toast';
 
@@ -21,9 +22,16 @@ interface ProductXMLData {
   default_price: number;
 }
 
+interface ImportProgress {
+  current: number;
+  total: number;
+  type: 'clients' | 'products';
+}
+
 export function XMLImportButtons({ onClientsImported, onProductsImported }: XMLImportButtonsProps) {
   const [loadingClients, setLoadingClients] = useState(false);
   const [loadingProducts, setLoadingProducts] = useState(false);
+  const [progress, setProgress] = useState<ImportProgress | null>(null);
   const clientsInputRef = useRef<HTMLInputElement>(null);
   const productsInputRef = useRef<HTMLInputElement>(null);
 
@@ -37,6 +45,7 @@ export function XMLImportButtons({ onClientsImported, onProductsImported }: XMLI
     if (!file) return;
 
     setLoadingClients(true);
+    setProgress(null);
     try {
       const text = await file.text();
       const xml = parseXML(text);
@@ -63,8 +72,14 @@ export function XMLImportButtons({ onClientsImported, onProductsImported }: XMLI
         return;
       }
 
-      // Insert clients into database
-      for (const client of clients) {
+      // Insert clients into database with progress
+      let successCount = 0;
+      let errorCount = 0;
+      
+      for (let i = 0; i < clients.length; i++) {
+        const client = clients[i];
+        setProgress({ current: i + 1, total: clients.length, type: 'clients' });
+        
         const { error } = await supabase
           .from('clients')
           .upsert({
@@ -74,12 +89,15 @@ export function XMLImportButtons({ onClientsImported, onProductsImported }: XMLI
 
         if (error) {
           console.error('Error inserting client:', error);
+          errorCount++;
+        } else {
+          successCount++;
         }
       }
 
       toast({
         title: 'Clientes importados',
-        description: `${clients.length} cliente(s) importado(s) com sucesso.`,
+        description: `${successCount} cliente(s) importado(s) com sucesso.${errorCount > 0 ? ` ${errorCount} erro(s).` : ''}`,
       });
       
       onClientsImported?.();
@@ -92,6 +110,7 @@ export function XMLImportButtons({ onClientsImported, onProductsImported }: XMLI
       });
     } finally {
       setLoadingClients(false);
+      setProgress(null);
       if (clientsInputRef.current) {
         clientsInputRef.current.value = '';
       }
@@ -103,6 +122,7 @@ export function XMLImportButtons({ onClientsImported, onProductsImported }: XMLI
     if (!file) return;
 
     setLoadingProducts(true);
+    setProgress(null);
     try {
       const text = await file.text();
       const xml = parseXML(text);
@@ -152,11 +172,14 @@ export function XMLImportButtons({ onClientsImported, onProductsImported }: XMLI
         return;
       }
 
-      // Insert products into database in batches
+      // Insert products into database with progress
       let successCount = 0;
       let errorCount = 0;
       
-      for (const product of products) {
+      for (let i = 0; i < products.length; i++) {
+        const product = products[i];
+        setProgress({ current: i + 1, total: products.length, type: 'products' });
+        
         const { error } = await supabase
           .from('products')
           .upsert({
@@ -188,50 +211,77 @@ export function XMLImportButtons({ onClientsImported, onProductsImported }: XMLI
       });
     } finally {
       setLoadingProducts(false);
+      setProgress(null);
       if (productsInputRef.current) {
         productsInputRef.current.value = '';
       }
     }
   };
 
+  const progressPercentage = progress ? Math.round((progress.current / progress.total) * 100) : 0;
+
   return (
-    <div className="flex gap-2">
-      <input
-        ref={clientsInputRef}
-        type="file"
-        accept=".xml"
-        onChange={handleClientsXML}
-        className="hidden"
-      />
-      <input
-        ref={productsInputRef}
-        type="file"
-        accept=".xml"
-        onChange={handleProductsXML}
-        className="hidden"
-      />
+    <div className="flex flex-col gap-2">
+      <div className="flex gap-2">
+        <input
+          ref={clientsInputRef}
+          type="file"
+          accept=".xml"
+          onChange={handleClientsXML}
+          className="hidden"
+        />
+        <input
+          ref={productsInputRef}
+          type="file"
+          accept=".xml"
+          onChange={handleProductsXML}
+          className="hidden"
+        />
+        
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => clientsInputRef.current?.click()}
+          disabled={loadingClients || loadingProducts}
+          className="gap-1.5 text-xs font-semibold hover:bg-gradient-to-r hover:from-blue-400 hover:to-blue-500 hover:text-white hover:border-blue-400 transition-all duration-300"
+        >
+          {loadingClients ? (
+            <Loader2 className="h-3.5 w-3.5 animate-spin" />
+          ) : (
+            <Users className="h-3.5 w-3.5" />
+          )}
+          {loadingClients ? 'Importando...' : 'XML Clientes'}
+        </Button>
+        
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => productsInputRef.current?.click()}
+          disabled={loadingProducts || loadingClients}
+          className="gap-1.5 text-xs font-semibold hover:bg-gradient-to-r hover:from-purple-400 hover:to-purple-500 hover:text-white hover:border-purple-400 transition-all duration-300"
+        >
+          {loadingProducts ? (
+            <Loader2 className="h-3.5 w-3.5 animate-spin" />
+          ) : (
+            <Package className="h-3.5 w-3.5" />
+          )}
+          {loadingProducts ? 'Importando...' : 'XML Produtos'}
+        </Button>
+      </div>
       
-      <Button
-        variant="outline"
-        size="sm"
-        onClick={() => clientsInputRef.current?.click()}
-        disabled={loadingClients}
-        className="gap-1.5 text-xs font-semibold hover:bg-gradient-to-r hover:from-blue-400 hover:to-blue-500 hover:text-white hover:border-blue-400 transition-all duration-300"
-      >
-        <Users className="h-3.5 w-3.5" />
-        {loadingClients ? 'Importando...' : 'XML Clientes'}
-      </Button>
-      
-      <Button
-        variant="outline"
-        size="sm"
-        onClick={() => productsInputRef.current?.click()}
-        disabled={loadingProducts}
-        className="gap-1.5 text-xs font-semibold hover:bg-gradient-to-r hover:from-purple-400 hover:to-purple-500 hover:text-white hover:border-purple-400 transition-all duration-300"
-      >
-        <Package className="h-3.5 w-3.5" />
-        {loadingProducts ? 'Importando...' : 'XML Produtos'}
-      </Button>
+      {progress && (
+        <div className="animate-fade-in space-y-1">
+          <div className="flex items-center justify-between text-xs text-muted-foreground">
+            <span>
+              Importando {progress.type === 'products' ? 'produtos' : 'clientes'}...
+            </span>
+            <span className="font-medium">
+              {progress.current} / {progress.total} ({progressPercentage}%)
+            </span>
+          </div>
+          <Progress value={progressPercentage} className="h-2" />
+        </div>
+      )}
     </div>
   );
 }
