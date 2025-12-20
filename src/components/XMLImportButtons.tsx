@@ -1,9 +1,9 @@
-import { useState, useRef } from 'react';
-import { Button } from '@/components/ui/button';
-import { Progress } from '@/components/ui/progress';
-import { Users, Package, Loader2, X } from 'lucide-react';
-import { supabase } from '@/integrations/supabase/client';
-import { toast } from '@/hooks/use-toast';
+import { useRef, useState } from "react";
+import { Button } from "@/components/ui/button";
+import { Progress } from "@/components/ui/progress";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { Package, Loader2, Users, X } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
 
 interface XMLImportButtonsProps {
   onClientsImported?: () => void;
@@ -25,13 +25,20 @@ interface ProductXMLData {
 interface ImportProgress {
   current: number;
   total: number;
-  type: 'clients' | 'products';
+  type: "clients" | "products";
 }
+
+type Notice = {
+  variant?: "default" | "destructive";
+  title: string;
+  description?: string;
+};
 
 export function XMLImportButtons({ onClientsImported, onProductsImported }: XMLImportButtonsProps) {
   const [loadingClients, setLoadingClients] = useState(false);
   const [loadingProducts, setLoadingProducts] = useState(false);
   const [progress, setProgress] = useState<ImportProgress | null>(null);
+  const [notice, setNotice] = useState<Notice | null>(null);
 
   // Re-monta o <input type="file" /> após cada import (evita mexer em input.value e reduz bugs de DOM)
   const [clientsInputKey, setClientsInputKey] = useState(0);
@@ -64,6 +71,7 @@ export function XMLImportButtons({ onClientsImported, onProductsImported }: XMLI
     const file = event.target.files?.[0];
     if (!file) return;
 
+    setNotice(null);
     setLoadingClients(true);
     setProgress(null);
     cancelRef.current = false;
@@ -76,10 +84,10 @@ export function XMLImportButtons({ onClientsImported, onProductsImported }: XMLI
         text = await file.text();
       } catch (readError) {
         console.error("Error reading file:", readError);
-        toast({
+        setNotice({
+          variant: "destructive",
           title: "Erro ao ler arquivo",
           description: "Não foi possível ler o arquivo selecionado.",
-          variant: "destructive",
         });
         return;
       }
@@ -101,10 +109,10 @@ export function XMLImportButtons({ onClientsImported, onProductsImported }: XMLI
       });
 
       if (clients.length === 0) {
-        toast({
+        setNotice({
+          variant: "destructive",
           title: "Nenhum cliente encontrado",
           description: "O arquivo XML não contém clientes válidos.",
-          variant: "destructive",
         });
         return;
       }
@@ -116,7 +124,7 @@ export function XMLImportButtons({ onClientsImported, onProductsImported }: XMLI
 
       for (let start = 0; start < clients.length; start += chunkSize) {
         if (cancelRef.current) {
-          toast({
+          setNotice({
             title: "Importação cancelada",
             description: `${successCount} cliente(s) importado(s) antes do cancelamento.`,
           });
@@ -142,7 +150,7 @@ export function XMLImportButtons({ onClientsImported, onProductsImported }: XMLI
       }
 
       if (!cancelRef.current) {
-        toast({
+        setNotice({
           title: "Clientes importados",
           description: `${successCount} cliente(s) importado(s) com sucesso.${errorCount > 0 ? ` ${errorCount} erro(s).` : ""}`,
         });
@@ -150,10 +158,10 @@ export function XMLImportButtons({ onClientsImported, onProductsImported }: XMLI
       }
     } catch (error) {
       console.error("Error importing clients XML:", error);
-      toast({
+      setNotice({
+        variant: "destructive",
         title: "Erro ao importar",
         description: error instanceof Error ? error.message : "Não foi possível ler o arquivo XML.",
-        variant: "destructive",
       });
     } finally {
       setLoadingClients(false);
@@ -162,7 +170,7 @@ export function XMLImportButtons({ onClientsImported, onProductsImported }: XMLI
       resetClientsInput();
 
       if (shouldNotify) {
-        // Deixa a UI assentar antes do refetch (reduz chance de erro de DOM em portais)
+        // Deixa a UI assentar antes do refetch
         setTimeout(() => onClientsImported?.(), 0);
       }
     }
@@ -172,6 +180,7 @@ export function XMLImportButtons({ onClientsImported, onProductsImported }: XMLI
     const file = event.target.files?.[0];
     if (!file) return;
 
+    setNotice(null);
     setLoadingProducts(true);
     setProgress(null);
     cancelRef.current = false;
@@ -184,10 +193,10 @@ export function XMLImportButtons({ onClientsImported, onProductsImported }: XMLI
         text = await file.text();
       } catch (readError) {
         console.error("Error reading file:", readError);
-        toast({
+        setNotice({
+          variant: "destructive",
           title: "Erro ao ler arquivo",
           description: "Não foi possível ler o arquivo selecionado.",
-          variant: "destructive",
         });
         return;
       }
@@ -211,10 +220,7 @@ export function XMLImportButtons({ onClientsImported, onProductsImported }: XMLI
             "";
 
           const description =
-            node.getAttribute("DESCRICAO") ||
-            node.getAttribute("Descricao") ||
-            node.getAttribute("descricao") ||
-            "";
+            node.getAttribute("DESCRICAO") || node.getAttribute("Descricao") || node.getAttribute("descricao") || "";
 
           const priceStr =
             node.getAttribute("PRECO_VENDA") ||
@@ -242,15 +248,18 @@ export function XMLImportButtons({ onClientsImported, onProductsImported }: XMLI
         productNodes.forEach((node) => {
           const code =
             node.querySelector("codigo, CODIGO, Codigo, code, CODE, Code")?.textContent?.trim() || "";
+
           const description =
             node
               .querySelector(
                 "descricao, DESCRICAO, Descricao, description, DESCRIPTION, Description, nome, NOME, Nome",
               )
               ?.textContent?.trim() || "";
+
           const priceStr =
             node.querySelector("preco, PRECO, Preco, price, PRICE, Price, valor, VALOR, Valor")?.textContent?.trim() ||
             "0";
+
           const default_price = parseFloat(priceStr.replace(",", ".")) || 0;
 
           if (code && description) {
@@ -260,22 +269,21 @@ export function XMLImportButtons({ onClientsImported, onProductsImported }: XMLI
       }
 
       if (products.length === 0) {
-        toast({
+        setNotice({
+          variant: "destructive",
           title: "Nenhum produto encontrado",
           description: "O arquivo XML não contém produtos válidos. Verifique a estrutura do arquivo.",
-          variant: "destructive",
         });
         return;
       }
 
-      // Upsert em lotes para reduzir re-renders e chamadas (mais estável)
       const chunkSize = 200;
       let successCount = 0;
       let errorCount = 0;
 
       for (let start = 0; start < products.length; start += chunkSize) {
         if (cancelRef.current) {
-          toast({
+          setNotice({
             title: "Importação cancelada",
             description: `${successCount} produto(s) importado(s) antes do cancelamento.`,
           });
@@ -302,7 +310,7 @@ export function XMLImportButtons({ onClientsImported, onProductsImported }: XMLI
       }
 
       if (!cancelRef.current) {
-        toast({
+        setNotice({
           title: "Produtos importados",
           description: `${successCount} produto(s) importado(s) com sucesso.${errorCount > 0 ? ` ${errorCount} erro(s).` : ""}`,
         });
@@ -310,10 +318,10 @@ export function XMLImportButtons({ onClientsImported, onProductsImported }: XMLI
       }
     } catch (error) {
       console.error("Error importing products XML:", error);
-      toast({
+      setNotice({
+        variant: "destructive",
         title: "Erro ao importar",
         description: error instanceof Error ? error.message : "Não foi possível ler o arquivo XML.",
-        variant: "destructive",
       });
     } finally {
       setLoadingProducts(false);
@@ -322,7 +330,6 @@ export function XMLImportButtons({ onClientsImported, onProductsImported }: XMLI
       resetProductsInput();
 
       if (shouldNotify) {
-        // Deixa a UI assentar antes do refetch (reduz chance de erro de DOM em portais)
         setTimeout(() => onProductsImported?.(), 0);
       }
     }
@@ -373,6 +380,27 @@ export function XMLImportButtons({ onClientsImported, onProductsImported }: XMLI
         </Button>
       </div>
 
+      {notice && (
+        <Alert variant={notice.variant} className="py-3">
+          <AlertTitle className="flex items-center justify-between">
+            <span>{notice.title}</span>
+            <button
+              type="button"
+              onClick={() => setNotice(null)}
+              className="rounded-md p-1 text-muted-foreground hover:text-foreground"
+              aria-label="Fechar aviso"
+            >
+              <X className="h-4 w-4" />
+            </button>
+          </AlertTitle>
+          {notice.description && (
+            <AlertDescription>
+              <p>{notice.description}</p>
+            </AlertDescription>
+          )}
+        </Alert>
+      )}
+
       {progress && (
         <div className="animate-fade-in space-y-1">
           <div className="flex items-center justify-between text-xs text-muted-foreground">
@@ -398,4 +426,3 @@ export function XMLImportButtons({ onClientsImported, onProductsImported }: XMLI
     </div>
   );
 }
-
