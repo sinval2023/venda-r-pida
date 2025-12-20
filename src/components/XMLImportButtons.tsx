@@ -52,8 +52,23 @@ export function XMLImportButtons({ onClientsImported, onProductsImported }: XMLI
     setLoadingClients(true);
     setProgress(null);
     cancelRef.current = false;
+    
+    let text = '';
     try {
-      const text = await file.text();
+      text = await file.text();
+    } catch (readError) {
+      console.error('Error reading file:', readError);
+      setLoadingClients(false);
+      toast({
+        title: 'Erro ao ler arquivo',
+        description: 'Não foi possível ler o arquivo selecionado.',
+        variant: 'destructive',
+      });
+      if (clientsInputRef.current) clientsInputRef.current.value = '';
+      return;
+    }
+    
+    try {
       const xml = parseXML(text);
       
       const clients: ClientXMLData[] = [];
@@ -71,11 +86,13 @@ export function XMLImportButtons({ onClientsImported, onProductsImported }: XMLI
 
       if (clients.length === 0) {
         setLoadingClients(false);
+        setProgress(null);
         toast({
           title: 'Nenhum cliente encontrado',
           description: 'O arquivo XML não contém clientes válidos.',
           variant: 'destructive',
         });
+        if (clientsInputRef.current) clientsInputRef.current.value = '';
         return;
       }
 
@@ -142,8 +159,23 @@ export function XMLImportButtons({ onClientsImported, onProductsImported }: XMLI
     setLoadingProducts(true);
     setProgress(null);
     cancelRef.current = false;
+    
+    let text = '';
     try {
-      const text = await file.text();
+      text = await file.text();
+    } catch (readError) {
+      console.error('Error reading file:', readError);
+      setLoadingProducts(false);
+      toast({
+        title: 'Erro ao ler arquivo',
+        description: 'Não foi possível ler o arquivo selecionado.',
+        variant: 'destructive',
+      });
+      if (productsInputRef.current) productsInputRef.current.value = '';
+      return;
+    }
+    
+    try {
       const xml = parseXML(text);
       
       const products: ProductXMLData[] = [];
@@ -184,11 +216,13 @@ export function XMLImportButtons({ onClientsImported, onProductsImported }: XMLI
 
       if (products.length === 0) {
         setLoadingProducts(false);
+        setProgress(null);
         toast({
           title: 'Nenhum produto encontrado',
           description: 'O arquivo XML não contém produtos válidos. Verifique a estrutura do arquivo.',
           variant: 'destructive',
         });
+        if (productsInputRef.current) productsInputRef.current.value = '';
         return;
       }
 
