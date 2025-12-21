@@ -426,18 +426,20 @@ export function SellerManagementModal({ open, onOpenChange, onSellersChanged }: 
                     <div key={i} className="h-16 bg-muted animate-pulse rounded" />
                   ))}
                 </div>
-              ) : sellers.filter(s => s.active).length === 0 ? (
+              ) : sellers.length === 0 ? (
                 <p className="text-muted-foreground text-sm text-center py-8">
                   Nenhum vendedor cadastrado
                 </p>
               ) : (
                 <div className="space-y-2 max-h-[400px] overflow-y-auto">
-                  {sellers.filter(s => s.active).map((seller) => (
+                  {sellers.map((seller) => (
                     <div
                       key={seller.id}
                       className={`flex items-center gap-3 p-3 rounded-lg border transition-colors ${
                         editingSeller?.id === seller.id 
                           ? 'bg-primary/10 border-primary' 
+                          : !seller.active
+                          ? 'bg-red-50 border-red-200 opacity-60'
                           : 'bg-muted/50 hover:bg-muted'
                       }`}
                     >
@@ -457,7 +459,14 @@ export function SellerManagementModal({ open, onOpenChange, onSellersChanged }: 
                       </div>
 
                       <div className="flex-1 min-w-0">
-                        <p className="font-medium truncate">{seller.name}</p>
+                        <div className="flex items-center gap-2">
+                          <p className="font-medium truncate">{seller.name}</p>
+                          {!seller.active && (
+                            <span className="text-[10px] px-1.5 py-0.5 bg-red-100 text-red-600 rounded">
+                              Inativo
+                            </span>
+                          )}
+                        </div>
                         <p className="text-xs text-muted-foreground">
                           Código: {seller.code} | Comissão: {seller.commission || 0}%
                         </p>

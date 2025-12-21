@@ -69,7 +69,7 @@ export function SellerCodeInput({ onSellerSelect, selectedSeller }: SellerCodeIn
                 </div>
                 {/* Name below image */}
                 <span className={`text-[10px] md:text-xs font-bold truncate max-w-[65px] text-center
-                  ${isSelected ? 'text-white' : 'text-blue-800 group-hover:text-blue-900'}
+                  ${isSelected ? 'text-white' : 'text-black'}
                 `}>
                   {seller.name.split(' ')[0]}
                 </span>
