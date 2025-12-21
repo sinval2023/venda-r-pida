@@ -3,7 +3,7 @@ import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Product } from '@/types/order';
-import { Plus, Minus, ShoppingCart } from 'lucide-react';
+import { Plus, Minus } from 'lucide-react';
 import { ProductWithCategory } from '@/hooks/useProducts';
 
 interface ProductCardProps {
@@ -90,6 +90,11 @@ export function ProductCard({ product, onAddToOrder }: ProductCardProps) {
     }
   };
 
+  // Get primary image or first image
+  const productImage = product.images?.find(img => img.is_primary)?.image_url || 
+                       product.images?.[0]?.image_url || 
+                       product.image_url;
+
   return (
     <Card 
       className="overflow-hidden cursor-pointer transition-all duration-300 hover:shadow-2xl hover:scale-[1.03] border-2 border-emerald-300 hover:border-emerald-500 bg-gradient-to-br from-emerald-50 via-green-100 to-emerald-200 dark:from-emerald-900/40 dark:via-green-900/30 dark:to-emerald-800/40 group"
@@ -97,18 +102,30 @@ export function ProductCard({ product, onAddToOrder }: ProductCardProps) {
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
     >
-      {/* Product Code Badge and Cart Icon */}
-      <div className="flex items-center justify-between px-2 pt-1">
+      {/* Product Image - Centered at Top */}
+      {productImage && (
+        <div className="w-full flex justify-center pt-2 px-2">
+          <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-lg overflow-hidden bg-white/50 flex items-center justify-center">
+            <img 
+              src={productImage} 
+              alt={product.description}
+              className="w-full h-full object-cover"
+            />
+          </div>
+        </div>
+      )}
+
+      {/* Product Code Badge */}
+      <div className="flex items-center justify-center px-2 pt-1">
         <div className="bg-primary text-primary-foreground text-[9px] sm:text-[10px] font-bold px-1 sm:px-1.5 py-0.5 rounded shadow">
           {product.code}
         </div>
-        <ShoppingCart className="w-4 h-4 sm:w-5 sm:h-5 md:w-6 md:h-6 text-emerald-600 dark:text-emerald-400 transition-transform duration-200 group-hover:scale-110" />
       </div>
 
       {/* Product Info */}
       <div className="p-1 sm:p-1.5">
-        {/* Product Name - Centered, Roboto, Responsive */}
-        <h3 className="font-roboto font-bold text-[10px] sm:text-xs md:text-sm lg:text-base text-foreground line-clamp-2 h-6 sm:h-8 md:h-9 mb-0.5 text-center group-hover:text-emerald-600 dark:group-hover:text-emerald-400 transition-colors duration-200">
+        {/* Product Name - Single line, responsive, centered */}
+        <h3 className="font-roboto font-bold text-[8px] sm:text-[9px] md:text-[10px] text-foreground truncate mb-0.5 text-center group-hover:text-emerald-600 dark:group-hover:text-emerald-400 transition-colors duration-200">
           {product.description}
         </h3>
         

@@ -384,26 +384,38 @@ export type Database = {
       sellers: {
         Row: {
           active: boolean
+          api_key: string | null
           code: string
+          commission: number | null
           created_at: string
           id: string
+          image_url: string | null
           name: string
+          password: string | null
           updated_at: string
         }
         Insert: {
           active?: boolean
+          api_key?: string | null
           code: string
+          commission?: number | null
           created_at?: string
           id?: string
+          image_url?: string | null
           name: string
+          password?: string | null
           updated_at?: string
         }
         Update: {
           active?: boolean
+          api_key?: string | null
           code?: string
+          commission?: number | null
           created_at?: string
           id?: string
+          image_url?: string | null
           name?: string
+          password?: string | null
           updated_at?: string
         }
         Relationships: []

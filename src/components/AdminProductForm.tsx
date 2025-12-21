@@ -154,7 +154,8 @@ export function AdminProductForm({ product, onSave, onCancel }: AdminProductForm
                 id="barcode"
                 placeholder="Ex: 7891234567890"
                 value={barcode}
-                onChange={(e) => setBarcode(e.target.value)}
+                onChange={(e) => setBarcode(e.target.value.toUpperCase())}
+                className="uppercase"
               />
             </div>
           </div>
@@ -165,7 +166,8 @@ export function AdminProductForm({ product, onSave, onCancel }: AdminProductForm
               id="description"
               placeholder="Descrição do produto"
               value={description}
-              onChange={(e) => setDescription(e.target.value)}
+              onChange={(e) => setDescription(e.target.value.toUpperCase())}
+              className="uppercase"
             />
           </div>
 

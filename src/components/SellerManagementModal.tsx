@@ -4,24 +4,39 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Plus, Trash2, Edit2, FolderOpen, Save, X, Upload, Image } from 'lucide-react';
-import { useCategories, Category } from '@/hooks/useCategories';
+import { Plus, Trash2, Edit2, UserPlus, Save, X, Upload, Image } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 
-interface CategoryManagementModalProps {
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
+interface Seller {
+  id: string;
+  code: string;
+  name: string;
+  password?: string;
+  image_url?: string;
+  api_key?: string;
+  commission?: number;
+  active: boolean;
 }
 
-export function CategoryManagementModal({ open, onOpenChange }: CategoryManagementModalProps) {
-  const { categories, loading, addCategory, updateCategory, deleteCategory, refetch } = useCategories();
+interface SellerManagementModalProps {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  onSellersChanged?: () => void;
+}
+
+export function SellerManagementModal({ open, onOpenChange, onSellersChanged }: SellerManagementModalProps) {
+  const [sellers, setSellers] = useState<Seller[]>([]);
+  const [loading, setLoading] = useState(false);
   
   // Form state
   const [formMode, setFormMode] = useState<'add' | 'edit'>('add');
-  const [editingCategory, setEditingCategory] = useState<Category | null>(null);
-  const [name, setName] = useState('');
+  const [editingSeller, setEditingSeller] = useState<Seller | null>(null);
   const [code, setCode] = useState('');
+  const [name, setName] = useState('');
+  const [password, setPassword] = useState('');
+  const [apiKey, setApiKey] = useState('');
+  const [commission, setCommission] = useState(0);
   const [imageUrl, setImageUrl] = useState<string | null>(null);
   const [pendingFile, setPendingFile] = useState<File | null>(null);
   const [saving, setSaving] = useState(false);
@@ -29,21 +44,47 @@ export function CategoryManagementModal({ open, onOpenChange }: CategoryManageme
   
   const fileInputRef = useRef<HTMLInputElement>(null);
 
+  const fetchSellers = async () => {
+    setLoading(true);
+    const { data, error } = await supabase
+      .from('sellers')
+      .select('*')
+      .order('code');
+    
+    if (!error && data) {
+      setSellers(data);
+    }
+    setLoading(false);
+  };
+
+  // Fetch sellers when modal opens
+  useState(() => {
+    if (open) {
+      fetchSellers();
+    }
+  });
+
   const resetForm = () => {
     setFormMode('add');
-    setEditingCategory(null);
-    setName('');
+    setEditingSeller(null);
     setCode('');
+    setName('');
+    setPassword('');
+    setApiKey('');
+    setCommission(0);
     setImageUrl(null);
     setPendingFile(null);
   };
 
-  const startEdit = (category: Category) => {
+  const startEdit = (seller: Seller) => {
     setFormMode('edit');
-    setEditingCategory(category);
-    setName(category.name);
-    setCode(category.code || '');
-    setImageUrl(category.image_url || null);
+    setEditingSeller(seller);
+    setCode(seller.code);
+    setName(seller.name);
+    setPassword(seller.password || '');
+    setApiKey(seller.api_key || '');
+    setCommission(seller.commission || 0);
+    setImageUrl(seller.image_url || null);
     setPendingFile(null);
   };
 
@@ -51,7 +92,6 @@ export function CategoryManagementModal({ open, onOpenChange }: CategoryManageme
     const file = e.target.files?.[0];
     if (file) {
       setPendingFile(file);
-      // Create preview
       const url = URL.createObjectURL(file);
       setImageUrl(url);
     }
@@ -61,8 +101,8 @@ export function CategoryManagementModal({ open, onOpenChange }: CategoryManageme
     setUploading(true);
     try {
       const fileExt = file.name.split('.').pop();
-      const fileName = `category_${Date.now()}.${fileExt}`;
-      const filePath = `categories/${fileName}`;
+      const fileName = `seller_${Date.now()}.${fileExt}`;
+      const filePath = `sellers/${fileName}`;
 
       const { error: uploadError } = await supabase.storage
         .from('product-images')
@@ -93,10 +133,10 @@ export function CategoryManagementModal({ open, onOpenChange }: CategoryManageme
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!name.trim()) {
+    if (!code.trim() || !name.trim()) {
       toast({
-        title: 'Campo obrigatório',
-        description: 'Preencha o nome da categoria.',
+        title: 'Campos obrigatórios',
+        description: 'Preencha o código e nome do vendedor.',
         variant: 'destructive',
       });
       return;
@@ -106,7 +146,6 @@ export function CategoryManagementModal({ open, onOpenChange }: CategoryManageme
 
     let finalImageUrl = imageUrl;
     
-    // Upload pending file if exists
     if (pendingFile) {
       const uploadedUrl = await uploadImage(pendingFile);
       if (uploadedUrl) {
@@ -114,12 +153,20 @@ export function CategoryManagementModal({ open, onOpenChange }: CategoryManageme
       }
     }
 
-    if (formMode === 'edit' && editingCategory) {
-      const { error } = await updateCategory(editingCategory.id, {
-        name,
-        code: code.trim() || null,
-        image_url: finalImageUrl,
-      });
+    const sellerData = {
+      code: code.toUpperCase(),
+      name: name.toUpperCase(),
+      password: password || null,
+      api_key: apiKey.toUpperCase() || null,
+      commission,
+      image_url: finalImageUrl,
+    };
+
+    if (formMode === 'edit' && editingSeller) {
+      const { error } = await supabase
+        .from('sellers')
+        .update(sellerData)
+        .eq('id', editingSeller.id);
 
       if (error) {
         toast({
@@ -128,25 +175,27 @@ export function CategoryManagementModal({ open, onOpenChange }: CategoryManageme
           variant: 'destructive',
         });
       } else {
-        toast({ title: 'Categoria atualizada!' });
+        toast({ title: 'Vendedor atualizado!' });
         resetForm();
+        fetchSellers();
+        onSellersChanged?.();
       }
     } else {
-      const { error } = await addCategory({
-        name,
-        code: code.trim() || undefined,
-        image_url: finalImageUrl || undefined,
-      });
+      const { error } = await supabase
+        .from('sellers')
+        .insert({ ...sellerData, active: true });
 
       if (error) {
         toast({
-          title: 'Erro ao criar categoria',
+          title: 'Erro ao criar vendedor',
           description: error.message,
           variant: 'destructive',
         });
       } else {
-        toast({ title: 'Categoria criada!' });
+        toast({ title: 'Vendedor criado!' });
         resetForm();
+        fetchSellers();
+        onSellersChanged?.();
       }
     }
 
@@ -154,7 +203,11 @@ export function CategoryManagementModal({ open, onOpenChange }: CategoryManageme
   };
 
   const handleDelete = async (id: string) => {
-    const { error } = await deleteCategory(id);
+    const { error } = await supabase
+      .from('sellers')
+      .update({ active: false })
+      .eq('id', id);
+
     if (error) {
       toast({
         title: 'Erro ao excluir',
@@ -162,20 +215,31 @@ export function CategoryManagementModal({ open, onOpenChange }: CategoryManageme
         variant: 'destructive',
       });
     } else {
-      toast({ title: 'Categoria excluída!' });
-      if (editingCategory?.id === id) {
+      toast({ title: 'Vendedor excluído!' });
+      if (editingSeller?.id === id) {
         resetForm();
       }
+      fetchSellers();
+      onSellersChanged?.();
     }
   };
 
+  // Reload sellers when modal opens
+  const handleOpenChange = (newOpen: boolean) => {
+    if (newOpen) {
+      fetchSellers();
+      resetForm();
+    }
+    onOpenChange(newOpen);
+  };
+
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
-            <FolderOpen className="h-5 w-5" />
-            Cadastro de Categorias
+            <UserPlus className="h-5 w-5" />
+            Cadastro de Vendedores
           </DialogTitle>
         </DialogHeader>
 
@@ -184,7 +248,7 @@ export function CategoryManagementModal({ open, onOpenChange }: CategoryManageme
           <Card className="shadow-md">
             <CardHeader>
               <CardTitle className="text-lg">
-                {formMode === 'edit' ? 'Editar Categoria' : 'Nova Categoria'}
+                {formMode === 'edit' ? 'Editar Vendedor' : 'Novo Vendedor'}
               </CardTitle>
             </CardHeader>
             <CardContent>
@@ -202,7 +266,7 @@ export function CategoryManagementModal({ open, onOpenChange }: CategoryManageme
                     />
                     
                     {imageUrl ? (
-                      <div className="relative w-32 h-32 border rounded-lg overflow-hidden group">
+                      <div className="relative w-24 h-24 border rounded-full overflow-hidden group">
                         <img
                           src={imageUrl}
                           alt="Preview"
@@ -213,7 +277,7 @@ export function CategoryManagementModal({ open, onOpenChange }: CategoryManageme
                             type="button"
                             size="icon"
                             variant="ghost"
-                            className="text-white hover:text-white hover:bg-white/20"
+                            className="text-white hover:text-white hover:bg-white/20 h-8 w-8"
                             onClick={() => fileInputRef.current?.click()}
                           >
                             <Upload className="h-4 w-4" />
@@ -222,7 +286,7 @@ export function CategoryManagementModal({ open, onOpenChange }: CategoryManageme
                             type="button"
                             size="icon"
                             variant="ghost"
-                            className="text-white hover:text-white hover:bg-white/20"
+                            className="text-white hover:text-white hover:bg-white/20 h-8 w-8"
                             onClick={() => {
                               setImageUrl(null);
                               setPendingFile(null);
@@ -236,33 +300,71 @@ export function CategoryManagementModal({ open, onOpenChange }: CategoryManageme
                       <Button
                         type="button"
                         variant="outline"
-                        className="w-32 h-32 flex flex-col items-center justify-center gap-2"
+                        className="w-24 h-24 rounded-full flex flex-col items-center justify-center gap-1"
                         onClick={() => fileInputRef.current?.click()}
                       >
-                        <Image className="h-8 w-8 text-muted-foreground" />
-                        <span className="text-xs text-muted-foreground">Adicionar</span>
+                        <Image className="h-6 w-6 text-muted-foreground" />
+                        <span className="text-[10px] text-muted-foreground">Foto</span>
                       </Button>
                     )}
                   </div>
                 </div>
 
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <Label htmlFor="seller-code">Código *</Label>
+                    <Input
+                      id="seller-code"
+                      placeholder="Ex: 1"
+                      value={code}
+                      onChange={(e) => setCode(e.target.value.toUpperCase())}
+                      className="uppercase"
+                    />
+                  </div>
+
+                  <div>
+                    <Label htmlFor="seller-commission">Comissão (%)</Label>
+                    <Input
+                      id="seller-commission"
+                      type="number"
+                      step="0.01"
+                      min="0"
+                      max="100"
+                      value={commission}
+                      onChange={(e) => setCommission(parseFloat(e.target.value) || 0)}
+                    />
+                  </div>
+                </div>
+
                 <div>
-                  <Label htmlFor="cat-code">Código</Label>
+                  <Label htmlFor="seller-name">Nome *</Label>
                   <Input
-                    id="cat-code"
-                    placeholder="Ex: CAT001"
-                    value={code}
-                    onChange={(e) => setCode(e.target.value.toUpperCase())}
+                    id="seller-name"
+                    placeholder="Nome do vendedor"
+                    value={name}
+                    onChange={(e) => setName(e.target.value.toUpperCase())}
+                    className="uppercase"
                   />
                 </div>
 
                 <div>
-                  <Label htmlFor="cat-name">Descrição *</Label>
+                  <Label htmlFor="seller-password">Senha</Label>
                   <Input
-                    id="cat-name"
-                    placeholder="Nome da categoria"
-                    value={name}
-                    onChange={(e) => setName(e.target.value.toUpperCase())}
+                    id="seller-password"
+                    type="password"
+                    placeholder="Senha de acesso"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                  />
+                </div>
+
+                <div>
+                  <Label htmlFor="seller-key">Chave</Label>
+                  <Input
+                    id="seller-key"
+                    placeholder="Chave API"
+                    value={apiKey}
+                    onChange={(e) => setApiKey(e.target.value.toUpperCase())}
                     className="uppercase"
                   />
                 </div>
@@ -285,7 +387,7 @@ export function CategoryManagementModal({ open, onOpenChange }: CategoryManageme
           {/* List */}
           <Card className="shadow-md">
             <CardHeader>
-              <CardTitle className="text-lg">Categorias Cadastradas</CardTitle>
+              <CardTitle className="text-lg">Vendedores Cadastrados</CardTitle>
             </CardHeader>
             <CardContent>
               {loading ? (
@@ -294,50 +396,50 @@ export function CategoryManagementModal({ open, onOpenChange }: CategoryManageme
                     <div key={i} className="h-16 bg-muted animate-pulse rounded" />
                   ))}
                 </div>
-              ) : categories.length === 0 ? (
+              ) : sellers.filter(s => s.active).length === 0 ? (
                 <p className="text-muted-foreground text-sm text-center py-8">
-                  Nenhuma categoria cadastrada
+                  Nenhum vendedor cadastrado
                 </p>
               ) : (
                 <div className="space-y-2 max-h-[400px] overflow-y-auto">
-                  {categories.map((category) => (
+                  {sellers.filter(s => s.active).map((seller) => (
                     <div
-                      key={category.id}
+                      key={seller.id}
                       className={`flex items-center gap-3 p-3 rounded-lg border transition-colors ${
-                        editingCategory?.id === category.id 
+                        editingSeller?.id === seller.id 
                           ? 'bg-primary/10 border-primary' 
                           : 'bg-muted/50 hover:bg-muted'
                       }`}
                     >
                       {/* Image thumbnail */}
-                      <div className="w-10 h-10 rounded bg-muted flex-shrink-0 overflow-hidden">
-                        {category.image_url ? (
+                      <div className="w-10 h-10 rounded-full bg-muted flex-shrink-0 overflow-hidden">
+                        {seller.image_url ? (
                           <img
-                            src={category.image_url}
-                            alt={category.name}
+                            src={seller.image_url}
+                            alt={seller.name}
                             className="w-full h-full object-cover"
                           />
                         ) : (
-                          <div className="w-full h-full flex items-center justify-center">
-                            <FolderOpen className="h-5 w-5 text-muted-foreground" />
+                          <div className="w-full h-full flex items-center justify-center bg-blue-100 text-blue-600 font-bold text-lg">
+                            {seller.code}
                           </div>
                         )}
                       </div>
 
                       <div className="flex-1 min-w-0">
-                        <p className="font-medium truncate">{category.name}</p>
-                        {category.code && (
-                          <p className="text-xs text-muted-foreground">{category.code}</p>
-                        )}
+                        <p className="font-medium truncate">{seller.name}</p>
+                        <p className="text-xs text-muted-foreground">
+                          Código: {seller.code} | Comissão: {seller.commission || 0}%
+                        </p>
                       </div>
 
-                      <Button size="icon" variant="ghost" onClick={() => startEdit(category)}>
+                      <Button size="icon" variant="ghost" onClick={() => startEdit(seller)}>
                         <Edit2 className="h-4 w-4" />
                       </Button>
                       <Button 
                         size="icon" 
                         variant="ghost" 
-                        onClick={() => handleDelete(category.id)} 
+                        onClick={() => handleDelete(seller.id)} 
                         className="text-destructive hover:text-destructive"
                       >
                         <Trash2 className="h-4 w-4" />

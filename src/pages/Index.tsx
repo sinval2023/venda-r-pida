@@ -141,8 +141,8 @@ const Index = () => {
             <Input
               placeholder="Buscar produto por código ou descrição..."
               value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-10 h-10 text-sm"
+              onChange={(e) => setSearchQuery(e.target.value.toUpperCase())}
+              className="pl-10 h-10 text-sm uppercase"
             />
           </div>
           <XMLImportButtons 
