@@ -124,8 +124,8 @@ export function ProductCard({ product, onAddToOrder }: ProductCardProps) {
 
       {/* Product Info */}
       <div className="p-1 sm:p-1.5">
-        {/* Product Name - Single line, responsive, centered */}
-        <h3 className="font-roboto font-bold text-[8px] sm:text-[9px] md:text-[10px] text-foreground truncate mb-0.5 text-center group-hover:text-emerald-600 dark:group-hover:text-emerald-400 transition-colors duration-200">
+        {/* Product Name - Single line, responsive, centered, larger font */}
+        <h3 className="font-roboto font-bold text-[10px] sm:text-xs md:text-sm text-foreground truncate mb-0.5 text-center group-hover:text-emerald-600 dark:group-hover:text-emerald-400 transition-colors duration-200">
           {product.description}
         </h3>
         

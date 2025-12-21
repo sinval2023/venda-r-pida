@@ -160,6 +160,7 @@ export function SellerManagementModal({ open, onOpenChange, onSellersChanged }: 
       api_key: apiKey.toUpperCase() || null,
       commission,
       image_url: finalImageUrl,
+      active: formMode === 'add' ? true : (editingSeller?.active ?? true),
     };
 
     if (formMode === 'edit' && editingSeller) {
@@ -367,6 +368,40 @@ export function SellerManagementModal({ open, onOpenChange, onSellersChanged }: 
                     onChange={(e) => setApiKey(e.target.value.toUpperCase())}
                     className="uppercase"
                   />
+                </div>
+
+                {/* Active/Inactive Toggle */}
+                <div className="flex items-center gap-3">
+                  <Label htmlFor="seller-active">Status</Label>
+                  <div className="flex gap-2">
+                    <Button
+                      type="button"
+                      variant={formMode === 'add' || (editingSeller && editingSeller.active) ? 'default' : 'outline'}
+                      size="sm"
+                      onClick={() => {
+                        if (editingSeller) {
+                          setEditingSeller({ ...editingSeller, active: true });
+                        }
+                      }}
+                      className={formMode === 'add' || (editingSeller && editingSeller.active) ? 'bg-green-600 hover:bg-green-700' : ''}
+                    >
+                      Ativo
+                    </Button>
+                    <Button
+                      type="button"
+                      variant={editingSeller && !editingSeller.active ? 'default' : 'outline'}
+                      size="sm"
+                      onClick={() => {
+                        if (editingSeller) {
+                          setEditingSeller({ ...editingSeller, active: false });
+                        }
+                      }}
+                      className={editingSeller && !editingSeller.active ? 'bg-red-600 hover:bg-red-700' : ''}
+                      disabled={formMode === 'add'}
+                    >
+                      Inativo
+                    </Button>
+                  </div>
                 </div>
 
                 <div className="flex gap-2 pt-2">
