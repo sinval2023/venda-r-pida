@@ -168,9 +168,10 @@ export function OrderTotal({ total, itemCount, productCount, onReview, onFinaliz
               </Button>
               <Button
                 onClick={() => setShowRetrieveModal(true)}
+                disabled={total > 0}
                 size="sm"
                 variant="outline"
-                className="font-bold text-xs sm:text-sm px-2 sm:px-3 border-cyan-300 text-cyan-600 hover:bg-cyan-100 hover:border-cyan-400 hover:text-cyan-700 transition-all duration-200"
+                className="font-bold text-xs sm:text-sm px-2 sm:px-3 border-cyan-300 text-cyan-600 hover:bg-cyan-100 hover:border-cyan-400 hover:text-cyan-700 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 <Clock className="h-4 w-4 sm:mr-1" />
                 <span className="hidden sm:inline">RESGATA</span>
