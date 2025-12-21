@@ -17,7 +17,7 @@ export function AdminCategoryList() {
     if (!newCategoryName.trim()) return;
     
     setSaving(true);
-    const { error } = await addCategory(newCategoryName, categories.length);
+    const { error } = await addCategory({ name: newCategoryName, display_order: categories.length });
     setSaving(false);
 
     if (error) {

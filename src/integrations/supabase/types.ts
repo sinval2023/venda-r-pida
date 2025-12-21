@@ -17,25 +17,31 @@ export type Database = {
       categories: {
         Row: {
           active: boolean
+          code: string | null
           created_at: string
           display_order: number
           id: string
+          image_url: string | null
           name: string
           updated_at: string
         }
         Insert: {
           active?: boolean
+          code?: string | null
           created_at?: string
           display_order?: number
           id?: string
+          image_url?: string | null
           name: string
           updated_at?: string
         }
         Update: {
           active?: boolean
+          code?: string | null
           created_at?: string
           display_order?: number
           id?: string
+          image_url?: string | null
           name?: string
           updated_at?: string
         }
