@@ -72,7 +72,7 @@ export function ProductCard({ product, onAddToOrder, hasSelectedSeller = true }:
 
   const handleAddToOrder = () => {
     if (!hasSelectedSeller) {
-      toast.error('Selecionar um vendedor para iniciar o pedido');
+      toast.error('Favor selecionar um vendedor');
       return;
     }
 

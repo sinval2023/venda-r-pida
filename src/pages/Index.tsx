@@ -50,7 +50,7 @@ const Index = () => {
 
   const handleAddToOrder = (product: Product, quantity: number, unitPrice: number) => {
     if (!selectedSeller) {
-      toast.error('Selecionar um vendedor');
+      toast.error('Favor selecionar um vendedor');
       return;
     }
     addItem(product, quantity, unitPrice);
@@ -176,7 +176,13 @@ const Index = () => {
         productCount={totalProductQuantity}
         onReview={handleReview}
         onFinalize={handleFinalize}
-        onCancelOrder={clearOrder}
+        onCancelOrder={() => {
+          clearOrder();
+          setSelectedClient(null);
+          setClientName('');
+          setSelectedSeller(null);
+          setObservations('');
+        }}
         onHoldOrder={async (identification) => {
           // Hold order in database with identification
           const { data: nextNumber } = await supabase.rpc('get_next_order_number');
