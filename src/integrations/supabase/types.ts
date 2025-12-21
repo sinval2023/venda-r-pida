@@ -47,6 +47,21 @@ export type Database = {
         }
         Relationships: []
       }
+      client_sequence: {
+        Row: {
+          id: number
+          last_number: number
+        }
+        Insert: {
+          id?: number
+          last_number?: number
+        }
+        Update: {
+          id?: number
+          last_number?: number
+        }
+        Relationships: []
+      }
       clients: {
         Row: {
           active: boolean
@@ -473,6 +488,7 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      get_next_client_code: { Args: never; Returns: string }
       get_next_order_number: { Args: never; Returns: number }
       has_role: {
         Args: {

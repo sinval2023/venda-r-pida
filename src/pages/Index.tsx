@@ -14,17 +14,17 @@ import { ClientSearchInput } from '@/components/ClientSearchInput';
 import { SellerCodeInput } from '@/components/SellerCodeInput';
 import { XMLImportButtons } from '@/components/XMLImportButtons';
 import { Order, Product } from '@/types/order';
-import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Search } from 'lucide-react';
 import { Client } from '@/hooks/useClients';
 import { Seller } from '@/hooks/useSellers';
+import { supabase } from '@/integrations/supabase/client';
 
 const Index = () => {
   const { user, loading, isAdmin } = useAuth();
   const navigate = useNavigate();
-  const { items, addItem, removeItem, getTotal, clearOrder, finalizeOrder } = useOrder();
+  const { items, addItem, removeItem, getTotal, clearOrder, finalizeOrder, setOrderItems } = useOrder();
   const { history: ftpHistory, loading: historyLoading } = useFTPHistory();
   const { products, refetch: refetchProducts } = useProducts();
   const [exportOrder, setExportOrder] = useState<Order | null>(null);
@@ -166,6 +166,57 @@ const Index = () => {
         onReview={handleReview}
         onFinalize={handleFinalize}
         onCancelOrder={clearOrder}
+        onHoldOrder={async (identification) => {
+          // Hold order in database with identification
+          const { data: nextNumber } = await supabase.rpc('get_next_order_number');
+          if (nextNumber && user) {
+            const { data: savedOrder } = await supabase.from('orders').insert({
+              order_number: nextNumber,
+              seller_id: selectedSeller?.id || null,
+              seller_name: selectedSeller?.name || user.user_metadata?.full_name || user.email || 'Vendedor',
+              client_id: selectedClient?.id || null,
+              client_name: selectedClient?.name || null,
+              user_id: user.id,
+              total: total,
+              observations: observations || null,
+              status: 'em_espera',
+              identification: identification
+            }).select().single();
+
+            // Save order items
+            if (savedOrder) {
+              const orderItems = items.map(item => ({
+                order_id: savedOrder.id,
+                product_id: item.productId || null,
+                product_code: item.code,
+                product_description: item.description,
+                quantity: item.quantity,
+                unit_price: item.unitPrice,
+                total: item.total
+              }));
+              await supabase.from('order_items').insert(orderItems);
+            }
+
+            // Clear order after hold
+            clearOrder();
+            setSelectedClient(null);
+            setSelectedSeller(null);
+            setObservations('');
+          }
+        }}
+        onRetrieveOrder={(orderId, orderItems) => {
+          // Convert order items to OrderItem format and set them
+          const convertedItems = orderItems.map(item => ({
+            id: item.id || crypto.randomUUID(),
+            productId: item.product_id || '',
+            code: item.product_code,
+            description: item.product_description,
+            quantity: item.quantity,
+            unitPrice: item.unit_price,
+            total: item.total,
+          }));
+          setOrderItems(convertedItems);
+        }}
         disabled={total === 0}
         items={items}
       />
