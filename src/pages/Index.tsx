@@ -17,7 +17,7 @@ import { Order, Product } from '@/types/order';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { History, Search, BarChart3, TrendingUp } from 'lucide-react';
+import { Search } from 'lucide-react';
 import { Client } from '@/hooks/useClients';
 import { Seller } from '@/hooks/useSellers';
 
@@ -134,7 +134,7 @@ const Index = () => {
           />
         </div>
 
-        {/* Search Bar, XML Import and History Button */}
+        {/* Search Bar and XML Import */}
         <div className="flex flex-wrap gap-2 mb-2">
           <div className="relative flex-1 min-w-[200px]">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
@@ -147,34 +147,8 @@ const Index = () => {
           </div>
           <XMLImportButtons 
             onProductsImported={refetchProducts}
+            onShowHistory={() => setShowHistory(true)}
           />
-          <Button
-            variant="outline"
-            size="default"
-            onClick={handleDashboardClick}
-            className="gap-1.5 text-sm font-semibold px-3 hover:bg-gradient-to-r hover:from-emerald-400 hover:to-teal-500 hover:text-white hover:border-emerald-400 transition-all duration-300 shadow-sm"
-          >
-            <TrendingUp className="h-4 w-4" />
-            <span className="hidden sm:inline">Painel</span>
-          </Button>
-          <Button
-            variant="outline"
-            size="default"
-            onClick={handleReportsClick}
-            className="gap-1.5 text-sm font-semibold px-3 hover:bg-gradient-to-r hover:from-blue-400 hover:to-indigo-500 hover:text-white hover:border-blue-400 transition-all duration-300 shadow-sm"
-          >
-            <BarChart3 className="h-4 w-4" />
-            <span className="hidden sm:inline">Relatórios</span>
-          </Button>
-          <Button
-            variant="outline"
-            size="default"
-            onClick={() => setShowHistory(true)}
-            className="gap-1.5 text-sm font-semibold px-3 hover:bg-gradient-to-r hover:from-orange-400 hover:to-amber-500 hover:text-white hover:border-orange-400 transition-all duration-300 shadow-sm"
-          >
-            <History className="h-4 w-4" />
-            <span className="hidden sm:inline">Histórico</span>
-          </Button>
         </div>
 
         {/* Product Grid - No categories, directly showing cards */}

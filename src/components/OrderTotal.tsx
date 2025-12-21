@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { ClipboardCheck, Send, XCircle, MessageCircle } from 'lucide-react';
+import { ClipboardCheck, Send, XCircle, MessageCircle, Pause, Clock } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
   AlertDialog,
@@ -12,6 +12,8 @@ import {
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
 import { OrderItem } from '@/types/order';
+import { HoldOrderModal } from './HoldOrderModal';
+import { RetrieveHoldOrderModal } from './RetrieveHoldOrderModal';
 
 interface OrderTotalProps {
   total: number;
@@ -19,12 +21,16 @@ interface OrderTotalProps {
   onReview: () => void;
   onFinalize: () => void;
   onCancelOrder: () => void;
+  onHoldOrder?: (identification: string) => void;
+  onRetrieveOrder?: (orderId: string, items: any[]) => void;
   disabled: boolean;
   items?: OrderItem[];
 }
 
-export function OrderTotal({ total, itemCount, productCount, onReview, onFinalize, onCancelOrder, disabled, items = [] }: OrderTotalProps & { productCount?: number }) {
+export function OrderTotal({ total, itemCount, productCount, onReview, onFinalize, onCancelOrder, onHoldOrder, onRetrieveOrder, disabled, items = [] }: OrderTotalProps & { productCount?: number }) {
   const [showCancelConfirm, setShowCancelConfirm] = useState(false);
+  const [showHoldModal, setShowHoldModal] = useState(false);
+  const [showRetrieveModal, setShowRetrieveModal] = useState(false);
 
   const formatCurrency = (value: number) => {
     return value.toLocaleString('pt-BR', {
@@ -110,16 +116,26 @@ export function OrderTotal({ total, itemCount, productCount, onReview, onFinaliz
                 className="font-bold text-xs sm:text-sm px-2 sm:px-3 border-red-300 text-red-600 hover:bg-red-100 hover:border-red-400 hover:text-red-700 transition-all duration-200"
               >
                 <XCircle className="h-4 w-4 sm:mr-1" />
-                <span className="hidden sm:inline">CANCELA PEDIDO</span>
+                <span className="hidden sm:inline">CANCELA</span>
               </Button>
               <Button
-                onClick={handleSendWhatsApp}
+                onClick={() => setShowHoldModal(true)}
                 disabled={disabled}
                 size="sm"
-                className="font-bold text-xs sm:text-sm px-2 sm:px-3 bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white shadow-md hover:shadow-lg transition-all duration-200"
+                variant="outline"
+                className="font-bold text-xs sm:text-sm px-2 sm:px-3 border-amber-300 text-amber-600 hover:bg-amber-100 hover:border-amber-400 hover:text-amber-700 transition-all duration-200"
               >
-                <MessageCircle className="h-4 w-4 sm:mr-1" />
-                <span className="hidden sm:inline">WHATSAPP</span>
+                <Pause className="h-4 w-4 sm:mr-1" />
+                <span className="hidden sm:inline">ESPERA</span>
+              </Button>
+              <Button
+                onClick={() => setShowRetrieveModal(true)}
+                size="sm"
+                variant="outline"
+                className="font-bold text-xs sm:text-sm px-2 sm:px-3 border-cyan-300 text-cyan-600 hover:bg-cyan-100 hover:border-cyan-400 hover:text-cyan-700 transition-all duration-200"
+              >
+                <Clock className="h-4 w-4 sm:mr-1" />
+                <span className="hidden sm:inline">RESGATA</span>
               </Button>
               <Button
                 onClick={onReview}
@@ -163,6 +179,18 @@ export function OrderTotal({ total, itemCount, productCount, onReview, onFinaliz
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      <HoldOrderModal
+        open={showHoldModal}
+        onOpenChange={setShowHoldModal}
+        onConfirm={(identification) => onHoldOrder?.(identification)}
+      />
+
+      <RetrieveHoldOrderModal
+        open={showRetrieveModal}
+        onOpenChange={setShowRetrieveModal}
+        onRetrieve={(orderId, items) => onRetrieveOrder?.(orderId, items)}
+      />
     </>
   );
 }
