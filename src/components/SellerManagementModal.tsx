@@ -57,12 +57,7 @@ export function SellerManagementModal({ open, onOpenChange, onSellersChanged }: 
     setLoading(false);
   };
 
-  // Fetch sellers when modal opens
-  useState(() => {
-    if (open) {
-      fetchSellers();
-    }
-  });
+  // Fetch sellers when modal opens - removed incorrect useState usage
 
   const resetForm = () => {
     setFormMode('add');
