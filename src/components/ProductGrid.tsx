@@ -1,10 +1,12 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useProducts } from '@/hooks/useProducts';
 import { ProductCard } from './ProductCard';
 import { Product } from '@/types/order';
-import { Input } from '@/components/ui/input';
-import { Search, Package } from 'lucide-react';
+import { Package } from 'lucide-react';
 import { Card } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+
+const PRODUCTS_PER_PAGE = 10;
 
 interface ProductGridProps {
   onAddToOrder: (product: Product, quantity: number, unitPrice: number) => void;
@@ -14,13 +16,26 @@ interface ProductGridProps {
 
 export function ProductGrid({ onAddToOrder, searchQuery, onSearchChange }: ProductGridProps) {
   const { products, loading, searchProducts } = useProducts();
+  const [visibleCount, setVisibleCount] = useState(PRODUCTS_PER_PAGE);
 
   const filteredProducts = searchQuery ? searchProducts(searchQuery) : products;
+
+  // Reset visible count when search changes
+  useEffect(() => {
+    setVisibleCount(PRODUCTS_PER_PAGE);
+  }, [searchQuery]);
+
+  const visibleProducts = filteredProducts.slice(0, visibleCount);
+  const hasMore = visibleCount < filteredProducts.length;
+
+  const handleLoadMore = () => {
+    setVisibleCount((prev) => prev + PRODUCTS_PER_PAGE);
+  };
 
   if (loading) {
     return (
       <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-2">
-        {Array.from({ length: 10 }).map((_, i) => (
+        {Array.from({ length: PRODUCTS_PER_PAGE }).map((_, i) => (
           <Card key={i} className="h-40 animate-pulse bg-muted" />
         ))}
       </div>
@@ -38,14 +53,28 @@ export function ProductGrid({ onAddToOrder, searchQuery, onSearchChange }: Produ
   }
 
   return (
-    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-2">
-      {filteredProducts.map((product) => (
-        <ProductCard
-          key={product.id}
-          product={product}
-          onAddToOrder={onAddToOrder}
-        />
-      ))}
+    <div className="space-y-4">
+      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-2">
+        {visibleProducts.map((product) => (
+          <ProductCard
+            key={product.id}
+            product={product}
+            onAddToOrder={onAddToOrder}
+          />
+        ))}
+      </div>
+      
+      {hasMore && (
+        <div className="flex justify-center pt-2">
+          <Button 
+            variant="outline" 
+            onClick={handleLoadMore}
+            className="min-w-[200px]"
+          >
+            Carregar mais ({filteredProducts.length - visibleCount} restantes)
+          </Button>
+        </div>
+      )}
     </div>
   );
 }
