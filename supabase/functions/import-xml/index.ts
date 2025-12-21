@@ -11,6 +11,7 @@ type ImportType = "products" | "clients";
 type ImportRequest = {
   type: ImportType;
   xml: string;
+  clearData?: boolean; // se true, limpa todos os dados antes de importar
 };
 
 type ProductRow = { code: string; description: string; default_price: number };
@@ -60,7 +61,8 @@ function extractProductsFromBarrasXml(xml: string): ProductRow[] {
     const attrs = parseRowAttributes(rowTag);
     const code = pickAttr(attrs, ["CODIGO", "COD_BARRA", "CODBARRA", "CODE"]);
     const description = pickAttr(attrs, ["DESCRICAO", "DESCR", "DESCRIPTION", "NOME"]);
-    const priceStr = pickAttr(attrs, ["PRECO_VENDA", "PRECO", "VALOR", "PRICE"]);
+    // Prioriza VALOR1, depois outras variantes
+    const priceStr = pickAttr(attrs, ["VALOR1", "PRECO_VENDA", "PRECO", "VALOR", "PRICE"]);
 
     if (code && description) {
       rows.push({
@@ -167,6 +169,16 @@ serve(async (req) => {
         });
       }
 
+      // Se clearData = true, limpa todos os produtos antes
+      if (body.clearData) {
+        console.log("Limpando todos os produtos...");
+        const { error: deleteError } = await admin.from("products").delete().neq("id", "00000000-0000-0000-0000-000000000000");
+        if (deleteError) {
+          console.error("Erro ao limpar produtos:", deleteError);
+          throw deleteError;
+        }
+      }
+
       const chunkSize = 500;
       for (let i = 0; i < products.length; i += chunkSize) {
         const chunk = products.slice(i, i + chunkSize);
@@ -186,6 +198,16 @@ serve(async (req) => {
           status: 200,
           headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
+      }
+
+      // Se clearData = true, limpa todos os clientes antes
+      if (body.clearData) {
+        console.log("Limpando todos os clientes...");
+        const { error: deleteError } = await admin.from("clients").delete().neq("id", "00000000-0000-0000-0000-000000000000");
+        if (deleteError) {
+          console.error("Erro ao limpar clientes:", deleteError);
+          throw deleteError;
+        }
       }
 
       const chunkSize = 500;

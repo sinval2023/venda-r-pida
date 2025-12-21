@@ -2,6 +2,8 @@ import { useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Label } from "@/components/ui/label";
 import { Package, Loader2, Users, X } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -27,6 +29,7 @@ export function XMLImportButtons({ onClientsImported, onProductsImported }: XMLI
   const [loadingProducts, setLoadingProducts] = useState(false);
   const [progress, setProgress] = useState<ImportProgress | null>(null);
   const [notice, setNotice] = useState<Notice | null>(null);
+  const [clearData, setClearData] = useState(false);
 
   // Re-monta o <input type="file" /> após cada import (evita mexer em input.value e reduz bugs de DOM)
   const [clientsInputKey, setClientsInputKey] = useState(0);
@@ -70,7 +73,7 @@ export function XMLImportButtons({ onClientsImported, onProductsImported }: XMLI
       setProgress({ current: 1, total: 1, type: "clients" });
 
       const { data, error } = await supabase.functions.invoke("import-xml", {
-        body: { type: "clients", xml: text },
+        body: { type: "clients", xml: text, clearData },
       });
 
       if (error) {
@@ -122,7 +125,7 @@ export function XMLImportButtons({ onClientsImported, onProductsImported }: XMLI
       setProgress({ current: 1, total: 1, type: "products" });
 
       const { data, error } = await supabase.functions.invoke("import-xml", {
-        body: { type: "products", xml: text },
+        body: { type: "products", xml: text, clearData },
       });
 
       if (error) {
@@ -163,7 +166,22 @@ export function XMLImportButtons({ onClientsImported, onProductsImported }: XMLI
   const progressPercentage = progress ? Math.round((progress.current / progress.total) * 100) : 0;
 
   return (
-    <div className="flex flex-col gap-2">
+    <div className="flex flex-col gap-3">
+      <div className="flex items-center gap-2">
+        <Checkbox
+          id="clear-data"
+          checked={clearData}
+          onCheckedChange={(checked) => setClearData(checked === true)}
+          disabled={loadingClients || loadingProducts}
+        />
+        <Label
+          htmlFor="clear-data"
+          className="text-xs text-muted-foreground cursor-pointer select-none"
+        >
+          Limpar dados antes de importar (substitui tudo)
+        </Label>
+      </div>
+      
       <div className="flex gap-2">
         <input
           key={clientsInputKey}
