@@ -5,7 +5,6 @@ import { Product } from '@/types/order';
 import { Package } from 'lucide-react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { toast } from 'sonner';
 
 const PRODUCTS_PER_PAGE = 10;
 

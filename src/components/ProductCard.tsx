@@ -5,7 +5,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Product } from '@/types/order';
 import { Plus, Minus } from 'lucide-react';
 import { ProductWithCategory } from '@/hooks/useProducts';
-import { toast } from 'sonner';
+import { toast } from '@/hooks/use-toast';
 
 interface ProductCardProps {
   product: ProductWithCategory;
@@ -72,7 +72,11 @@ export function ProductCard({ product, onAddToOrder, hasSelectedSeller = true }:
 
   const handleAddToOrder = () => {
     if (!hasSelectedSeller) {
-      toast.error('Favor selecionar um vendedor');
+      toast({
+        title: 'VENDEDOR NÃO SELECIONADO',
+        description: 'Favor selecionar um vendedor.',
+        variant: 'destructive',
+      });
       return;
     }
 

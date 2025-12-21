@@ -1,8 +1,9 @@
 import { useState, useEffect, useRef } from 'react';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { useClients, Client } from '@/hooks/useClients';
-import { User, X, Search } from 'lucide-react';
+import { supabase } from '@/integrations/supabase/client';
+import { Client } from '@/hooks/useClients';
+import { User, X, Search, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
 interface ClientSearchInputProps {
@@ -13,15 +14,16 @@ interface ClientSearchInputProps {
 }
 
 export function ClientSearchInput({ onClientSelect, selectedClient, clientName = '', onClientNameChange }: ClientSearchInputProps) {
-  const { searchClients } = useClients();
   const [search, setSearch] = useState('');
   const [results, setResults] = useState<Client[]>([]);
   const [showResults, setShowResults] = useState(false);
+  const [searchLoading, setSearchLoading] = useState(false);
   const wrapperRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (selectedClient) {
       setSearch('');
+      setShowResults(false);
       onClientNameChange?.(selectedClient.name);
     }
   }, [selectedClient]);
@@ -36,15 +38,49 @@ export function ClientSearchInput({ onClientSelect, selectedClient, clientName =
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
+  useEffect(() => {
+    const q = search.trim();
+    if (q.length < 2) return;
+
+    let cancelled = false;
+
+    const timeout = window.setTimeout(async () => {
+      setSearchLoading(true);
+      const { data, error } = await supabase
+        .from('clients')
+        .select('id, name, cpf, phone, email, active')
+        .eq('active', true)
+        .ilike('name', `%${q}%`)
+        .order('name')
+        .limit(10);
+
+      if (cancelled) return;
+
+      if (error) {
+        setResults([]);
+        setSearchLoading(false);
+        return;
+      }
+
+      setResults((data ?? []) as Client[]);
+      setSearchLoading(false);
+    }, 250);
+
+    return () => {
+      cancelled = true;
+      window.clearTimeout(timeout);
+    };
+  }, [search]);
+
   const handleSearch = (value: string) => {
     setSearch(value);
-    if (value.length >= 2) {
-      const found = searchClients(value);
-      setResults(found);
-      setShowResults(true);
-    } else {
+
+    const hasQuery = value.trim().length >= 2;
+    setShowResults(hasQuery);
+
+    if (!hasQuery) {
       setResults([]);
-      setShowResults(false);
+      setSearchLoading(false);
     }
   };
 
@@ -57,6 +93,7 @@ export function ClientSearchInput({ onClientSelect, selectedClient, clientName =
 
   const handleClear = () => {
     setSearch('');
+    setShowResults(false);
     onClientSelect(null);
     onClientNameChange?.('');
     setResults([]);
@@ -103,17 +140,29 @@ export function ClientSearchInput({ onClientSelect, selectedClient, clientName =
           />
         </div>
         
-        {showResults && results.length > 0 && (
+        {showResults && (
           <div className="absolute z-50 w-full mt-1 bg-popover border border-border rounded-md shadow-lg max-h-48 overflow-auto">
-            {results.map((client) => (
-              <button
-                key={client.id}
-                className="w-full px-3 py-2 text-left hover:bg-accent transition-colors text-sm"
-                onClick={() => handleSelect(client)}
-              >
-                <div className="font-medium">{client.name}</div>
-              </button>
-            ))}
+            {searchLoading && (
+              <div className="px-3 py-2 text-sm text-muted-foreground flex items-center gap-2">
+                <Loader2 className="h-4 w-4 animate-spin" /> Buscando...
+              </div>
+            )}
+
+            {!searchLoading && results.length === 0 && (
+              <div className="px-3 py-2 text-sm text-muted-foreground">Nenhum cliente encontrado</div>
+            )}
+
+            {!searchLoading && results.length > 0 &&
+              results.map((client) => (
+                <button
+                  key={client.id}
+                  className="w-full px-3 py-2 text-left hover:bg-accent transition-colors text-sm"
+                  onClick={() => handleSelect(client)}
+                >
+                  <div className="font-medium">{client.name}</div>
+                  <div className="text-xs text-muted-foreground">{client.cpf}</div>
+                </button>
+              ))}
           </div>
         )}
       </div>

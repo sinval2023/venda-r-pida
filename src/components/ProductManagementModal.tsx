@@ -10,7 +10,7 @@ import { ArrowLeft, Package, FileSpreadsheet, FileText } from "lucide-react";
 import { AdminProductForm } from "./AdminProductForm";
 import { AdminProductList } from "./AdminProductList";
 import { useProducts, ProductWithCategory } from "@/hooks/useProducts";
-import { toast } from "sonner";
+import { toast } from "@/hooks/use-toast";
 import * as XLSX from 'xlsx';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
@@ -44,7 +44,7 @@ export function ProductManagementModal({
         if (result.error) {
           return { error: result.error };
         }
-        toast.success("Produto atualizado com sucesso!");
+        toast({ title: "Produto atualizado com sucesso!" });
         // Reset after successful save
         setEditingProduct(null);
         setSelectedProductId(null);
@@ -53,7 +53,7 @@ export function ProductManagementModal({
         if (result.error) {
           return { error: result.error };
         }
-        toast.success("Produto adicionado com sucesso!");
+        toast({ title: "Produto adicionado com sucesso!" });
       }
       onProductsChanged?.();
       return { error: null };
@@ -70,9 +70,13 @@ export function ProductManagementModal({
   const handleDeleteProduct = async (productId: string) => {
     const result = await deleteProduct(productId);
     if (result.error) {
-      toast.error("Erro ao excluir produto: " + result.error.message);
+      toast({
+        title: "Erro ao excluir produto",
+        description: result.error.message,
+        variant: "destructive",
+      });
     } else {
-      toast.success("Produto excluído com sucesso!");
+      toast({ title: "Produto excluído com sucesso!" });
       if (selectedProductId === productId) {
         setSelectedProductId(null);
       }
@@ -106,7 +110,7 @@ export function ProductManagementModal({
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, 'Produtos');
     XLSX.writeFile(wb, 'produtos.xlsx');
-    toast.success("Exportado para Excel com sucesso!");
+    toast({ title: "Exportado para Excel com sucesso!" });
   };
 
   const exportToPDF = () => {
@@ -128,7 +132,7 @@ export function ProductManagementModal({
     });
 
     doc.save('produtos.pdf');
-    toast.success("Exportado para PDF com sucesso!");
+    toast({ title: "Exportado para PDF com sucesso!" });
   };
 
   return (
