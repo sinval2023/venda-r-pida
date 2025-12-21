@@ -5,6 +5,7 @@ import { Product } from '@/types/order';
 import { Package } from 'lucide-react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { toast } from 'sonner';
 
 const PRODUCTS_PER_PAGE = 10;
 
@@ -12,9 +13,10 @@ interface ProductGridProps {
   onAddToOrder: (product: Product, quantity: number, unitPrice: number) => void;
   searchQuery: string;
   onSearchChange: (query: string) => void;
+  hasSelectedSeller: boolean;
 }
 
-export function ProductGrid({ onAddToOrder, searchQuery, onSearchChange }: ProductGridProps) {
+export function ProductGrid({ onAddToOrder, searchQuery, onSearchChange, hasSelectedSeller }: ProductGridProps) {
   const { products, loading, searchProducts } = useProducts();
   const [visibleCount, setVisibleCount] = useState(PRODUCTS_PER_PAGE);
 
