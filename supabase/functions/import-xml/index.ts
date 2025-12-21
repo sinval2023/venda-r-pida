@@ -47,7 +47,17 @@ function pickAttr(attrs: Record<string, string>, names: string[]) {
 }
 
 function parsePrice(priceStr: string) {
-  const cleaned = (priceStr ?? "0").toString().trim().replace(",", ".");
+  // Remove moeda e qualquer coisa que não seja dígito / separador
+  let cleaned = (priceStr ?? "0").toString().trim();
+  cleaned = cleaned.replace(/[^0-9,.-]/g, "");
+
+  // Se vier no formato 1.234,56 -> remove separador de milhar e troca vírgula por ponto
+  if (cleaned.includes(".") && cleaned.includes(",")) {
+    cleaned = cleaned.replace(/\./g, "").replace(/,/g, ".");
+  } else {
+    cleaned = cleaned.replace(/,/g, ".");
+  }
+
   const n = Number.parseFloat(cleaned);
   return Number.isFinite(n) ? n : 0;
 }
@@ -82,7 +92,7 @@ function extractProductsFromBarrasXml(xml: string): ProductRow[] {
     const description =
       (block.match(/<(descricao|DESCRICAO|nome|NOME)>([\s\S]*?)<\/(descricao|DESCRICAO|nome|NOME)>/i)?.[2] ?? "").trim();
     const priceStr =
-      (block.match(/<(preco|PRECO|valor|VALOR)>([\s\S]*?)<\/(preco|PRECO|valor|VALOR)>/i)?.[2] ?? "0").trim();
+      (block.match(/<(valor1|VALOR1|preco|PRECO|valor|VALOR)>([\s\S]*?)<\/(valor1|VALOR1|preco|PRECO|valor|VALOR)>/i)?.[2] ?? "0").trim();
 
     if (code && description) {
       rows.push({
@@ -162,6 +172,9 @@ serve(async (req) => {
 
     if (body.type === "products") {
       const products = extractProductsFromBarrasXml(body.xml);
+      console.log(`Produtos extraídos: ${products.length} (xmlLen=${body.xml.length})`);
+      console.log("Amostra:", products.slice(0, 3));
+
       if (products.length === 0) {
         return new Response(JSON.stringify({ success: false, error: "Nenhum produto válido encontrado no XML." }), {
           status: 200,
