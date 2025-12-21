@@ -431,7 +431,11 @@ export function ClientManagementModal({ open, onOpenChange, onClientsChanged }: 
                 </div>
                 <div>
                   <Label className="text-xs">Tipo</Label>
-                  <Select value={personType} onValueChange={(v: PersonType) => setPersonType(v)}>
+                  <Select 
+                    key={`person-type-${personType}`}
+                    value={personType} 
+                    onValueChange={(v: PersonType) => setPersonType(v)}
+                  >
                     <SelectTrigger className="h-9">
                       <SelectValue />
                     </SelectTrigger>
