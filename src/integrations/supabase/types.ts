@@ -50,33 +50,57 @@ export type Database = {
       clients: {
         Row: {
           active: boolean
+          address: string | null
+          address_number: string | null
+          city: string | null
+          code: string | null
           cpf: string
           created_at: string
           email: string | null
           id: string
           name: string
+          neighborhood: string | null
           phone: string | null
+          phone2: string | null
+          state: string | null
           updated_at: string
+          zipcode: string | null
         }
         Insert: {
           active?: boolean
+          address?: string | null
+          address_number?: string | null
+          city?: string | null
+          code?: string | null
           cpf: string
           created_at?: string
           email?: string | null
           id?: string
           name: string
+          neighborhood?: string | null
           phone?: string | null
+          phone2?: string | null
+          state?: string | null
           updated_at?: string
+          zipcode?: string | null
         }
         Update: {
           active?: boolean
+          address?: string | null
+          address_number?: string | null
+          city?: string | null
+          code?: string | null
           cpf?: string
           created_at?: string
           email?: string | null
           id?: string
           name?: string
+          neighborhood?: string | null
           phone?: string | null
+          phone2?: string | null
+          state?: string | null
           updated_at?: string
+          zipcode?: string | null
         }
         Relationships: []
       }
@@ -227,10 +251,12 @@ export type Database = {
           client_name: string | null
           created_at: string
           id: string
+          identification: string | null
           observations: string | null
           order_number: number
           seller_id: string | null
           seller_name: string
+          status: string | null
           total: number
           user_id: string
         }
@@ -239,10 +265,12 @@ export type Database = {
           client_name?: string | null
           created_at?: string
           id?: string
+          identification?: string | null
           observations?: string | null
           order_number: number
           seller_id?: string | null
           seller_name: string
+          status?: string | null
           total?: number
           user_id: string
         }
@@ -251,10 +279,12 @@ export type Database = {
           client_name?: string | null
           created_at?: string
           id?: string
+          identification?: string | null
           observations?: string | null
           order_number?: number
           seller_id?: string | null
           seller_name?: string
+          status?: string | null
           total?: number
           user_id?: string
         }

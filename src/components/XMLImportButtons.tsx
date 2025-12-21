@@ -1,18 +1,21 @@
 import { useRef, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { Package, Loader2, Users, X, ClipboardEdit, FolderOpen, MoreHorizontal } from "lucide-react";
+import { Package, Loader2, Users, X, ClipboardEdit, FolderOpen, MoreHorizontal, TrendingUp, BarChart3, History, UserPlus } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { ProductManagementModal } from "./ProductManagementModal";
 import { CategoryManagementModal } from "./CategoryManagementModal";
+import { ClientManagementModal } from "./ClientManagementModal";
 
 interface XMLImportButtonsProps {
   onClientsImported?: () => void;
   onProductsImported?: () => void;
+  onShowHistory?: () => void;
 }
 
 interface ImportProgress {
@@ -27,9 +30,11 @@ type Notice = {
   description?: string;
 };
 
-export function XMLImportButtons({ onClientsImported, onProductsImported }: XMLImportButtonsProps) {
+export function XMLImportButtons({ onClientsImported, onProductsImported, onShowHistory }: XMLImportButtonsProps) {
+  const navigate = useNavigate();
   const [productModalOpen, setProductModalOpen] = useState(false);
   const [categoryModalOpen, setCategoryModalOpen] = useState(false);
+  const [clientModalOpen, setClientModalOpen] = useState(false);
   const [loadingClients, setLoadingClients] = useState(false);
   const [loadingProducts, setLoadingProducts] = useState(false);
   const [progress, setProgress] = useState<ImportProgress | null>(null);
@@ -219,6 +224,46 @@ export function XMLImportButtons({ onClientsImported, onProductsImported }: XMLI
             
             <div className="grid grid-cols-2 gap-2">
               <Button
+                variant="outline"
+                size="sm"
+                onClick={() => navigate('/dashboard')}
+                className="gap-1.5 text-xs font-semibold hover:bg-gradient-to-r hover:from-emerald-400 hover:to-teal-500 hover:text-white hover:border-emerald-400 transition-all duration-300"
+              >
+                <TrendingUp className="h-3.5 w-3.5" />
+                Painel
+              </Button>
+
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => navigate('/relatorios')}
+                className="gap-1.5 text-xs font-semibold hover:bg-gradient-to-r hover:from-blue-400 hover:to-indigo-500 hover:text-white hover:border-blue-400 transition-all duration-300"
+              >
+                <BarChart3 className="h-3.5 w-3.5" />
+                Relatórios
+              </Button>
+
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => onShowHistory?.()}
+                className="gap-1.5 text-xs font-semibold hover:bg-gradient-to-r hover:from-orange-400 hover:to-amber-500 hover:text-white hover:border-orange-400 transition-all duration-300"
+              >
+                <History className="h-3.5 w-3.5" />
+                Histórico
+              </Button>
+
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setClientModalOpen(true)}
+                className="gap-1.5 text-xs font-semibold hover:bg-gradient-to-r hover:from-pink-400 hover:to-rose-500 hover:text-white hover:border-pink-400 transition-all duration-300"
+              >
+                <UserPlus className="h-3.5 w-3.5" />
+                Clientes
+              </Button>
+
+              <Button
                 asChild
                 variant="outline"
                 size="sm"
@@ -295,6 +340,12 @@ export function XMLImportButtons({ onClientsImported, onProductsImported }: XMLI
       <CategoryManagementModal
         open={categoryModalOpen}
         onOpenChange={setCategoryModalOpen}
+      />
+
+      <ClientManagementModal
+        open={clientModalOpen}
+        onOpenChange={setClientModalOpen}
+        onClientsChanged={onClientsImported}
       />
 
       {notice && (
