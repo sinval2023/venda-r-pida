@@ -4,6 +4,7 @@ import { UserCheck, UserPlus } from 'lucide-react';
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
 import { SellerManagementModal } from './SellerManagementModal';
+import { PasswordAuthModal } from './PasswordAuthModal';
 
 interface SellerCodeInputProps {
   onSellerSelect: (seller: Seller | null) => void;
@@ -13,13 +14,32 @@ interface SellerCodeInputProps {
 export function SellerCodeInput({ onSellerSelect, selectedSeller }: SellerCodeInputProps) {
   const { sellers, getSellerByCode, refetch } = useSellers();
   const [showSellerModal, setShowSellerModal] = useState(false);
+  const [showPasswordModal, setShowPasswordModal] = useState(false);
+  const [pendingSellerCode, setPendingSellerCode] = useState<string | null>(null);
 
   const handleSelectSeller = (code: string) => {
+    // Se já tem um vendedor selecionado e está tentando trocar, pedir senha
+    if (selectedSeller && selectedSeller.code !== code) {
+      setPendingSellerCode(code);
+      setShowPasswordModal(true);
+      return;
+    }
+    
     const seller = getSellerByCode(code);
     if (seller) {
       onSellerSelect(seller);
     } else {
       onSellerSelect(null);
+    }
+  };
+
+  const handlePasswordSuccess = () => {
+    if (pendingSellerCode) {
+      const seller = getSellerByCode(pendingSellerCode);
+      if (seller) {
+        onSellerSelect(seller);
+      }
+      setPendingSellerCode(null);
     }
   };
 
@@ -103,6 +123,14 @@ export function SellerCodeInput({ onSellerSelect, selectedSeller }: SellerCodeIn
         open={showSellerModal}
         onOpenChange={setShowSellerModal}
         onSellersChanged={refetch}
+      />
+
+      <PasswordAuthModal
+        open={showPasswordModal}
+        onOpenChange={setShowPasswordModal}
+        onSuccess={handlePasswordSuccess}
+        title="Autorização para Trocar Vendedor"
+        description="Digite a senha para alterar o vendedor do pedido."
       />
     </div>
   );

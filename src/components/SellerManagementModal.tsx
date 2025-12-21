@@ -4,9 +4,12 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Plus, Trash2, Edit2, UserPlus, Save, X, Upload, Image, ArrowLeft } from 'lucide-react';
+import { Plus, Trash2, Edit2, UserPlus, Save, X, Upload, Image, ArrowLeft, FileSpreadsheet, FileText, Search } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
+import * as XLSX from 'xlsx';
+import jsPDF from 'jspdf';
+import autoTable from 'jspdf-autotable';
 
 interface Seller {
   id: string;
@@ -227,6 +230,43 @@ export function SellerManagementModal({ open, onOpenChange, onSellersChanged }: 
     }
   };
 
+  const exportToExcel = () => {
+    const exportData = sellers.filter(s => s.active).map(s => ({
+      'Código': s.code,
+      'Nome': s.name,
+      'Comissão (%)': s.commission || 0,
+      'Status': s.active ? 'Ativo' : 'Inativo',
+    }));
+
+    const ws = XLSX.utils.json_to_sheet(exportData);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, 'Vendedores');
+    XLSX.writeFile(wb, 'vendedores.xlsx');
+    toast({ title: "Exportado para Excel com sucesso!" });
+  };
+
+  const exportToPDF = () => {
+    const doc = new jsPDF();
+    doc.setFontSize(16);
+    doc.text('Lista de Vendedores', 14, 20);
+
+    const tableData = sellers.filter(s => s.active).map(s => [
+      s.code,
+      s.name,
+      `${s.commission || 0}%`,
+      s.active ? 'Ativo' : 'Inativo',
+    ]);
+
+    autoTable(doc, {
+      head: [['Código', 'Nome', 'Comissão', 'Status']],
+      body: tableData,
+      startY: 30,
+    });
+
+    doc.save('vendedores.pdf');
+    toast({ title: "Exportado para PDF com sucesso!" });
+  };
+
   // Reload sellers when modal opens
   const handleOpenChange = (newOpen: boolean) => {
     if (newOpen) {
@@ -238,25 +278,26 @@ export function SellerManagementModal({ open, onOpenChange, onSellersChanged }: 
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
-      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
-        <DialogHeader>
+      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto p-0">
+        <DialogHeader className="p-4 pb-2 border-b bg-gradient-to-r from-sky-400 via-sky-500 to-cyan-400">
           <div className="flex items-center gap-3">
             <Button
               variant="ghost"
               size="icon"
               onClick={() => handleOpenChange(false)}
-              className="h-9 w-9 rounded-full hover:bg-muted/80 hover:scale-105 transition-all duration-200"
+              className="text-white hover:bg-white/20"
             >
               <ArrowLeft className="h-5 w-5" />
             </Button>
-            <DialogTitle className="flex items-center gap-2">
+            <DialogTitle className="text-xl font-bold text-white flex items-center gap-2">
               <UserPlus className="h-5 w-5" />
               Cadastro de Vendedores
             </DialogTitle>
           </div>
         </DialogHeader>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div className="p-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           {/* Form */}
           <Card className="shadow-md" key={editingSeller?.id || 'new'}>
             <CardHeader>
@@ -437,8 +478,30 @@ export function SellerManagementModal({ open, onOpenChange, onSellersChanged }: 
 
           {/* List */}
           <Card className="shadow-md">
-            <CardHeader>
-              <CardTitle className="text-lg">Vendedores Cadastrados</CardTitle>
+            <CardHeader className="pb-2">
+              <div className="flex items-center justify-between">
+                <CardTitle className="text-lg">Vendedores Cadastrados</CardTitle>
+                <div className="flex gap-1">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={exportToExcel}
+                    className="gap-1 hover:bg-green-100 hover:text-green-700 hover:border-green-400"
+                  >
+                    <FileSpreadsheet className="h-4 w-4" />
+                    Excel
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={exportToPDF}
+                    className="gap-1 hover:bg-red-100 hover:text-red-700 hover:border-red-400"
+                  >
+                    <FileText className="h-4 w-4" />
+                    PDF
+                  </Button>
+                </div>
+              </div>
             </CardHeader>
             <CardContent>
               {loading ? (
@@ -510,6 +573,7 @@ export function SellerManagementModal({ open, onOpenChange, onSellersChanged }: 
               )}
             </CardContent>
           </Card>
+          </div>
         </div>
       </DialogContent>
     </Dialog>
