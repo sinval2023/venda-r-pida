@@ -1,4 +1,4 @@
-import { useState, useRef } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -57,8 +57,8 @@ export function SellerManagementModal({ open, onOpenChange, onSellersChanged }: 
     setLoading(false);
   };
 
-  // Fetch sellers when modal opens - removed incorrect useState usage
-
+  // When the parent toggles `open` directly, Dialog's `onOpenChange` won't fire.
+  // So we fetch/reset here whenever the modal becomes visible.
   const resetForm = () => {
     setFormMode('add');
     setEditingSeller(null);
@@ -70,6 +70,13 @@ export function SellerManagementModal({ open, onOpenChange, onSellersChanged }: 
     setImageUrl(null);
     setPendingFile(null);
   };
+
+  useEffect(() => {
+    if (!open) return;
+    fetchSellers();
+    resetForm();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open]);
 
   const startEdit = (seller: Seller) => {
     setFormMode('edit');
