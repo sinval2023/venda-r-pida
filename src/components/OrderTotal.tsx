@@ -1,6 +1,7 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { ClipboardCheck, Send, XCircle, MessageCircle, Pause, Clock } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { supabase } from '@/integrations/supabase/client';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -22,15 +23,47 @@ interface OrderTotalProps {
   onFinalize: () => void;
   onCancelOrder: () => void;
   onHoldOrder?: (identification: string) => void;
-  onRetrieveOrder?: (orderId: string, items: any[]) => void;
+  onRetrieveOrder?: (orderId: string, items: any[], orderData?: any) => void;
   disabled: boolean;
   items?: OrderItem[];
+  productCount?: number;
 }
 
-export function OrderTotal({ total, itemCount, productCount, onReview, onFinalize, onCancelOrder, onHoldOrder, onRetrieveOrder, disabled, items = [] }: OrderTotalProps & { productCount?: number }) {
+export function OrderTotal({ total, itemCount, productCount, onReview, onFinalize, onCancelOrder, onHoldOrder, onRetrieveOrder, disabled, items = [] }: OrderTotalProps) {
   const [showCancelConfirm, setShowCancelConfirm] = useState(false);
   const [showHoldModal, setShowHoldModal] = useState(false);
   const [showRetrieveModal, setShowRetrieveModal] = useState(false);
+  const [holdOrderCount, setHoldOrderCount] = useState(0);
+
+  // Fetch hold orders count
+  const fetchHoldOrderCount = async () => {
+    const { count, error } = await supabase
+      .from('orders')
+      .select('*', { count: 'exact', head: true })
+      .eq('status', 'em_espera');
+    
+    if (!error && count !== null) {
+      setHoldOrderCount(count);
+    }
+  };
+
+  useEffect(() => {
+    fetchHoldOrderCount();
+    
+    // Subscribe to orders changes to update count
+    const channel = supabase
+      .channel('orders-count')
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'orders' },
+        () => fetchHoldOrderCount()
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, []);
 
   const formatCurrency = (value: number) => {
     return value.toLocaleString('pt-BR', {
@@ -123,10 +156,15 @@ export function OrderTotal({ total, itemCount, productCount, onReview, onFinaliz
                 disabled={disabled}
                 size="sm"
                 variant="outline"
-                className="font-bold text-xs sm:text-sm px-2 sm:px-3 border-amber-300 text-amber-600 hover:bg-amber-100 hover:border-amber-400 hover:text-amber-700 transition-all duration-200"
+                className="font-bold text-xs sm:text-sm px-2 sm:px-3 border-amber-300 text-amber-600 hover:bg-amber-100 hover:border-amber-400 hover:text-amber-700 transition-all duration-200 relative"
               >
                 <Pause className="h-4 w-4 sm:mr-1" />
                 <span className="hidden sm:inline">ESPERA</span>
+                {holdOrderCount > 0 && (
+                  <span className="absolute -top-2 -right-2 bg-amber-500 text-white text-[10px] font-bold rounded-full h-5 w-5 flex items-center justify-center shadow-sm">
+                    {holdOrderCount}
+                  </span>
+                )}
               </Button>
               <Button
                 onClick={() => setShowRetrieveModal(true)}
