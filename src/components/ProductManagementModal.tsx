@@ -40,7 +40,9 @@ export function ProductManagementModal({
           return { error: result.error };
         }
         toast.success("Produto atualizado com sucesso!");
+        // Reset after successful save
         setEditingProduct(null);
+        setSelectedProductId(null);
       } else {
         const result = await addProduct(productData);
         if (result.error) {
