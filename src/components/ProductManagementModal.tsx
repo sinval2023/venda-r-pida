@@ -5,6 +5,8 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+import { ArrowLeft, Package } from "lucide-react";
 import { AdminProductForm } from "./AdminProductForm";
 import { AdminProductList } from "./AdminProductList";
 import { useProducts, ProductWithCategory } from "@/hooks/useProducts";
@@ -92,7 +94,20 @@ export function ProductManagementModal({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-6xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>Cadastro de Produtos</DialogTitle>
+          <div className="flex items-center gap-3">
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => onOpenChange(false)}
+              className="h-9 w-9 rounded-full hover:bg-muted/80 hover:scale-105 transition-all duration-200"
+            >
+              <ArrowLeft className="h-5 w-5" />
+            </Button>
+            <DialogTitle className="flex items-center gap-2">
+              <Package className="h-5 w-5" />
+              Cadastro de Produtos
+            </DialogTitle>
+          </div>
         </DialogHeader>
         
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-4">
