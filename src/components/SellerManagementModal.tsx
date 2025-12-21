@@ -248,7 +248,7 @@ export function SellerManagementModal({ open, onOpenChange, onSellersChanged }: 
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           {/* Form */}
-          <Card className="shadow-md">
+          <Card className="shadow-md" key={editingSeller?.id || 'new'}>
             <CardHeader>
               <CardTitle className="text-lg">
                 {formMode === 'edit' ? 'Editar Vendedor' : 'Novo Vendedor'}
