@@ -32,11 +32,11 @@ export function ProductSearch({ products, onSearch, onSelectProduct }: ProductSe
           placeholder="Buscar produto por código ou descrição..."
           value={query}
           onChange={(e) => {
-            setQuery(e.target.value);
+            setQuery(e.target.value.toUpperCase());
             setShowResults(true);
           }}
           onFocus={() => setShowResults(true)}
-          className="pl-10"
+          className="pl-10 uppercase"
         />
       </div>
 

@@ -1,6 +1,9 @@
+import { useState } from 'react';
 import { useSellers, Seller } from '@/hooks/useSellers';
-import { UserCheck } from 'lucide-react';
+import { UserCheck, UserPlus } from 'lucide-react';
 import { Label } from '@/components/ui/label';
+import { Button } from '@/components/ui/button';
+import { SellerManagementModal } from './SellerManagementModal';
 
 interface SellerCodeInputProps {
   onSellerSelect: (seller: Seller | null) => void;
@@ -8,7 +11,8 @@ interface SellerCodeInputProps {
 }
 
 export function SellerCodeInput({ onSellerSelect, selectedSeller }: SellerCodeInputProps) {
-  const { getSellerByCode } = useSellers();
+  const { getSellerByCode, refetch } = useSellers();
+  const [showSellerModal, setShowSellerModal] = useState(false);
 
   const sellerCodes = ['1', '2', '3', '4', '5'];
 
@@ -27,7 +31,7 @@ export function SellerCodeInput({ onSellerSelect, selectedSeller }: SellerCodeIn
         <Label className="text-xs text-muted-foreground flex items-center gap-1 mb-1">
           <UserCheck className="h-3 w-3" /> Vendedor
         </Label>
-        <div className="flex gap-2">
+        <div className="flex gap-2 items-center">
           {sellerCodes.map((code) => {
             const seller = getSellerByCode(code);
             const isSelected = selectedSeller?.code === code;
@@ -56,6 +60,17 @@ export function SellerCodeInput({ onSellerSelect, selectedSeller }: SellerCodeIn
               </button>
             );
           })}
+          
+          {/* Add New Seller Button */}
+          <Button
+            variant="outline"
+            size="icon"
+            onClick={() => setShowSellerModal(true)}
+            className="h-10 w-10 rounded-full border-2 border-dashed border-blue-400 hover:border-blue-500 hover:bg-blue-50"
+            title="Adicionar vendedor"
+          >
+            <UserPlus className="h-5 w-5 text-blue-500" />
+          </Button>
         </div>
       </div>
       
@@ -67,6 +82,12 @@ export function SellerCodeInput({ onSellerSelect, selectedSeller }: SellerCodeIn
           </span>
         </div>
       )}
+
+      <SellerManagementModal
+        open={showSellerModal}
+        onOpenChange={setShowSellerModal}
+        onSellersChanged={refetch}
+      />
     </div>
   );
 }
