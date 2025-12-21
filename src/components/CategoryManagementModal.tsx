@@ -181,7 +181,7 @@ export function CategoryManagementModal({ open, onOpenChange }: CategoryManageme
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           {/* Form */}
-          <Card className="shadow-md">
+          <Card className="shadow-md" key={editingCategory?.id || 'new'}>
             <CardHeader>
               <CardTitle className="text-lg">
                 {formMode === 'edit' ? 'Editar Categoria' : 'Nova Categoria'}
