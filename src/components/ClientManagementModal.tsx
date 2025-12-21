@@ -1,13 +1,14 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent } from '@/components/ui/card';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
-import { ArrowLeft, Save, Pencil, Trash2, FileSpreadsheet, FileText, Search } from 'lucide-react';
+import { ArrowLeft, Save, Pencil, Trash2, FileSpreadsheet, FileText, Search, X } from 'lucide-react';
 import * as XLSX from 'xlsx';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
@@ -35,12 +36,16 @@ interface ClientManagementModalProps {
   onClientsChanged?: () => void;
 }
 
+type PersonType = 'PF' | 'PJ';
+
 export function ClientManagementModal({ open, onOpenChange, onClientsChanged }: ClientManagementModalProps) {
   const { toast } = useToast();
+  const codeInputRef = useRef<HTMLInputElement>(null);
   const [clients, setClients] = useState<Client[]>([]);
   const [loading, setLoading] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [editingClient, setEditingClient] = useState<Client | null>(null);
+  const [personType, setPersonType] = useState<PersonType>('PF');
   const [formData, setFormData] = useState({
     code: '',
     name: '',
@@ -64,6 +69,9 @@ export function ClientManagementModal({ open, onOpenChange, onClientsChanged }: 
 
   useEffect(() => {
     if (editingClient) {
+      // Detect if it's PJ based on document length
+      const docLength = editingClient.cpf.replace(/\D/g, '').length;
+      setPersonType(docLength > 11 ? 'PJ' : 'PF');
       setFormData({
         code: editingClient.code || '',
         name: editingClient.name,
@@ -84,6 +92,7 @@ export function ClientManagementModal({ open, onOpenChange, onClientsChanged }: 
   }, [editingClient]);
 
   const resetForm = () => {
+    setPersonType('PF');
     setFormData({
       code: '',
       name: '',
@@ -98,6 +107,11 @@ export function ClientManagementModal({ open, onOpenChange, onClientsChanged }: 
       state: '',
       zipcode: '',
     });
+    setEditingClient(null);
+    // Focus on code field
+    setTimeout(() => {
+      codeInputRef.current?.focus();
+    }, 100);
   };
 
   const fetchClients = async () => {
@@ -150,19 +164,78 @@ export function ClientManagementModal({ open, onOpenChange, onClientsChanged }: 
     }
   };
 
+  const handleCNPJSearch = async (cnpj: string) => {
+    const cleanCNPJ = cnpj.replace(/\D/g, '');
+    if (cleanCNPJ.length !== 14) return;
+
+    try {
+      toast({ title: "Buscando CNPJ...", description: "Aguarde..." });
+      const response = await fetch(`https://brasilapi.com.br/api/cnpj/v1/${cleanCNPJ}`);
+      const data = await response.json();
+      
+      if (!data.message) {
+        setFormData(prev => ({
+          ...prev,
+          name: data.razao_social || data.nome_fantasia || prev.name,
+          address: data.logradouro || prev.address,
+          address_number: data.numero || prev.address_number,
+          neighborhood: data.bairro || prev.neighborhood,
+          city: data.municipio || prev.city,
+          state: data.uf || prev.state,
+          zipcode: data.cep?.replace(/\D/g, '') || prev.zipcode,
+          email: data.email || prev.email,
+          phone: data.ddd_telefone_1 || prev.phone,
+        }));
+        toast({
+          title: "CNPJ encontrado",
+          description: "Dados da empresa preenchidos automaticamente.",
+        });
+      } else {
+        toast({
+          title: "CNPJ não encontrado",
+          description: "Verifique o CNPJ informado.",
+          variant: "destructive",
+        });
+      }
+    } catch (error) {
+      console.error('Error fetching CNPJ:', error);
+      toast({
+        title: "Erro ao buscar CNPJ",
+        description: "Não foi possível buscar os dados do CNPJ.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const getNextClientCode = async (): Promise<string> => {
+    const { data, error } = await supabase.rpc('get_next_client_code');
+    if (error) {
+      console.error('Error getting next client code:', error);
+      return '';
+    }
+    return data || '';
+  };
+
   const handleSave = async () => {
     if (!formData.name.trim() || !formData.cpf.trim()) {
       toast({
         title: "Campos obrigatórios",
-        description: "Nome e CPF/CNPJ são obrigatórios.",
+        description: `Nome e ${personType === 'PJ' ? 'CNPJ' : 'CPF'} são obrigatórios.`,
         variant: "destructive",
       });
       return;
     }
 
     setLoading(true);
+    
+    // Auto-generate code if empty and new client
+    let clientCode = formData.code;
+    if (!editingClient && !clientCode) {
+      clientCode = await getNextClientCode();
+    }
+
     const clientData = {
-      code: formData.code || null,
+      code: clientCode || null,
       name: formData.name.toUpperCase(),
       cpf: formData.cpf,
       phone: formData.phone || null,
@@ -297,6 +370,22 @@ export function ClientManagementModal({ open, onOpenChange, onClientsChanged }: 
     }
   };
 
+  const handleCancel = () => {
+    resetForm();
+  };
+
+  const handleDocumentChange = (value: string) => {
+    setFormData(prev => ({ ...prev, cpf: value }));
+    
+    // If PJ and has 14 digits, search CNPJ
+    if (personType === 'PJ') {
+      const cleanDoc = value.replace(/\D/g, '');
+      if (cleanDoc.length === 14) {
+        handleCNPJSearch(value);
+      }
+    }
+  };
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-6xl max-h-[90vh] overflow-hidden p-0">
@@ -324,10 +413,11 @@ export function ClientManagementModal({ open, onOpenChange, onClientsChanged }: 
                 <div>
                   <Label className="text-xs">Código</Label>
                   <Input
+                    ref={codeInputRef}
                     value={formData.code}
                     onChange={(e) => setFormData(prev => ({ ...prev, code: e.target.value }))}
                     className="h-9"
-                    placeholder="Código"
+                    placeholder="Auto"
                   />
                 </div>
                 <div className="col-span-2">
@@ -340,17 +430,29 @@ export function ClientManagementModal({ open, onOpenChange, onClientsChanged }: 
                   />
                 </div>
                 <div>
-                  <Label className="text-xs">CPF/CNPJ *</Label>
-                  <Input
-                    value={formData.cpf}
-                    onChange={(e) => setFormData(prev => ({ ...prev, cpf: e.target.value }))}
-                    className="h-9"
-                    placeholder="CPF ou CNPJ"
-                  />
+                  <Label className="text-xs">Tipo</Label>
+                  <Select value={personType} onValueChange={(v: PersonType) => setPersonType(v)}>
+                    <SelectTrigger className="h-9">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="PF">Pessoa Física</SelectItem>
+                      <SelectItem value="PJ">Pessoa Jurídica</SelectItem>
+                    </SelectContent>
+                  </Select>
                 </div>
               </div>
 
               <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                <div>
+                  <Label className="text-xs">{personType === 'PJ' ? 'CNPJ *' : 'CPF *'}</Label>
+                  <Input
+                    value={formData.cpf}
+                    onChange={(e) => handleDocumentChange(e.target.value)}
+                    className="h-9"
+                    placeholder={personType === 'PJ' ? '00.000.000/0000-00' : '000.000.000-00'}
+                  />
+                </div>
                 <div>
                   <Label className="text-xs">Telefone WhatsApp 1</Label>
                   <Input
@@ -369,6 +471,9 @@ export function ClientManagementModal({ open, onOpenChange, onClientsChanged }: 
                     placeholder="(00) 00000-0000"
                   />
                 </div>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                 <div>
                   <Label className="text-xs">Email</Label>
                   <Input
@@ -450,6 +555,14 @@ export function ClientManagementModal({ open, onOpenChange, onClientsChanged }: 
 
               <div className="flex justify-end gap-2">
                 <Button
+                  onClick={handleCancel}
+                  variant="outline"
+                  className="gap-2 border-gray-300 text-gray-600 hover:bg-gray-100"
+                >
+                  <X className="h-4 w-4" />
+                  Cancelar
+                </Button>
+                <Button
                   onClick={handleSave}
                   disabled={loading}
                   className="gap-2 bg-green-600 hover:bg-green-700 text-white"
@@ -501,7 +614,10 @@ export function ClientManagementModal({ open, onOpenChange, onClientsChanged }: 
                     className="flex items-center justify-between p-3 bg-muted/50 rounded-lg hover:bg-muted transition-colors"
                   >
                     <div className="flex-1 min-w-0">
-                      <div className="font-medium text-sm truncate">{client.name}</div>
+                      <div className="font-medium text-sm truncate">
+                        {client.code && <span className="text-muted-foreground mr-2">[{client.code}]</span>}
+                        {client.name}
+                      </div>
                       <div className="text-xs text-muted-foreground">
                         {client.cpf} {client.city && `• ${client.city}/${client.state}`}
                       </div>

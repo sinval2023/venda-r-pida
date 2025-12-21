@@ -132,6 +132,10 @@ export function useOrder() {
     return order;
   };
 
+  const setOrderItems = (newItems: OrderItem[]) => {
+    setItems(newItems);
+  };
+
   return {
     items,
     addItem,
@@ -140,5 +144,6 @@ export function useOrder() {
     getTotal,
     clearOrder,
     finalizeOrder,
+    setOrderItems,
   };
 }

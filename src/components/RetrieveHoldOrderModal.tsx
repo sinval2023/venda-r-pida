@@ -18,6 +18,7 @@ interface HoldOrder {
 
 interface OrderItem {
   id: string;
+  product_id: string | null;
   product_code: string;
   product_description: string;
   quantity: number;
@@ -62,7 +63,7 @@ export function RetrieveHoldOrderModal({ open, onOpenChange, onRetrieve }: Retri
     // Fetch order items
     const { data: items, error } = await supabase
       .from('order_items')
-      .select('*')
+      .select('id, product_id, product_code, product_description, quantity, unit_price, total')
       .eq('order_id', orderId);
 
     if (error) {
