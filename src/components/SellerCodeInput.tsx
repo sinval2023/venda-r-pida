@@ -9,17 +9,18 @@ import { PasswordAuthModal } from './PasswordAuthModal';
 interface SellerCodeInputProps {
   onSellerSelect: (seller: Seller | null) => void;
   selectedSeller: Seller | null;
+  orderTotal?: number;
 }
 
-export function SellerCodeInput({ onSellerSelect, selectedSeller }: SellerCodeInputProps) {
+export function SellerCodeInput({ onSellerSelect, selectedSeller, orderTotal = 0 }: SellerCodeInputProps) {
   const { sellers, getSellerByCode, refetch } = useSellers();
   const [showSellerModal, setShowSellerModal] = useState(false);
   const [showPasswordModal, setShowPasswordModal] = useState(false);
   const [pendingSellerCode, setPendingSellerCode] = useState<string | null>(null);
 
   const handleSelectSeller = (code: string) => {
-    // Se já tem um vendedor selecionado e está tentando trocar, pedir senha
-    if (selectedSeller && selectedSeller.code !== code) {
+    // Se já tem um vendedor selecionado e está tentando trocar, pedir senha APENAS se o pedido foi iniciado (total > 0)
+    if (selectedSeller && selectedSeller.code !== code && orderTotal > 0) {
       setPendingSellerCode(code);
       setShowPasswordModal(true);
       return;

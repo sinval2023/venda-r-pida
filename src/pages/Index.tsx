@@ -20,6 +20,7 @@ import { Search } from 'lucide-react';
 import { Client } from '@/hooks/useClients';
 import { Seller } from '@/hooks/useSellers';
 import { supabase } from '@/integrations/supabase/client';
+import { toast } from 'sonner';
 
 const Index = () => {
   const { user, loading, isAdmin } = useAuth();
@@ -47,6 +48,10 @@ const Index = () => {
   }, [user, loading, navigate]);
 
   const handleAddToOrder = (product: Product, quantity: number, unitPrice: number) => {
+    if (!selectedSeller) {
+      toast.error('Selecionar um vendedor');
+      return;
+    }
     addItem(product, quantity, unitPrice);
   };
 
@@ -124,6 +129,7 @@ const Index = () => {
           <SellerCodeInput
             onSellerSelect={setSelectedSeller}
             selectedSeller={selectedSeller}
+            orderTotal={total}
           />
           <Input
             placeholder="OBSERVAÇÕES..."
@@ -156,6 +162,7 @@ const Index = () => {
           onAddToOrder={handleAddToOrder}
           searchQuery={searchQuery}
           onSearchChange={setSearchQuery}
+          hasSelectedSeller={!!selectedSeller}
         />
       </main>
 
