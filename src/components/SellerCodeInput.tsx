@@ -11,10 +11,8 @@ interface SellerCodeInputProps {
 }
 
 export function SellerCodeInput({ onSellerSelect, selectedSeller }: SellerCodeInputProps) {
-  const { getSellerByCode, refetch } = useSellers();
+  const { sellers, getSellerByCode, refetch } = useSellers();
   const [showSellerModal, setShowSellerModal] = useState(false);
-
-  const sellerCodes = ['1', '2', '3', '4', '5'];
 
   const handleSelectSeller = (code: string) => {
     const seller = getSellerByCode(code);
@@ -31,15 +29,14 @@ export function SellerCodeInput({ onSellerSelect, selectedSeller }: SellerCodeIn
         <Label className="text-xs text-muted-foreground flex items-center gap-1 mb-1">
           <UserCheck className="h-3 w-3" /> Vendedor
         </Label>
-        <div className="flex gap-2 items-center">
-          {sellerCodes.map((code) => {
-            const seller = getSellerByCode(code);
-            const isSelected = selectedSeller?.code === code;
+        <div className="flex gap-2 items-center flex-wrap">
+          {sellers.map((seller) => {
+            const isSelected = selectedSeller?.code === seller.code;
             
             return (
               <button
-                key={code}
-                onClick={() => handleSelectSeller(code)}
+                key={seller.id}
+                onClick={() => handleSelectSeller(seller.code)}
                 className={`
                   flex flex-col items-center justify-center px-6 py-3 rounded-2xl border-4 
                   transition-all duration-300 min-w-[90px] md:min-w-[100px]
@@ -47,16 +44,13 @@ export function SellerCodeInput({ onSellerSelect, selectedSeller }: SellerCodeIn
                     ? 'bg-gradient-to-br from-blue-500 via-blue-400 to-sky-300 text-white border-blue-600 shadow-xl scale-110' 
                     : 'bg-gradient-to-br from-blue-100 via-sky-100 to-blue-50 border-blue-400 text-black hover:from-blue-200 hover:via-sky-200 hover:to-blue-100 hover:border-blue-500 hover:scale-105 hover:shadow-lg'
                   }
-                  ${!seller ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}
+                  cursor-pointer
                 `}
-                disabled={!seller}
               >
-                <span className="font-black text-2xl md:text-3xl">{code}</span>
-                {seller && (
-                  <span className={`text-xs md:text-sm font-bold truncate max-w-[80px] ${isSelected ? 'text-white' : 'text-black'}`}>
-                    {seller.name.split(' ')[0]}
-                  </span>
-                )}
+                <span className="font-black text-2xl md:text-3xl">{seller.code}</span>
+                <span className={`text-xs md:text-sm font-bold truncate max-w-[80px] ${isSelected ? 'text-white' : 'text-black'}`}>
+                  {seller.name.split(' ')[0]}
+                </span>
               </button>
             );
           })}
