@@ -6,11 +6,14 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, Package } from "lucide-react";
+import { ArrowLeft, Package, FileSpreadsheet, FileText } from "lucide-react";
 import { AdminProductForm } from "./AdminProductForm";
 import { AdminProductList } from "./AdminProductList";
 import { useProducts, ProductWithCategory } from "@/hooks/useProducts";
 import { toast } from "sonner";
+import * as XLSX from 'xlsx';
+import jsPDF from 'jspdf';
+import autoTable from 'jspdf-autotable';
 
 interface ProductManagementModalProps {
   open: boolean;
@@ -90,27 +93,87 @@ export function ProductManagementModal({
     setSelectedProductId(null);
   };
 
+  const exportToExcel = () => {
+    const exportData = products.map(p => ({
+      'Código': p.code,
+      'Descrição': p.description,
+      'Preço': p.default_price,
+      'Categoria': p.category_name || '',
+      'Código de Barras': p.barcode || '',
+    }));
+
+    const ws = XLSX.utils.json_to_sheet(exportData);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, 'Produtos');
+    XLSX.writeFile(wb, 'produtos.xlsx');
+    toast.success("Exportado para Excel com sucesso!");
+  };
+
+  const exportToPDF = () => {
+    const doc = new jsPDF();
+    doc.setFontSize(16);
+    doc.text('Lista de Produtos', 14, 20);
+
+    const tableData = products.map(p => [
+      p.code,
+      p.description.substring(0, 30) + (p.description.length > 30 ? '...' : ''),
+      p.default_price.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' }),
+      p.category_name || '',
+    ]);
+
+    autoTable(doc, {
+      head: [['Código', 'Descrição', 'Preço', 'Categoria']],
+      body: tableData,
+      startY: 30,
+    });
+
+    doc.save('produtos.pdf');
+    toast.success("Exportado para PDF com sucesso!");
+  };
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-6xl max-h-[90vh] overflow-y-auto">
-        <DialogHeader>
-          <div className="flex items-center gap-3">
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={() => onOpenChange(false)}
-              className="h-9 w-9 rounded-full hover:bg-muted/80 hover:scale-105 transition-all duration-200"
-            >
-              <ArrowLeft className="h-5 w-5" />
-            </Button>
-            <DialogTitle className="flex items-center gap-2">
-              <Package className="h-5 w-5" />
-              Cadastro de Produtos
-            </DialogTitle>
+      <DialogContent className="max-w-6xl max-h-[90vh] overflow-y-auto p-0">
+        <DialogHeader className="p-4 pb-2 border-b bg-gradient-to-r from-sky-400 via-sky-500 to-cyan-400">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => onOpenChange(false)}
+                className="text-white hover:bg-white/20"
+              >
+                <ArrowLeft className="h-5 w-5" />
+              </Button>
+              <DialogTitle className="text-xl font-bold text-white flex items-center gap-2">
+                <Package className="h-5 w-5" />
+                Cadastro de Produtos
+              </DialogTitle>
+            </div>
+            <div className="flex gap-1">
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={exportToExcel}
+                className="gap-1 text-white hover:bg-white/20"
+              >
+                <FileSpreadsheet className="h-4 w-4" />
+                Excel
+              </Button>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={exportToPDF}
+                className="gap-1 text-white hover:bg-white/20"
+              >
+                <FileText className="h-4 w-4" />
+                PDF
+              </Button>
+            </div>
           </div>
         </DialogHeader>
         
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-4">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 p-4">
           <div>
             <AdminProductForm
               product={editingProduct}
