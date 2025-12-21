@@ -16,6 +16,7 @@ export default function Admin() {
   const { isAdmin, loading: authLoading } = useAuth();
   const { products, loading, addProduct, updateProduct, deleteProduct } = useProducts();
   const [editingProduct, setEditingProduct] = useState<ProductWithCategory | null>(null);
+  const [selectedProduct, setSelectedProduct] = useState<ProductWithCategory | null>(null);
 
   if (authLoading) {
     return (
@@ -34,11 +35,12 @@ export default function Admin() {
     );
   }
 
-  const handleSave = async (productData: { code: string; description: string; default_price: number; category_id?: string; image_url?: string }) => {
+  const handleSave = async (productData: { code: string; description: string; default_price: number; category_id?: string; image_url?: string; barcode?: string }) => {
     if (editingProduct) {
       const result = await updateProduct(editingProduct.id, productData);
       if (!result.error) {
         setEditingProduct(null);
+        setSelectedProduct(null);
       }
       return result;
     }
@@ -58,7 +60,15 @@ export default function Admin() {
         title: 'Produto excluído',
         description: 'O produto foi removido do catálogo.',
       });
+      if (selectedProduct?.id === productId) {
+        setSelectedProduct(null);
+      }
     }
+  };
+
+  const handleSelectProduct = (product: ProductWithCategory) => {
+    setSelectedProduct(product);
+    setEditingProduct(product);
   };
 
   return (
@@ -87,7 +97,10 @@ export default function Admin() {
                 <AdminProductForm
                   product={editingProduct || undefined}
                   onSave={handleSave}
-                  onCancel={editingProduct ? () => setEditingProduct(null) : undefined}
+                  onCancel={editingProduct ? () => {
+                    setEditingProduct(null);
+                    setSelectedProduct(null);
+                  } : undefined}
                 />
               </div>
               
@@ -96,6 +109,8 @@ export default function Admin() {
                   products={products}
                   onEdit={setEditingProduct}
                   onDelete={handleDelete}
+                  onSelect={handleSelectProduct}
+                  selectedProductId={selectedProduct?.id}
                   loading={loading}
                 />
               </div>

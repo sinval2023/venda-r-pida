@@ -14,7 +14,7 @@ type ImportRequest = {
   clearData?: boolean; // se true, limpa todos os dados antes de importar
 };
 
-type ProductRow = { code: string; description: string; default_price: number };
+type ProductRow = { code: string; description: string; default_price: number; barcode?: string };
 
 type ClientRow = { cpf: string; name: string };
 
@@ -69,16 +69,19 @@ function extractProductsFromBarrasXml(xml: string): ProductRow[] {
 
   for (const rowTag of rowTags) {
     const attrs = parseRowAttributes(rowTag);
-    const code = pickAttr(attrs, ["CODIGO", "COD_BARRA", "CODBARRA", "CODE"]);
+    const code = pickAttr(attrs, ["CODIGO", "CODE"]);
     const description = pickAttr(attrs, ["DESCRICAO", "DESCR", "DESCRIPTION", "NOME"]);
     // Prioriza VALOR1, depois outras variantes
     const priceStr = pickAttr(attrs, ["VALOR1", "PRECO_VENDA", "PRECO", "VALOR", "PRICE"]);
+    // Código de barras
+    const barcode = pickAttr(attrs, ["COD_BARRA", "CODBARRA", "BARCODE", "EAN", "GTIN"]);
 
     if (code && description) {
       rows.push({
         code: code.trim(),
         description: description.trim().toUpperCase(),
         default_price: parsePrice(priceStr),
+        barcode: barcode.trim() || undefined,
       });
     }
   }
@@ -93,12 +96,15 @@ function extractProductsFromBarrasXml(xml: string): ProductRow[] {
       (block.match(/<(descricao|DESCRICAO|nome|NOME)>([\s\S]*?)<\/(descricao|DESCRICAO|nome|NOME)>/i)?.[2] ?? "").trim();
     const priceStr =
       (block.match(/<(valor1|VALOR1|preco|PRECO|valor|VALOR)>([\s\S]*?)<\/(valor1|VALOR1|preco|PRECO|valor|VALOR)>/i)?.[2] ?? "0").trim();
+    const barcode =
+      (block.match(/<(cod_barra|COD_BARRA|codbarra|CODBARRA|barcode|BARCODE)>([\s\S]*?)<\/(cod_barra|COD_BARRA|codbarra|CODBARRA|barcode|BARCODE)>/i)?.[2] ?? "").trim();
 
     if (code && description) {
       rows.push({
         code,
         description: description.toUpperCase(),
         default_price: parsePrice(priceStr),
+        barcode: barcode || undefined,
       });
     }
   }
