@@ -1,10 +1,11 @@
 import { useRef, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
-import { Package, Loader2, Users, X } from "lucide-react";
+import { Package, Loader2, Users, X, ClipboardEdit } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 
 interface XMLImportButtonsProps {
@@ -25,6 +26,7 @@ type Notice = {
 };
 
 export function XMLImportButtons({ onClientsImported, onProductsImported }: XMLImportButtonsProps) {
+  const navigate = useNavigate();
   const [loadingClients, setLoadingClients] = useState(false);
   const [loadingProducts, setLoadingProducts] = useState(false);
   const [progress, setProgress] = useState<ImportProgress | null>(null);
@@ -242,6 +244,16 @@ export function XMLImportButtons({ onClientsImported, onProductsImported }: XMLI
             {loadingProducts ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Package className="h-3.5 w-3.5" />}
             {loadingProducts ? "Importando..." : "XML Produtos"}
           </label>
+        </Button>
+
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => navigate('/admin')}
+          className="gap-1.5 text-xs font-semibold bg-gradient-to-r from-emerald-500 to-teal-500 text-white border-emerald-500 hover:from-emerald-600 hover:to-teal-600 hover:border-emerald-600 transition-all duration-300 shadow-md hover:shadow-lg"
+        >
+          <ClipboardEdit className="h-3.5 w-3.5" />
+          Cadastro Produtos
         </Button>
       </div>
 
