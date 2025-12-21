@@ -4,7 +4,8 @@ import { Progress } from "@/components/ui/progress";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
-import { Package, Loader2, Users, X, ClipboardEdit, FolderOpen } from "lucide-react";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Package, Loader2, Users, X, ClipboardEdit, FolderOpen, MoreHorizontal } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { ProductManagementModal } from "./ProductManagementModal";
 import { CategoryManagementModal } from "./CategoryManagementModal";
@@ -171,104 +172,119 @@ export function XMLImportButtons({ onClientsImported, onProductsImported }: XMLI
 
   return (
     <div className="flex flex-col gap-3">
-      <div className="flex items-center gap-2">
-        <Checkbox
-          id="clear-data"
-          checked={clearData}
-          onCheckedChange={(checked) => setClearData(checked === true)}
-          disabled={loadingClients || loadingProducts}
-        />
-        <Label
-          htmlFor="clear-data"
-          className="text-xs text-muted-foreground cursor-pointer select-none"
-        >
-          Limpar dados antes de importar (substitui tudo)
-        </Label>
-      </div>
+      <input
+        key={`clients-${clientsInputKey}`}
+        id={clientsInputId}
+        type="file"
+        accept=".xml"
+        onChange={handleClientsXML}
+        className="hidden"
+      />
+      <input
+        key={`products-${productsInputKey}`}
+        id={productsInputId}
+        type="file"
+        accept=".xml"
+        onChange={handleProductsXML}
+        className="hidden"
+      />
       
-      <div className="flex gap-2">
-        <input
-          key={`clients-${clientsInputKey}`}
-          id={clientsInputId}
-          type="file"
-          accept=".xml"
-          onChange={handleClientsXML}
-          className="hidden"
-        />
-        <input
-          key={`products-${productsInputKey}`}
-          id={productsInputId}
-          type="file"
-          accept=".xml"
-          onChange={handleProductsXML}
-          className="hidden"
-        />
-
-        <Button
-          asChild
-          variant="outline"
-          size="sm"
-          className="gap-1.5 text-xs font-semibold hover:bg-gradient-to-r hover:from-blue-400 hover:to-blue-500 hover:text-white hover:border-blue-400 transition-all duration-300"
-        >
-          <label
-            htmlFor={clientsInputId}
-            onClick={(e) => {
-              if (loadingClients || loadingProducts) {
-                e.preventDefault();
-                e.stopPropagation();
-              }
-            }}
-            className={loadingClients || loadingProducts ? "pointer-events-none opacity-50" : "cursor-pointer"}
-            aria-disabled={loadingClients || loadingProducts}
+      <Popover>
+        <PopoverTrigger asChild>
+          <Button
+            variant="outline"
+            size="default"
+            className="gap-2 text-sm font-semibold px-4 bg-gradient-to-r from-blue-500 to-indigo-600 text-white border-0 hover:from-blue-600 hover:to-indigo-700 hover:scale-[1.02] transition-all duration-300 shadow-md"
           >
-            {loadingClients ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Users className="h-3.5 w-3.5" />}
-            {loadingClients ? "Importando..." : "XML Clientes"}
-          </label>
-        </Button>
+            <MoreHorizontal className="h-4 w-4" />
+            Mais Opções
+          </Button>
+        </PopoverTrigger>
+        <PopoverContent className="w-80 p-4" align="start">
+          <div className="space-y-4">
+            <div className="flex items-center gap-2">
+              <Checkbox
+                id="clear-data"
+                checked={clearData}
+                onCheckedChange={(checked) => setClearData(checked === true)}
+                disabled={loadingClients || loadingProducts}
+              />
+              <Label
+                htmlFor="clear-data"
+                className="text-xs text-muted-foreground cursor-pointer select-none"
+              >
+                Limpar dados antes de importar
+              </Label>
+            </div>
+            
+            <div className="grid grid-cols-2 gap-2">
+              <Button
+                asChild
+                variant="outline"
+                size="sm"
+                className="gap-1.5 text-xs font-semibold hover:bg-gradient-to-r hover:from-blue-400 hover:to-blue-500 hover:text-white hover:border-blue-400 transition-all duration-300"
+              >
+                <label
+                  htmlFor={clientsInputId}
+                  onClick={(e) => {
+                    if (loadingClients || loadingProducts) {
+                      e.preventDefault();
+                      e.stopPropagation();
+                    }
+                  }}
+                  className={loadingClients || loadingProducts ? "pointer-events-none opacity-50" : "cursor-pointer"}
+                  aria-disabled={loadingClients || loadingProducts}
+                >
+                  {loadingClients ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Users className="h-3.5 w-3.5" />}
+                  {loadingClients ? "Importando..." : "XML Clientes"}
+                </label>
+              </Button>
 
-        <Button
-          asChild
-          variant="outline"
-          size="sm"
-          className="gap-1.5 text-xs font-semibold hover:bg-gradient-to-r hover:from-purple-400 hover:to-purple-500 hover:text-white hover:border-purple-400 transition-all duration-300"
-        >
-          <label
-            htmlFor={productsInputId}
-            onClick={(e) => {
-              if (loadingProducts || loadingClients) {
-                e.preventDefault();
-                e.stopPropagation();
-              }
-            }}
-            className={loadingProducts || loadingClients ? "pointer-events-none opacity-50" : "cursor-pointer"}
-            aria-disabled={loadingProducts || loadingClients}
-          >
-            {loadingProducts ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Package className="h-3.5 w-3.5" />}
-            {loadingProducts ? "Importando..." : "XML Produtos"}
-          </label>
-        </Button>
+              <Button
+                asChild
+                variant="outline"
+                size="sm"
+                className="gap-1.5 text-xs font-semibold hover:bg-gradient-to-r hover:from-purple-400 hover:to-purple-500 hover:text-white hover:border-purple-400 transition-all duration-300"
+              >
+                <label
+                  htmlFor={productsInputId}
+                  onClick={(e) => {
+                    if (loadingProducts || loadingClients) {
+                      e.preventDefault();
+                      e.stopPropagation();
+                    }
+                  }}
+                  className={loadingProducts || loadingClients ? "pointer-events-none opacity-50" : "cursor-pointer"}
+                  aria-disabled={loadingProducts || loadingClients}
+                >
+                  {loadingProducts ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Package className="h-3.5 w-3.5" />}
+                  {loadingProducts ? "Importando..." : "XML Produtos"}
+                </label>
+              </Button>
 
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={() => setProductModalOpen(true)}
-          className="gap-1.5 text-xs font-semibold hover:bg-gradient-to-r hover:from-emerald-400 hover:to-teal-500 hover:text-white hover:border-emerald-400 transition-all duration-300"
-        >
-          <ClipboardEdit className="h-3.5 w-3.5" />
-          Cadastro Produtos
-        </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setProductModalOpen(true)}
+                className="gap-1.5 text-xs font-semibold hover:bg-gradient-to-r hover:from-emerald-400 hover:to-teal-500 hover:text-white hover:border-emerald-400 transition-all duration-300"
+              >
+                <ClipboardEdit className="h-3.5 w-3.5" />
+                Produtos
+              </Button>
 
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={() => setCategoryModalOpen(true)}
-          className="gap-1.5 text-xs font-semibold hover:bg-gradient-to-r hover:from-amber-400 hover:to-orange-500 hover:text-white hover:border-amber-400 transition-all duration-300"
-        >
-          <FolderOpen className="h-3.5 w-3.5" />
-          Categorias
-        </Button>
-
-      </div>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setCategoryModalOpen(true)}
+                className="gap-1.5 text-xs font-semibold hover:bg-gradient-to-r hover:from-amber-400 hover:to-orange-500 hover:text-white hover:border-amber-400 transition-all duration-300"
+              >
+                <FolderOpen className="h-3.5 w-3.5" />
+                Categorias
+              </Button>
+            </div>
+          </div>
+        </PopoverContent>
+      </Popover>
 
       <ProductManagementModal
         open={productModalOpen}

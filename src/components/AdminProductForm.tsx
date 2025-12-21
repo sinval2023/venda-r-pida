@@ -211,9 +211,13 @@ export function AdminProductForm({ product, onSave, onCancel }: AdminProductForm
                 Cancelar
               </Button>
             )}
-            <Button type="submit" disabled={loading || categoriesLoading} className="flex-1">
-              {product ? <Save className="h-4 w-4 mr-2" /> : <Plus className="h-4 w-4 mr-2" />}
-              {loading ? 'Salvando...' : product ? 'Salvar' : 'Cadastrar'}
+            <Button 
+              type="submit" 
+              disabled={loading || categoriesLoading} 
+              className="flex-1 bg-green-600 hover:bg-green-700 hover:scale-[1.02] transition-all duration-200"
+            >
+              <Save className="h-4 w-4 mr-2" />
+              {loading ? 'Salvando...' : 'Salvar'}
             </Button>
           </div>
         </form>

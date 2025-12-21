@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Plus, Trash2, Edit2, UserPlus, Save, X, Upload, Image } from 'lucide-react';
+import { Plus, Trash2, Edit2, UserPlus, Save, X, Upload, Image, ArrowLeft } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 
@@ -240,10 +240,20 @@ export function SellerManagementModal({ open, onOpenChange, onSellersChanged }: 
     <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">
-            <UserPlus className="h-5 w-5" />
-            Cadastro de Vendedores
-          </DialogTitle>
+          <div className="flex items-center gap-3">
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => handleOpenChange(false)}
+              className="h-9 w-9 rounded-full hover:bg-muted/80 hover:scale-105 transition-all duration-200"
+            >
+              <ArrowLeft className="h-5 w-5" />
+            </Button>
+            <DialogTitle className="flex items-center gap-2">
+              <UserPlus className="h-5 w-5" />
+              Cadastro de Vendedores
+            </DialogTitle>
+          </div>
         </DialogHeader>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -412,9 +422,13 @@ export function SellerManagementModal({ open, onOpenChange, onSellersChanged }: 
                       Cancelar
                     </Button>
                   )}
-                  <Button type="submit" disabled={saving || uploading} className="flex-1">
-                    {formMode === 'edit' ? <Save className="h-4 w-4 mr-2" /> : <Plus className="h-4 w-4 mr-2" />}
-                    {saving || uploading ? 'Salvando...' : formMode === 'edit' ? 'Salvar' : 'Cadastrar'}
+                  <Button 
+                    type="submit" 
+                    disabled={saving || uploading} 
+                    className="flex-1 bg-green-600 hover:bg-green-700 hover:scale-[1.02] transition-all duration-200"
+                  >
+                    <Save className="h-4 w-4 mr-2" />
+                    {saving || uploading ? 'Salvando...' : 'Salvar'}
                   </Button>
                 </div>
               </form>
