@@ -38,6 +38,7 @@ export function AdminProductForm({ product, onSave, onCancel }: AdminProductForm
       setDefaultPrice(product.default_price);
       setCategoryId(product.category_id || undefined);
       loadProductImages(product.id);
+      setPendingFiles([]);
     } else {
       setCode('');
       setDescription('');
@@ -47,7 +48,7 @@ export function AdminProductForm({ product, onSave, onCancel }: AdminProductForm
       setImages([]);
       setPendingFiles([]);
     }
-  }, [product]);
+  }, [product?.id]);
 
   const loadProductImages = async (productId: string) => {
     const productImages = await getProductImages(productId);
