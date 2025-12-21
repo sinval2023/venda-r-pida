@@ -4,9 +4,10 @@ import { Progress } from "@/components/ui/progress";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
-import { Package, Loader2, Users, X, ClipboardEdit } from "lucide-react";
+import { Package, Loader2, Users, X, ClipboardEdit, FolderOpen } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { ProductManagementModal } from "./ProductManagementModal";
+import { CategoryManagementModal } from "./CategoryManagementModal";
 
 interface XMLImportButtonsProps {
   onClientsImported?: () => void;
@@ -27,6 +28,7 @@ type Notice = {
 
 export function XMLImportButtons({ onClientsImported, onProductsImported }: XMLImportButtonsProps) {
   const [productModalOpen, setProductModalOpen] = useState(false);
+  const [categoryModalOpen, setCategoryModalOpen] = useState(false);
   const [loadingClients, setLoadingClients] = useState(false);
   const [loadingProducts, setLoadingProducts] = useState(false);
   const [progress, setProgress] = useState<ImportProgress | null>(null);
@@ -255,12 +257,28 @@ export function XMLImportButtons({ onClientsImported, onProductsImported }: XMLI
           <ClipboardEdit className="h-3.5 w-3.5" />
           Cadastro Produtos
         </Button>
+
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => setCategoryModalOpen(true)}
+          className="gap-1.5 text-xs font-semibold hover:bg-gradient-to-r hover:from-amber-400 hover:to-orange-500 hover:text-white hover:border-amber-400 transition-all duration-300"
+        >
+          <FolderOpen className="h-3.5 w-3.5" />
+          Categorias
+        </Button>
+
       </div>
 
       <ProductManagementModal
         open={productModalOpen}
         onOpenChange={setProductModalOpen}
         onProductsChanged={onProductsImported}
+      />
+
+      <CategoryManagementModal
+        open={categoryModalOpen}
+        onOpenChange={setCategoryModalOpen}
       />
 
       {notice && (
