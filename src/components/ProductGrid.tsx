@@ -69,9 +69,9 @@ export function ProductGrid({ onAddToOrder, searchQuery, onSearchChange }: Produ
           <Button 
             variant="outline" 
             onClick={handleLoadMore}
-            className="min-w-[200px]"
+            className="min-w-[220px]"
           >
-            Carregar mais ({filteredProducts.length - visibleCount} restantes)
+            Mostrar próximos {PRODUCTS_PER_PAGE} ({filteredProducts.length - visibleCount} restantes)
           </Button>
         </div>
       )}

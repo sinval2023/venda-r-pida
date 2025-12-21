@@ -184,7 +184,7 @@ export function XMLImportButtons({ onClientsImported, onProductsImported }: XMLI
       
       <div className="flex gap-2">
         <input
-          key={clientsInputKey}
+          key={`clients-${clientsInputKey}`}
           id={clientsInputId}
           type="file"
           accept=".xml"
@@ -192,7 +192,7 @@ export function XMLImportButtons({ onClientsImported, onProductsImported }: XMLI
           className="hidden"
         />
         <input
-          key={productsInputKey}
+          key={`products-${productsInputKey}`}
           id={productsInputId}
           type="file"
           accept=".xml"
