@@ -1,5 +1,4 @@
 import { useRef, useState } from "react";
-import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
@@ -7,6 +6,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { Package, Loader2, Users, X, ClipboardEdit } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import { ProductManagementModal } from "./ProductManagementModal";
 
 interface XMLImportButtonsProps {
   onClientsImported?: () => void;
@@ -26,7 +26,7 @@ type Notice = {
 };
 
 export function XMLImportButtons({ onClientsImported, onProductsImported }: XMLImportButtonsProps) {
-  const navigate = useNavigate();
+  const [productModalOpen, setProductModalOpen] = useState(false);
   const [loadingClients, setLoadingClients] = useState(false);
   const [loadingProducts, setLoadingProducts] = useState(false);
   const [progress, setProgress] = useState<ImportProgress | null>(null);
@@ -249,13 +249,19 @@ export function XMLImportButtons({ onClientsImported, onProductsImported }: XMLI
         <Button
           variant="outline"
           size="sm"
-          onClick={() => navigate('/admin')}
-          className="gap-1.5 text-xs font-semibold bg-gradient-to-r from-emerald-500 to-teal-500 text-white border-emerald-500 hover:from-emerald-600 hover:to-teal-600 hover:border-emerald-600 transition-all duration-300 shadow-md hover:shadow-lg"
+          onClick={() => setProductModalOpen(true)}
+          className="gap-1.5 text-xs font-semibold hover:bg-gradient-to-r hover:from-emerald-400 hover:to-teal-500 hover:text-white hover:border-emerald-400 transition-all duration-300"
         >
           <ClipboardEdit className="h-3.5 w-3.5" />
           Cadastro Produtos
         </Button>
       </div>
+
+      <ProductManagementModal
+        open={productModalOpen}
+        onOpenChange={setProductModalOpen}
+        onProductsChanged={onProductsImported}
+      />
 
       {notice && (
         <Alert variant={notice.variant} className="py-3">
