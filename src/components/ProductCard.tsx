@@ -5,13 +5,15 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Product } from '@/types/order';
 import { Plus, Minus } from 'lucide-react';
 import { ProductWithCategory } from '@/hooks/useProducts';
+import { toast } from 'sonner';
 
 interface ProductCardProps {
   product: ProductWithCategory;
   onAddToOrder: (product: Product, quantity: number, unitPrice: number) => void;
+  hasSelectedSeller?: boolean;
 }
 
-export function ProductCard({ product, onAddToOrder }: ProductCardProps) {
+export function ProductCard({ product, onAddToOrder, hasSelectedSeller = true }: ProductCardProps) {
   const [quantity, setQuantity] = useState(1);
   const [isHovered, setIsHovered] = useState(false);
   const [editPrice, setEditPrice] = useState(false);
@@ -69,6 +71,11 @@ export function ProductCard({ product, onAddToOrder }: ProductCardProps) {
   };
 
   const handleAddToOrder = () => {
+    if (!hasSelectedSeller) {
+      toast.error('Selecionar um vendedor para iniciar o pedido');
+      return;
+    }
+
     const finalPrice = editPriceRef.current ? customPriceRef.current : product.default_price;
 
     // Reseta imediatamente (sincrono) para que o próximo clique use sempre o preço original

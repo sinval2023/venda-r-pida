@@ -33,6 +33,7 @@ const Index = () => {
   const [showHistory, setShowHistory] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedClient, setSelectedClient] = useState<Client | null>(null);
+  const [clientName, setClientName] = useState('');
   const [selectedSeller, setSelectedSeller] = useState<Seller | null>(null);
   const [observations, setObservations] = useState('');
 
@@ -65,7 +66,7 @@ const Index = () => {
       sellerId: selectedSeller?.id,
       sellerName: selectedSeller?.name,
       clientId: selectedClient?.id,
-      clientName: selectedClient?.name,
+      clientName: clientName || selectedClient?.name,
       observations
     });
     if (order) {
@@ -77,6 +78,7 @@ const Index = () => {
     setExportOrder(null);
     clearOrder();
     setSelectedClient(null);
+    setClientName('');
     setSelectedSeller(null);
     setObservations('');
   };
@@ -125,6 +127,8 @@ const Index = () => {
           <ClientSearchInput 
             onClientSelect={setSelectedClient}
             selectedClient={selectedClient}
+            clientName={clientName}
+            onClientNameChange={setClientName}
           />
           <SellerCodeInput
             onSellerSelect={setSelectedSeller}
@@ -182,7 +186,7 @@ const Index = () => {
               seller_id: selectedSeller?.id || null,
               seller_name: selectedSeller?.name || user.user_metadata?.full_name || user.email || 'Vendedor',
               client_id: selectedClient?.id || null,
-              client_name: selectedClient?.name || null,
+              client_name: clientName || selectedClient?.name || null,
               user_id: user.id,
               total: total,
               observations: observations || null,
@@ -207,11 +211,12 @@ const Index = () => {
             // Clear order after hold
             clearOrder();
             setSelectedClient(null);
+            setClientName('');
             setSelectedSeller(null);
             setObservations('');
           }
         }}
-        onRetrieveOrder={(orderId, orderItems) => {
+        onRetrieveOrder={(orderId, orderItems, orderData) => {
           // Convert order items to OrderItem format and set them
           const convertedItems = orderItems.map(item => ({
             id: item.id || crypto.randomUUID(),
@@ -223,6 +228,18 @@ const Index = () => {
             total: item.total,
           }));
           setOrderItems(convertedItems);
+          
+          // Set client name from identification field
+          if (orderData?.identification) {
+            setClientName(orderData.identification);
+          } else if (orderData?.client_name) {
+            setClientName(orderData.client_name);
+          }
+          
+          // Set observations if present
+          if (orderData?.observations) {
+            setObservations(orderData.observations);
+          }
         }}
         disabled={total === 0}
         items={items}

@@ -62,6 +62,7 @@ export function ProductGrid({ onAddToOrder, searchQuery, onSearchChange, hasSele
             key={product.id}
             product={product}
             onAddToOrder={onAddToOrder}
+            hasSelectedSeller={hasSelectedSeller}
           />
         ))}
       </div>

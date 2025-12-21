@@ -5,10 +5,10 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent } from '@/components/ui/card';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
-import { ArrowLeft, Save, Pencil, Trash2, FileSpreadsheet, FileText, Search, X } from 'lucide-react';
+import { ArrowLeft, Save, Pencil, Trash2, FileSpreadsheet, FileText, Search, X, User, Building2 } from 'lucide-react';
 import * as XLSX from 'xlsx';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
@@ -431,19 +431,31 @@ export function ClientManagementModal({ open, onOpenChange, onClientsChanged }: 
                 </div>
                 <div>
                   <Label className="text-xs">Tipo</Label>
-                  <Select 
-                    key={`person-type-${personType}`}
-                    value={personType} 
-                    onValueChange={(v: PersonType) => setPersonType(v)}
+                  <ToggleGroup
+                    type="single"
+                    value={personType}
+                    onValueChange={(value) => {
+                      if (value) setPersonType(value as PersonType);
+                    }}
+                    className="h-9 justify-start"
                   >
-                    <SelectTrigger className="h-9">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="PF">Pessoa Física</SelectItem>
-                      <SelectItem value="PJ">Pessoa Jurídica</SelectItem>
-                    </SelectContent>
-                  </Select>
+                    <ToggleGroupItem 
+                      value="PF" 
+                      aria-label="Pessoa Física"
+                      className="flex-1 gap-1 data-[state=on]:bg-primary data-[state=on]:text-primary-foreground"
+                    >
+                      <User className="h-3 w-3" />
+                      <span className="text-xs">Física</span>
+                    </ToggleGroupItem>
+                    <ToggleGroupItem 
+                      value="PJ" 
+                      aria-label="Pessoa Jurídica"
+                      className="flex-1 gap-1 data-[state=on]:bg-primary data-[state=on]:text-primary-foreground"
+                    >
+                      <Building2 className="h-3 w-3" />
+                      <span className="text-xs">Jurídica</span>
+                    </ToggleGroupItem>
+                  </ToggleGroup>
                 </div>
               </div>
 

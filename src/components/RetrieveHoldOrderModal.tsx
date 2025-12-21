@@ -14,6 +14,7 @@ interface HoldOrder {
   created_at: string;
   seller_name: string;
   client_name: string | null;
+  observations: string | null;
 }
 
 interface OrderItem {
@@ -29,7 +30,7 @@ interface OrderItem {
 interface RetrieveHoldOrderModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onRetrieve: (orderId: string, items: OrderItem[]) => void;
+  onRetrieve: (orderId: string, items: OrderItem[], orderData?: HoldOrder) => void;
 }
 
 export function RetrieveHoldOrderModal({ open, onOpenChange, onRetrieve }: RetrieveHoldOrderModalProps) {
@@ -47,7 +48,7 @@ export function RetrieveHoldOrderModal({ open, onOpenChange, onRetrieve }: Retri
     setLoading(true);
     const { data, error } = await supabase
       .from('orders')
-      .select('id, order_number, identification, total, created_at, seller_name, client_name')
+      .select('id, order_number, identification, total, created_at, seller_name, client_name, observations')
       .eq('status', 'em_espera')
       .order('created_at', { ascending: false });
 
@@ -57,14 +58,14 @@ export function RetrieveHoldOrderModal({ open, onOpenChange, onRetrieve }: Retri
     setLoading(false);
   };
 
-  const handleRetrieve = async (orderId: string) => {
+  const handleRetrieve = async (order: HoldOrder) => {
     setLoading(true);
     
     // Fetch order items
     const { data: items, error } = await supabase
       .from('order_items')
       .select('id, product_id, product_code, product_description, quantity, unit_price, total')
-      .eq('order_id', orderId);
+      .eq('order_id', order.id);
 
     if (error) {
       toast({
@@ -80,10 +81,10 @@ export function RetrieveHoldOrderModal({ open, onOpenChange, onRetrieve }: Retri
     await supabase
       .from('orders')
       .update({ status: 'em_andamento' })
-      .eq('id', orderId);
+      .eq('id', order.id);
 
     toast({ title: "Pedido recuperado com sucesso!" });
-    onRetrieve(orderId, items as OrderItem[]);
+    onRetrieve(order.id, items as OrderItem[], order);
     onOpenChange(false);
     setLoading(false);
   };
@@ -149,7 +150,7 @@ export function RetrieveHoldOrderModal({ open, onOpenChange, onRetrieve }: Retri
                     </div>
                     <Button
                       size="sm"
-                      onClick={() => handleRetrieve(order.id)}
+                      onClick={() => handleRetrieve(order)}
                       disabled={loading}
                       className="mt-2 gap-1 bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600"
                     >
