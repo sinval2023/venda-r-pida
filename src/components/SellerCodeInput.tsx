@@ -29,7 +29,7 @@ export function SellerCodeInput({ onSellerSelect, selectedSeller }: SellerCodeIn
         <Label className="text-xs text-muted-foreground flex items-center gap-1 mb-1">
           <UserCheck className="h-3 w-3" /> Vendedor
         </Label>
-        <div className="flex gap-2 items-center flex-wrap">
+        <div className="flex gap-3 items-center flex-wrap">
           {sellers.map((seller) => {
             const isSelected = selectedSeller?.code === seller.code;
             
@@ -38,17 +38,39 @@ export function SellerCodeInput({ onSellerSelect, selectedSeller }: SellerCodeIn
                 key={seller.id}
                 onClick={() => handleSelectSeller(seller.code)}
                 className={`
-                  flex flex-col items-center justify-center px-6 py-3 rounded-2xl border-4 
-                  transition-all duration-300 min-w-[90px] md:min-w-[100px]
+                  flex flex-col items-center justify-center p-2 rounded-xl border-3 
+                  transition-all duration-300 min-w-[70px] group
                   ${isSelected 
-                    ? 'bg-gradient-to-br from-blue-500 via-blue-400 to-sky-300 text-white border-blue-600 shadow-xl scale-110' 
-                    : 'bg-gradient-to-br from-blue-100 via-sky-100 to-blue-50 border-blue-400 text-black hover:from-blue-200 hover:via-sky-200 hover:to-blue-100 hover:border-blue-500 hover:scale-105 hover:shadow-lg'
+                    ? 'bg-gradient-to-br from-blue-500 via-blue-400 to-sky-300 border-blue-600 shadow-xl scale-110' 
+                    : 'bg-gradient-to-br from-blue-50 via-sky-50 to-blue-100 border-blue-300 hover:from-blue-100 hover:via-sky-100 hover:to-blue-200 hover:border-blue-500 hover:scale-105 hover:shadow-lg'
                   }
                   cursor-pointer
                 `}
               >
-                <span className="font-black text-2xl md:text-3xl">{seller.code}</span>
-                <span className={`text-xs md:text-sm font-bold truncate max-w-[80px] ${isSelected ? 'text-white' : 'text-black'}`}>
+                {/* Round Image with Hover Effect */}
+                <div className={`
+                  w-12 h-12 md:w-14 md:h-14 rounded-full overflow-hidden mb-1 
+                  transition-all duration-300 group-hover:scale-110 group-hover:shadow-lg
+                  ${isSelected ? 'ring-2 ring-white ring-offset-2 ring-offset-blue-500' : 'ring-2 ring-blue-200 group-hover:ring-blue-400'}
+                `}>
+                  {seller.image_url ? (
+                    <img
+                      src={seller.image_url}
+                      alt={seller.name}
+                      className="w-full h-full object-cover"
+                    />
+                  ) : (
+                    <div className={`w-full h-full flex items-center justify-center font-bold text-lg
+                      ${isSelected ? 'bg-white/30 text-white' : 'bg-blue-200 text-blue-700'}
+                    `}>
+                      {seller.name.charAt(0)}
+                    </div>
+                  )}
+                </div>
+                {/* Name below image */}
+                <span className={`text-[10px] md:text-xs font-bold truncate max-w-[65px] text-center
+                  ${isSelected ? 'text-white' : 'text-blue-800 group-hover:text-blue-900'}
+                `}>
                   {seller.name.split(' ')[0]}
                 </span>
               </button>

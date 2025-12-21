@@ -6,6 +6,10 @@ export interface Seller {
   code: string;
   name: string;
   active: boolean;
+  image_url?: string | null;
+  password?: string | null;
+  api_key?: string | null;
+  commission?: number | null;
 }
 
 export function useSellers() {
