@@ -171,14 +171,16 @@ export function ClientSearchInput({ onClientSelect, selectedClient, clientName =
       </div>
 
       {/* NOVO CLIENTE Button */}
-      <Button
-        type="button"
-        onClick={onNewClientClick}
-        className="w-full h-9 bg-green-600 hover:bg-green-700 text-white font-bold"
-      >
-        <UserPlus className="h-4 w-4 mr-2" />
-        NOVO CLIENTE
-      </Button>
+      <div className="flex justify-center">
+        <Button
+          type="button"
+          onClick={onNewClientClick}
+          className="h-8 px-4 bg-green-600 hover:bg-green-700 text-white text-xs font-semibold"
+        >
+          <UserPlus className="h-3 w-3 mr-1" />
+          NOVO CLIENTE
+        </Button>
+      </div>
     </div>
   );
 }
