@@ -34,13 +34,15 @@ interface ClientManagementModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onClientsChanged?: () => void;
+  focusNameOnOpen?: boolean;
 }
 
 type PersonType = 'PF' | 'PJ';
 
-export function ClientManagementModal({ open, onOpenChange, onClientsChanged }: ClientManagementModalProps) {
+export function ClientManagementModal({ open, onOpenChange, onClientsChanged, focusNameOnOpen }: ClientManagementModalProps) {
   const { toast } = useToast();
   const codeInputRef = useRef<HTMLInputElement>(null);
+  const nameInputRef = useRef<HTMLInputElement>(null);
   const [clients, setClients] = useState<Client[]>([]);
   const [loading, setLoading] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
@@ -108,9 +110,13 @@ export function ClientManagementModal({ open, onOpenChange, onClientsChanged }: 
       zipcode: '',
     });
     setEditingClient(null);
-    // Focus on code field
+    // Focus on appropriate field
     setTimeout(() => {
-      codeInputRef.current?.focus();
+      if (focusNameOnOpen) {
+        nameInputRef.current?.focus();
+      } else {
+        codeInputRef.current?.focus();
+      }
     }, 100);
   };
 
@@ -428,6 +434,8 @@ export function ClientManagementModal({ open, onOpenChange, onClientsChanged }: 
                       if (data) {
                         setEditingClient(data as Client);
                         toast({ title: "Cliente encontrado", description: data.name });
+                      } else {
+                        toast({ title: "Código não localizado", variant: "destructive" });
                       }
                     }}
                     className="h-9"
@@ -437,6 +445,7 @@ export function ClientManagementModal({ open, onOpenChange, onClientsChanged }: 
                 <div className="col-span-2">
                   <Label className="text-xs">Nome *</Label>
                   <Input
+                    ref={nameInputRef}
                     value={formData.name}
                     onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value.toUpperCase() }))}
                     className="h-9 uppercase"

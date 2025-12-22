@@ -383,6 +383,8 @@ export function SellerManagementModal({ open, onOpenChange, onSellersChanged }: 
                         if (data) {
                           startEdit(data as Seller);
                           toast({ title: "Vendedor encontrado", description: data.name });
+                        } else {
+                          toast({ title: "Código não localizado", variant: "destructive" });
                         }
                       }}
                       className="uppercase"

@@ -312,6 +312,8 @@ export function CategoryManagementModal({ open, onOpenChange }: CategoryManageme
                       if (data) {
                         startEdit(data as Category);
                         toast({ title: "Categoria encontrada", description: data.name });
+                      } else {
+                        toast({ title: "Código não localizado", variant: "destructive" });
                       }
                     }}
                   />
