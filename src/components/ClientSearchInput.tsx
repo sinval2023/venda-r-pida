@@ -133,7 +133,7 @@ export function ClientSearchInput({ onClientSelect, selectedClient, clientName =
         </Label>
         <div className="relative">
           <Input
-            placeholder="BUSCAR..."
+            placeholder=""
             value={search.toUpperCase()}
             onChange={(e) => handleSearch(e.target.value.toUpperCase())}
             className="h-11 text-sm font-bold uppercase"

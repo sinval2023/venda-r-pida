@@ -300,6 +300,20 @@ export function CategoryManagementModal({ open, onOpenChange }: CategoryManageme
                     placeholder="Ex: CAT001"
                     value={code}
                     onChange={(e) => setCode(e.target.value.toUpperCase())}
+                    onBlur={async (e) => {
+                      const searchCode = e.target.value.trim().toUpperCase();
+                      if (!searchCode || formMode === 'edit') return;
+                      const { data } = await supabase
+                        .from('categories')
+                        .select('*')
+                        .eq('code', searchCode)
+                        .eq('active', true)
+                        .maybeSingle();
+                      if (data) {
+                        startEdit(data as Category);
+                        toast({ title: "Categoria encontrada", description: data.name });
+                      }
+                    }}
                   />
                 </div>
 

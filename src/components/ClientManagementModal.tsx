@@ -416,6 +416,20 @@ export function ClientManagementModal({ open, onOpenChange, onClientsChanged }: 
                     ref={codeInputRef}
                     value={formData.code}
                     onChange={(e) => setFormData(prev => ({ ...prev, code: e.target.value }))}
+                    onBlur={async (e) => {
+                      const code = e.target.value.trim();
+                      if (!code || editingClient) return;
+                      const { data } = await supabase
+                        .from('clients')
+                        .select('*')
+                        .eq('code', code)
+                        .eq('active', true)
+                        .maybeSingle();
+                      if (data) {
+                        setEditingClient(data as Client);
+                        toast({ title: "Cliente encontrado", description: data.name });
+                      }
+                    }}
                     className="h-9"
                     placeholder="Auto"
                   />

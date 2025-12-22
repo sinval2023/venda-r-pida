@@ -183,6 +183,7 @@ export function ProductManagementModal({
               product={editingProduct}
               onSave={handleSaveProduct}
               onCancel={editingProduct ? handleCancelEdit : undefined}
+              onCodeSearch={handleEditProduct}
             />
           </div>
           
