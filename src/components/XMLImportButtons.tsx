@@ -6,16 +6,19 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { Package, Loader2, Users, X, ClipboardEdit, FolderOpen, MoreHorizontal, TrendingUp, BarChart3, History, UserPlus } from "lucide-react";
+import { Package, Loader2, Users, X, ClipboardEdit, FolderOpen, MoreHorizontal, TrendingUp, BarChart3, History, UserPlus, ShoppingBag } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { ProductManagementModal } from "./ProductManagementModal";
 import { CategoryManagementModal } from "./CategoryManagementModal";
 import { ClientManagementModal } from "./ClientManagementModal";
+import { ClientOrdersModal } from "./ClientOrdersModal";
+import { Client } from "@/hooks/useClients";
 
 interface XMLImportButtonsProps {
   onClientsImported?: () => void;
   onProductsImported?: () => void;
   onShowHistory?: () => void;
+  selectedClient?: Client | null;
 }
 
 interface ImportProgress {
@@ -30,11 +33,12 @@ type Notice = {
   description?: string;
 };
 
-export function XMLImportButtons({ onClientsImported, onProductsImported, onShowHistory }: XMLImportButtonsProps) {
+export function XMLImportButtons({ onClientsImported, onProductsImported, onShowHistory, selectedClient }: XMLImportButtonsProps) {
   const navigate = useNavigate();
   const [productModalOpen, setProductModalOpen] = useState(false);
   const [categoryModalOpen, setCategoryModalOpen] = useState(false);
   const [clientModalOpen, setClientModalOpen] = useState(false);
+  const [clientOrdersModalOpen, setClientOrdersModalOpen] = useState(false);
   const [loadingClients, setLoadingClients] = useState(false);
   const [loadingProducts, setLoadingProducts] = useState(false);
   const [progress, setProgress] = useState<ImportProgress | null>(null);
@@ -264,6 +268,18 @@ export function XMLImportButtons({ onClientsImported, onProductsImported, onShow
               </Button>
 
               <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setClientOrdersModalOpen(true)}
+                disabled={!selectedClient}
+                className="gap-1.5 text-xs font-semibold hover:bg-gradient-to-r hover:from-cyan-400 hover:to-sky-500 hover:text-white hover:border-cyan-400 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
+                title={!selectedClient ? "Selecione um cliente primeiro" : "Ver pedidos do cliente"}
+              >
+                <ShoppingBag className="h-3.5 w-3.5" />
+                Pedidos Cliente
+              </Button>
+
+              <Button
                 asChild
                 variant="outline"
                 size="sm"
@@ -347,6 +363,14 @@ export function XMLImportButtons({ onClientsImported, onProductsImported, onShow
         onOpenChange={setClientModalOpen}
         onClientsChanged={onClientsImported}
       />
+
+      {selectedClient && (
+        <ClientOrdersModal
+          open={clientOrdersModalOpen}
+          onOpenChange={setClientOrdersModalOpen}
+          client={selectedClient}
+        />
+      )}
 
       {notice && (
         <Alert variant={notice.variant} className="py-3">

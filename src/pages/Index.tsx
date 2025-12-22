@@ -165,6 +165,7 @@ const Index = () => {
           <XMLImportButtons 
             onProductsImported={refetchProducts}
             onShowHistory={() => setShowHistory(true)}
+            selectedClient={selectedClient}
           />
         </div>
 
