@@ -6,6 +6,7 @@ export interface OrderItem {
   quantity: number;
   unitPrice: number;
   total: number;
+  observations?: string;
 }
 
 export interface Order {
