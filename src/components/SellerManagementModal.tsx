@@ -372,6 +372,19 @@ export function SellerManagementModal({ open, onOpenChange, onSellersChanged }: 
                       placeholder="Ex: 1"
                       value={code}
                       onChange={(e) => setCode(e.target.value.toUpperCase())}
+                      onBlur={async (e) => {
+                        const searchCode = e.target.value.trim().toUpperCase();
+                        if (!searchCode || formMode === 'edit') return;
+                        const { data } = await supabase
+                          .from('sellers')
+                          .select('*')
+                          .eq('code', searchCode)
+                          .maybeSingle();
+                        if (data) {
+                          startEdit(data as Seller);
+                          toast({ title: "Vendedor encontrado", description: data.name });
+                        }
+                      }}
                       className="uppercase"
                     />
                   </div>

@@ -11,14 +11,16 @@ import { toast } from '@/hooks/use-toast';
 import { ProductWithCategory } from '@/hooks/useProducts';
 import { ProductImageGallery } from './ProductImageGallery';
 import { useProductImages, ProductImage } from '@/hooks/useProductImages';
+import { supabase } from '@/integrations/supabase/client';
 
 interface AdminProductFormProps {
   product?: ProductWithCategory;
   onSave: (product: Omit<Product, 'id' | 'active'> & { category_id?: string; image_url?: string; barcode?: string }) => Promise<{ error: Error | null }>;
   onCancel?: () => void;
+  onCodeSearch?: (product: ProductWithCategory) => void;
 }
 
-export function AdminProductForm({ product, onSave, onCancel }: AdminProductFormProps) {
+export function AdminProductForm({ product, onSave, onCancel, onCodeSearch }: AdminProductFormProps) {
   const { categories, loading: categoriesLoading } = useCategories();
   const { getProductImages } = useProductImages();
   const [code, setCode] = useState(product?.code || '');
@@ -145,6 +147,24 @@ export function AdminProductForm({ product, onSave, onCancel }: AdminProductForm
                 placeholder="Ex: PROD001"
                 value={code}
                 onChange={(e) => setCode(e.target.value.toUpperCase())}
+                onBlur={async (e) => {
+                  const searchCode = e.target.value.trim().toUpperCase();
+                  if (!searchCode || product) return;
+                  const { data } = await supabase
+                    .from('products')
+                    .select('*, categories(name)')
+                    .eq('code', searchCode)
+                    .eq('active', true)
+                    .maybeSingle();
+                  if (data) {
+                    const foundProduct: ProductWithCategory = {
+                      ...data,
+                      category_name: data.categories?.name || null,
+                    };
+                    onCodeSearch?.(foundProduct);
+                    toast({ title: "Produto encontrado", description: data.description });
+                  }
+                }}
               />
             </div>
 
