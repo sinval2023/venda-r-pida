@@ -102,9 +102,9 @@ export function ClientSearchInput({ onClientSelect, selectedClient, clientName =
 
   return (
     <div className="space-y-2">
-      <div className="flex gap-2 items-end">
+      <div className="flex gap-2 items-end flex-wrap sm:flex-nowrap">
         {/* Nome do Cliente Field */}
-        <div className="flex-1">
+        <div className="flex-1 min-w-0">
           <Label className="text-xs text-muted-foreground flex items-center gap-1">
             <User className="h-3 w-3" /> Nome do Cliente
           </Label>
@@ -128,8 +128,20 @@ export function ClientSearchInput({ onClientSelect, selectedClient, clientName =
           </div>
         </div>
 
+        {/* NOVO CLIENTE Button */}
+        <div className="flex items-end">
+          <Button
+            type="button"
+            onClick={onNewClientClick}
+            className="h-11 px-3 bg-green-600 hover:bg-green-700 text-white text-xs font-semibold"
+          >
+            <UserPlus className="h-3 w-3 sm:mr-1" />
+            <span className="hidden sm:inline">NOVO CLIENTE</span>
+          </Button>
+        </div>
+
         {/* Client Search Field */}
-        <div ref={wrapperRef} className="relative w-48 sm:w-56">
+        <div ref={wrapperRef} className="relative w-full sm:w-48 md:w-56">
           <Label className="text-xs text-muted-foreground flex items-center gap-1">
             <Search className="h-3 w-3" /> Buscar Cliente
           </Label>
@@ -168,18 +180,6 @@ export function ClientSearchInput({ onClientSelect, selectedClient, clientName =
             </div>
           )}
         </div>
-      </div>
-
-      {/* NOVO CLIENTE Button */}
-      <div className="flex justify-center">
-        <Button
-          type="button"
-          onClick={onNewClientClick}
-          className="h-8 px-4 bg-green-600 hover:bg-green-700 text-white text-xs font-semibold"
-        >
-          <UserPlus className="h-3 w-3 mr-1" />
-          NOVO CLIENTE
-        </Button>
       </div>
     </div>
   );
