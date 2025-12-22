@@ -1,12 +1,12 @@
 import { useState, useEffect } from 'react';
-import { format } from 'date-fns';
+import { format, subDays } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Calendar, Search, ChevronDown, ChevronUp, Package } from 'lucide-react';
+import { Calendar, ChevronDown, ChevronUp, Package } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { Client } from '@/hooks/useClients';
 
@@ -36,14 +36,50 @@ interface ClientOrdersModalProps {
   client: Client;
 }
 
+const getFormattedDate = (date: Date) => format(date, 'yyyy-MM-dd');
+
 export function ClientOrdersModal({ open, onOpenChange, client }: ClientOrdersModalProps) {
+  const today = getFormattedDate(new Date());
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(false);
-  const [startDate, setStartDate] = useState('');
-  const [endDate, setEndDate] = useState('');
+  const [startDate, setStartDate] = useState(today);
+  const [endDate, setEndDate] = useState(today);
   const [expandedOrderId, setExpandedOrderId] = useState<string | null>(null);
   const [orderItems, setOrderItems] = useState<Record<string, OrderItem[]>>({});
   const [loadingItems, setLoadingItems] = useState<string | null>(null);
+  const [activeFilter, setActiveFilter] = useState<string>('hoje');
+
+  const applyQuickFilter = (filter: string) => {
+    const now = new Date();
+    setActiveFilter(filter);
+    
+    switch (filter) {
+      case 'hoje':
+        setStartDate(getFormattedDate(now));
+        setEndDate(getFormattedDate(now));
+        break;
+      case '15':
+        setStartDate(getFormattedDate(subDays(now, 15)));
+        setEndDate(getFormattedDate(now));
+        break;
+      case '30':
+        setStartDate(getFormattedDate(subDays(now, 30)));
+        setEndDate(getFormattedDate(now));
+        break;
+      case '90':
+        setStartDate(getFormattedDate(subDays(now, 90)));
+        setEndDate(getFormattedDate(now));
+        break;
+      case '180':
+        setStartDate(getFormattedDate(subDays(now, 180)));
+        setEndDate(getFormattedDate(now));
+        break;
+      case 'geral':
+        setStartDate('');
+        setEndDate('');
+        break;
+    }
+  };
 
   const fetchOrders = async () => {
     if (!client) return;
@@ -147,48 +183,95 @@ export function ClientOrdersModal({ open, onOpenChange, client }: ClientOrdersMo
           </DialogTitle>
         </DialogHeader>
 
-        <div className="flex flex-wrap gap-4 items-end border-b pb-4">
-          <div className="flex-1 min-w-[140px]">
-            <Label htmlFor="startDate" className="text-xs text-muted-foreground">
-              Data Inicial
-            </Label>
-            <div className="relative">
-              <Calendar className="absolute left-2 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-              <Input
-                id="startDate"
-                type="date"
-                value={startDate}
-                onChange={(e) => setStartDate(e.target.value)}
-                className="pl-8 h-9"
-              />
+        <div className="space-y-3 border-b pb-4">
+          <div className="flex flex-wrap gap-2">
+            <Button
+              variant={activeFilter === 'hoje' ? 'default' : 'outline'}
+              size="sm"
+              onClick={() => applyQuickFilter('hoje')}
+              className="h-8 text-xs"
+            >
+              Hoje
+            </Button>
+            <Button
+              variant={activeFilter === '15' ? 'default' : 'outline'}
+              size="sm"
+              onClick={() => applyQuickFilter('15')}
+              className="h-8 text-xs"
+            >
+              Últimos 15 dias
+            </Button>
+            <Button
+              variant={activeFilter === '30' ? 'default' : 'outline'}
+              size="sm"
+              onClick={() => applyQuickFilter('30')}
+              className="h-8 text-xs"
+            >
+              Últimos 30 dias
+            </Button>
+            <Button
+              variant={activeFilter === '90' ? 'default' : 'outline'}
+              size="sm"
+              onClick={() => applyQuickFilter('90')}
+              className="h-8 text-xs"
+            >
+              Últimos 90 dias
+            </Button>
+            <Button
+              variant={activeFilter === '180' ? 'default' : 'outline'}
+              size="sm"
+              onClick={() => applyQuickFilter('180')}
+              className="h-8 text-xs"
+            >
+              Últimos 180 dias
+            </Button>
+            <Button
+              variant={activeFilter === 'geral' ? 'default' : 'outline'}
+              size="sm"
+              onClick={() => applyQuickFilter('geral')}
+              className="h-8 text-xs"
+            >
+              Geral
+            </Button>
+          </div>
+          <div className="flex flex-wrap gap-4 items-end">
+            <div className="flex-1 min-w-[140px]">
+              <Label htmlFor="startDate" className="text-xs text-muted-foreground">
+                Data Inicial
+              </Label>
+              <div className="relative">
+                <Calendar className="absolute left-2 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <Input
+                  id="startDate"
+                  type="date"
+                  value={startDate}
+                  onChange={(e) => {
+                    setStartDate(e.target.value);
+                    setActiveFilter('');
+                  }}
+                  className="pl-8 h-9"
+                />
+              </div>
+            </div>
+            <div className="flex-1 min-w-[140px]">
+              <Label htmlFor="endDate" className="text-xs text-muted-foreground">
+                Data Final
+              </Label>
+              <div className="relative">
+                <Calendar className="absolute left-2 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <Input
+                  id="endDate"
+                  type="date"
+                  value={endDate}
+                  onChange={(e) => {
+                    setEndDate(e.target.value);
+                    setActiveFilter('');
+                  }}
+                  className="pl-8 h-9"
+                />
+              </div>
             </div>
           </div>
-          <div className="flex-1 min-w-[140px]">
-            <Label htmlFor="endDate" className="text-xs text-muted-foreground">
-              Data Final
-            </Label>
-            <div className="relative">
-              <Calendar className="absolute left-2 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-              <Input
-                id="endDate"
-                type="date"
-                value={endDate}
-                onChange={(e) => setEndDate(e.target.value)}
-                className="pl-8 h-9"
-              />
-            </div>
-          </div>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => {
-              setStartDate('');
-              setEndDate('');
-            }}
-            className="h-9"
-          >
-            Limpar Filtros
-          </Button>
         </div>
 
         <ScrollArea className="flex-1 pr-4">
