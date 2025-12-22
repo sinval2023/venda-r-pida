@@ -185,54 +185,66 @@ export function ClientOrdersModal({ open, onOpenChange, client }: ClientOrdersMo
 
         <div className="space-y-3 border-b pb-4">
           <div className="flex flex-wrap gap-2">
-            <Button
-              variant={activeFilter === 'hoje' ? 'default' : 'outline'}
-              size="sm"
+            <button
               onClick={() => applyQuickFilter('hoje')}
-              className="h-8 text-xs"
+              className={`px-4 py-2 rounded-lg font-medium text-sm transition-all duration-200 border ${
+                activeFilter === 'hoje'
+                  ? 'bg-gradient-to-r from-blue-500 to-blue-600 text-white border-blue-500 shadow-md'
+                  : 'bg-background border-border hover:bg-gradient-to-r hover:from-blue-100 hover:to-blue-200 hover:border-blue-300'
+              }`}
             >
               Hoje
-            </Button>
-            <Button
-              variant={activeFilter === '15' ? 'default' : 'outline'}
-              size="sm"
+            </button>
+            <button
               onClick={() => applyQuickFilter('15')}
-              className="h-8 text-xs"
+              className={`px-4 py-2 rounded-lg font-medium text-sm transition-all duration-200 border ${
+                activeFilter === '15'
+                  ? 'bg-gradient-to-r from-blue-500 to-blue-600 text-white border-blue-500 shadow-md'
+                  : 'bg-background border-border hover:bg-gradient-to-r hover:from-blue-100 hover:to-blue-200 hover:border-blue-300'
+              }`}
             >
               Últimos 15 dias
-            </Button>
-            <Button
-              variant={activeFilter === '30' ? 'default' : 'outline'}
-              size="sm"
+            </button>
+            <button
               onClick={() => applyQuickFilter('30')}
-              className="h-8 text-xs"
+              className={`px-4 py-2 rounded-lg font-medium text-sm transition-all duration-200 border ${
+                activeFilter === '30'
+                  ? 'bg-gradient-to-r from-blue-500 to-blue-600 text-white border-blue-500 shadow-md'
+                  : 'bg-background border-border hover:bg-gradient-to-r hover:from-blue-100 hover:to-blue-200 hover:border-blue-300'
+              }`}
             >
               Últimos 30 dias
-            </Button>
-            <Button
-              variant={activeFilter === '90' ? 'default' : 'outline'}
-              size="sm"
+            </button>
+            <button
               onClick={() => applyQuickFilter('90')}
-              className="h-8 text-xs"
+              className={`px-4 py-2 rounded-lg font-medium text-sm transition-all duration-200 border ${
+                activeFilter === '90'
+                  ? 'bg-gradient-to-r from-blue-500 to-blue-600 text-white border-blue-500 shadow-md'
+                  : 'bg-background border-border hover:bg-gradient-to-r hover:from-blue-100 hover:to-blue-200 hover:border-blue-300'
+              }`}
             >
               Últimos 90 dias
-            </Button>
-            <Button
-              variant={activeFilter === '180' ? 'default' : 'outline'}
-              size="sm"
+            </button>
+            <button
               onClick={() => applyQuickFilter('180')}
-              className="h-8 text-xs"
+              className={`px-4 py-2 rounded-lg font-medium text-sm transition-all duration-200 border ${
+                activeFilter === '180'
+                  ? 'bg-gradient-to-r from-blue-500 to-blue-600 text-white border-blue-500 shadow-md'
+                  : 'bg-background border-border hover:bg-gradient-to-r hover:from-blue-100 hover:to-blue-200 hover:border-blue-300'
+              }`}
             >
               Últimos 180 dias
-            </Button>
-            <Button
-              variant={activeFilter === 'geral' ? 'default' : 'outline'}
-              size="sm"
+            </button>
+            <button
               onClick={() => applyQuickFilter('geral')}
-              className="h-8 text-xs"
+              className={`px-4 py-2 rounded-lg font-medium text-sm transition-all duration-200 border ${
+                activeFilter === 'geral'
+                  ? 'bg-gradient-to-r from-blue-500 to-blue-600 text-white border-blue-500 shadow-md'
+                  : 'bg-background border-border hover:bg-gradient-to-r hover:from-blue-100 hover:to-blue-200 hover:border-blue-300'
+              }`}
             >
               Geral
-            </Button>
+            </button>
           </div>
           <div className="flex flex-wrap gap-4 items-end">
             <div className="flex-1 min-w-[140px]">
