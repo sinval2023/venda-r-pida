@@ -26,7 +26,7 @@ import { toast } from '@/hooks/use-toast';
 const Index = () => {
   const { user, loading, isAdmin } = useAuth();
   const navigate = useNavigate();
-  const { items, addItem, removeItem, getTotal, clearOrder, finalizeOrder, setOrderItems } = useOrder();
+  const { items, addItem, removeItem, getTotal, clearOrder, finalizeOrder, setOrderItems, updateItemObservation } = useOrder();
   const { history: ftpHistory, loading: historyLoading } = useFTPHistory();
   const { products, refetch: refetchProducts } = useProducts();
   const [exportOrder, setExportOrder] = useState<Order | null>(null);
@@ -50,7 +50,7 @@ const Index = () => {
     }
   }, [user, loading, navigate]);
 
-  const handleAddToOrder = (product: Product, quantity: number, unitPrice: number) => {
+  const handleAddToOrder = (product: Product, quantity: number, unitPrice: number, observation?: string) => {
     if (!selectedSeller) {
       toast({
         title: 'VENDEDOR NÃO SELECIONADO',
@@ -59,7 +59,7 @@ const Index = () => {
       });
       return;
     }
-    addItem(product, quantity, unitPrice);
+    addItem(product, quantity, unitPrice, observation);
   };
 
   const handleReview = () => {
@@ -216,7 +216,8 @@ const Index = () => {
                 product_description: item.description,
                 quantity: item.quantity,
                 unit_price: item.unitPrice,
-                total: item.total
+                total: item.total,
+                observations: item.observations || null
               }));
               await supabase.from('order_items').insert(orderItems);
             }
@@ -239,6 +240,7 @@ const Index = () => {
             quantity: item.quantity,
             unitPrice: item.unit_price,
             total: item.total,
+            observations: item.observations || undefined,
           }));
           setOrderItems(convertedItems);
           
@@ -265,6 +267,7 @@ const Index = () => {
         onClose={() => setShowReview(false)}
         onConfirm={handleFinalize}
         onRemoveItem={removeItem}
+        onUpdateObservation={updateItemObservation}
       />
 
       {exportOrder && (

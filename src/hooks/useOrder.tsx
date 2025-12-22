@@ -76,6 +76,15 @@ export function useOrder() {
     }));
   };
 
+  const updateItemObservation = (itemId: string, observation: string) => {
+    setItems(items.map(item => {
+      if (item.id === itemId) {
+        return { ...item, observations: observation || undefined };
+      }
+      return item;
+    }));
+  };
+
   const getTotal = () => {
     return items.reduce((sum, item) => sum + item.total, 0);
   };
@@ -158,6 +167,7 @@ export function useOrder() {
     addItem,
     removeItem,
     updateItemQuantity,
+    updateItemObservation,
     getTotal,
     clearOrder,
     finalizeOrder,
