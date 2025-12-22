@@ -161,8 +161,13 @@ export function AdminProductForm({ product, onSave, onCancel, onCodeSearch }: Ad
                       ...data,
                       category_name: data.categories?.name || null,
                     };
-                    onCodeSearch?.(foundProduct);
+                    // Use setTimeout to defer state update and avoid DOM issues
+                    setTimeout(() => {
+                      onCodeSearch?.(foundProduct);
+                    }, 0);
                     toast({ title: "Produto encontrado", description: data.description });
+                  } else {
+                    toast({ title: "Código não localizado", variant: "destructive" });
                   }
                 }}
               />

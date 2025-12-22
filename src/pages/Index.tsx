@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useRef } from 'react';
 import { useNavigate, Navigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { useOrder } from '@/hooks/useOrder';
@@ -11,6 +11,7 @@ import { OrderReviewModal } from '@/components/OrderReviewModal';
 import { ExportModal } from '@/components/ExportModal';
 import { FTPHistoryList } from '@/components/FTPHistoryList';
 import { ClientSearchInput } from '@/components/ClientSearchInput';
+import { ClientManagementModal } from '@/components/ClientManagementModal';
 import { SellerCodeInput } from '@/components/SellerCodeInput';
 import { XMLImportButtons } from '@/components/XMLImportButtons';
 import { Order, Product } from '@/types/order';
@@ -36,6 +37,7 @@ const Index = () => {
   const [clientName, setClientName] = useState('');
   const [selectedSeller, setSelectedSeller] = useState<Seller | null>(null);
   const [observations, setObservations] = useState('');
+  const [showClientModal, setShowClientModal] = useState(false);
 
   // Calculate total quantity of products in order
   const totalProductQuantity = useMemo(() => {
@@ -133,6 +135,7 @@ const Index = () => {
             selectedClient={selectedClient}
             clientName={clientName}
             onClientNameChange={setClientName}
+            onNewClientClick={() => setShowClientModal(true)}
           />
           <SellerCodeInput
             onSellerSelect={setSelectedSeller}
@@ -282,6 +285,12 @@ const Index = () => {
           <FTPHistoryList history={ftpHistory} loading={historyLoading} />
         </DialogContent>
       </Dialog>
+
+      <ClientManagementModal
+        open={showClientModal}
+        onOpenChange={setShowClientModal}
+        focusNameOnOpen
+      />
     </div>
   );
 };
