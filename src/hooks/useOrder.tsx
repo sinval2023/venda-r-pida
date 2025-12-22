@@ -15,14 +15,30 @@ export function useOrder() {
   const [items, setItems] = useState<OrderItem[]>([]);
   const { user } = useAuth();
 
-  const addItem = (product: Product, quantity: number, unitPrice: number) => {
+  const addItem = (product: Product, quantity: number, unitPrice: number, observation?: string) => {
     // Se o mesmo produto for adicionado com preços diferentes,
     // criamos linhas separadas no pedido (evita "grudar" no último preço editado).
     const priceCents = Math.round(unitPrice * 100);
 
+    // Se tiver observação, sempre cria uma nova linha
+    if (observation) {
+      const newItem: OrderItem = {
+        id: crypto.randomUUID(),
+        productId: product.id,
+        code: product.code,
+        description: product.description,
+        quantity,
+        unitPrice,
+        total: quantity * unitPrice,
+        observations: observation,
+      };
+      setItems([...items, newItem]);
+      return;
+    }
+
     const existingIndex = items.findIndex(
       (item) =>
-        item.productId === product.id && Math.round(item.unitPrice * 100) === priceCents
+        item.productId === product.id && Math.round(item.unitPrice * 100) === priceCents && !item.observations
     );
 
     if (existingIndex >= 0) {
@@ -108,7 +124,8 @@ export function useOrder() {
         product_description: item.description,
         quantity: item.quantity,
         unit_price: item.unitPrice,
-        total: item.total
+        total: item.total,
+        observations: item.observations || null
       }));
 
       const { error: itemsError } = await supabase

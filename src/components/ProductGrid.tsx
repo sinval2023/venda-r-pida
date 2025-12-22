@@ -9,7 +9,7 @@ import { Button } from '@/components/ui/button';
 const PRODUCTS_PER_PAGE = 10;
 
 interface ProductGridProps {
-  onAddToOrder: (product: Product, quantity: number, unitPrice: number) => void;
+  onAddToOrder: (product: Product, quantity: number, unitPrice: number, observation?: string) => void;
   searchQuery: string;
   onSearchChange: (query: string) => void;
   hasSelectedSeller: boolean;

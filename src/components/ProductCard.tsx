@@ -3,13 +3,14 @@ import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Product } from '@/types/order';
-import { Plus, Minus } from 'lucide-react';
+import { Plus, Minus, MessageSquare } from 'lucide-react';
 import { ProductWithCategory } from '@/hooks/useProducts';
 import { toast } from '@/hooks/use-toast';
+import { ItemObservationModal } from './ItemObservationModal';
 
 interface ProductCardProps {
   product: ProductWithCategory;
-  onAddToOrder: (product: Product, quantity: number, unitPrice: number) => void;
+  onAddToOrder: (product: Product, quantity: number, unitPrice: number, observation?: string) => void;
   hasSelectedSeller?: boolean;
 }
 
@@ -18,7 +19,8 @@ export function ProductCard({ product, onAddToOrder, hasSelectedSeller = true }:
   const [isHovered, setIsHovered] = useState(false);
   const [editPrice, setEditPrice] = useState(false);
   const [customPrice, setCustomPrice] = useState(product.default_price);
-
+  const [showObservationModal, setShowObservationModal] = useState(false);
+  const [pendingObservation, setPendingObservation] = useState<string>('');
   const priceInputRef = useRef<HTMLInputElement>(null);
   const editPriceRef = useRef(false);
   const customPriceRef = useRef(product.default_price);
@@ -70,7 +72,7 @@ export function ProductCard({ product, onAddToOrder, hasSelectedSeller = true }:
     setQuantity(prev => Math.max(1, prev - 1));
   };
 
-  const handleAddToOrder = () => {
+  const handleAddToOrder = (observation?: string) => {
     if (!hasSelectedSeller) {
       toast({
         title: 'VENDEDOR NÃO SELECIONADO',
@@ -81,6 +83,7 @@ export function ProductCard({ product, onAddToOrder, hasSelectedSeller = true }:
     }
 
     const finalPrice = editPriceRef.current ? customPriceRef.current : product.default_price;
+    const finalObservation = observation || pendingObservation;
 
     // Reseta imediatamente (sincrono) para que o próximo clique use sempre o preço original
     editPriceRef.current = false;
@@ -89,8 +92,20 @@ export function ProductCard({ product, onAddToOrder, hasSelectedSeller = true }:
     setQuantity(1);
     setEditPrice(false);
     setCustomPrice(product.default_price);
+    setPendingObservation('');
 
-    onAddToOrder(product, quantity, finalPrice);
+    onAddToOrder(product, quantity, finalPrice, finalObservation);
+  };
+
+  const handleObservationClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    setShowObservationModal(true);
+  };
+
+  const handleSaveObservation = (observation: string) => {
+    setPendingObservation(observation);
+    // Adiciona ao pedido imediatamente com a observação
+    handleAddToOrder(observation);
   };
 
   const handlePriceKeyDown = (e: React.KeyboardEvent) => {
@@ -107,12 +122,21 @@ export function ProductCard({ product, onAddToOrder, hasSelectedSeller = true }:
                        product.image_url;
 
   return (
+    <>
     <Card 
-      className="overflow-hidden cursor-pointer transition-all duration-300 hover:shadow-2xl hover:scale-[1.03] border-2 border-emerald-300 hover:border-emerald-500 bg-gradient-to-br from-emerald-50 via-green-100 to-emerald-200 dark:from-emerald-900/40 dark:via-green-900/30 dark:to-emerald-800/40 group"
-      onClick={handleAddToOrder}
+      className="overflow-hidden cursor-pointer transition-all duration-300 hover:shadow-2xl hover:scale-[1.03] border-2 border-emerald-300 hover:border-emerald-500 bg-gradient-to-br from-emerald-50 via-green-100 to-emerald-200 dark:from-emerald-900/40 dark:via-green-900/30 dark:to-emerald-800/40 group relative"
+      onClick={() => handleAddToOrder()}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
     >
+      {/* Observation Icon */}
+      <button
+        onClick={handleObservationClick}
+        className="absolute top-1 right-1 z-10 p-1 rounded-full bg-amber-100 hover:bg-amber-200 dark:bg-amber-900/50 dark:hover:bg-amber-800 transition-colors"
+        title="Adicionar observação"
+      >
+        <MessageSquare className="h-3 w-3 sm:h-4 sm:w-4 text-amber-600 dark:text-amber-400" />
+      </button>
       {/* Product Image - Centered at Top */}
       {productImage && (
         <div className="w-full flex justify-center pt-2 px-2">
@@ -235,5 +259,15 @@ export function ProductCard({ product, onAddToOrder, hasSelectedSeller = true }:
         )}
       </div>
     </Card>
+    
+    <ItemObservationModal
+      open={showObservationModal}
+      onOpenChange={setShowObservationModal}
+      productCode={product.code}
+      productDescription={product.description}
+      currentObservation={pendingObservation}
+      onSave={handleSaveObservation}
+    />
+    </>
   );
 }
