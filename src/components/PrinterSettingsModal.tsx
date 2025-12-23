@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Printer, Save, Loader2, Settings2, Building, Phone, MapPin, FileText, Hash, Type, Image } from 'lucide-react';
+import { Printer, Save, Loader2, Settings2, Building, Phone, MapPin, FileText, Hash, Type, Image, Layout } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -9,6 +9,7 @@ import { Card } from '@/components/ui/card';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { usePrinterSettings, PrinterSettings } from '@/hooks/usePrinterSettings';
+import { receiptTemplates, ReceiptTemplateType } from '@/components/receipt-templates';
 
 interface PrinterSettingsModalProps {
   open: boolean;
@@ -59,6 +60,32 @@ export function PrinterSettingsModal({ open, onClose }: PrinterSettingsModalProp
         </DialogHeader>
 
         <div className="space-y-4">
+          {/* Template Selection */}
+          <Card className="p-4 space-y-4">
+            <h3 className="font-semibold flex items-center gap-2">
+              <Layout className="h-4 w-4" />
+              Template do Cupom
+            </h3>
+
+            <div className="grid grid-cols-2 gap-2">
+              {receiptTemplates.map((template) => (
+                <button
+                  key={template.id}
+                  type="button"
+                  onClick={() => handleChange('receipt_template', template.id)}
+                  className={`p-3 rounded-lg border-2 text-left transition-all ${
+                    formData.receipt_template === template.id
+                      ? 'border-primary bg-primary/10'
+                      : 'border-border hover:border-primary/50'
+                  }`}
+                >
+                  <div className="font-medium text-sm">{template.name}</div>
+                  <div className="text-[10px] text-muted-foreground mt-1">{template.description}</div>
+                </button>
+              ))}
+            </div>
+          </Card>
+
           {/* Printer Settings */}
           <Card className="p-4 space-y-4">
             <h3 className="font-semibold flex items-center gap-2">

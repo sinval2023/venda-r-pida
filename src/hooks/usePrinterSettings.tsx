@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { toast } from '@/hooks/use-toast';
+import { ReceiptTemplateType } from '@/components/receipt-templates';
 
 export interface PrinterSettings {
   id?: string;
@@ -17,6 +18,7 @@ export interface PrinterSettings {
   footer_message: string;
   auto_print: boolean;
   copies: number;
+  receipt_template: ReceiptTemplateType;
 }
 
 const defaultSettings: PrinterSettings = {
@@ -31,6 +33,7 @@ const defaultSettings: PrinterSettings = {
   footer_message: 'Obrigado pela preferência!',
   auto_print: false,
   copies: 1,
+  receipt_template: 'classic',
 };
 
 export function usePrinterSettings() {
@@ -72,6 +75,7 @@ export function usePrinterSettings() {
           footer_message: data.footer_message || defaultSettings.footer_message,
           auto_print: data.auto_print || defaultSettings.auto_print,
           copies: data.copies || defaultSettings.copies,
+          receipt_template: (data.receipt_template as ReceiptTemplateType) || defaultSettings.receipt_template,
         });
       }
     } catch (err) {
@@ -103,6 +107,7 @@ export function usePrinterSettings() {
         footer_message: newSettings.footer_message ?? settings.footer_message,
         auto_print: newSettings.auto_print ?? settings.auto_print,
         copies: newSettings.copies ?? settings.copies,
+        receipt_template: newSettings.receipt_template ?? settings.receipt_template,
       };
 
       const { error } = await supabase

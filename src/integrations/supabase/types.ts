@@ -337,6 +337,7 @@ export type Database = {
           logo_url: string | null
           paper_width: number | null
           printer_name: string | null
+          receipt_template: string | null
           show_logo: boolean | null
           updated_at: string
           user_id: string
@@ -354,6 +355,7 @@ export type Database = {
           logo_url?: string | null
           paper_width?: number | null
           printer_name?: string | null
+          receipt_template?: string | null
           show_logo?: boolean | null
           updated_at?: string
           user_id: string
@@ -371,6 +373,7 @@ export type Database = {
           logo_url?: string | null
           paper_width?: number | null
           printer_name?: string | null
+          receipt_template?: string | null
           show_logo?: boolean | null
           updated_at?: string
           user_id?: string
