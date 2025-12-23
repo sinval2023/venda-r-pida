@@ -46,8 +46,8 @@ export function SellerCodeInput({ onSellerSelect, selectedSeller, orderTotal = 0
   };
 
   return (
-    <div className="flex items-center gap-4">
-      <Card className="bg-gradient-to-br from-blue-400 via-sky-300 to-blue-200 border-2 border-blue-300 shadow-lg p-4 rounded-2xl">
+    <div className="w-full">
+      <Card className="w-full bg-gradient-to-br from-blue-400 via-sky-300 to-blue-200 border-2 border-blue-300 shadow-lg p-4 rounded-2xl">
         <Label className="text-xs text-white/90 flex items-center gap-1 mb-2 font-semibold">
           <UserCheck className="h-3 w-3" /> Vendedor
         </Label>
