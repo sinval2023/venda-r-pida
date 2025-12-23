@@ -124,7 +124,7 @@ export function ProductCard({ product, onAddToOrder, hasSelectedSeller = true }:
   return (
     <>
     <Card 
-      className="overflow-hidden cursor-pointer transition-all duration-300 hover:shadow-2xl hover:scale-[1.03] border-2 border-emerald-300 hover:border-emerald-500 bg-gradient-to-br from-emerald-50 via-green-100 to-emerald-200 dark:from-emerald-900/40 dark:via-green-900/30 dark:to-emerald-800/40 group relative"
+      className="overflow-hidden cursor-pointer transition-all duration-300 hover:shadow-2xl hover:scale-[1.03] border-2 border-blue-200 hover:border-blue-400 bg-gradient-to-br from-blue-50 via-sky-100 to-blue-200 dark:from-blue-900/40 dark:via-sky-900/30 dark:to-blue-800/40 group relative"
       onClick={() => handleAddToOrder()}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
