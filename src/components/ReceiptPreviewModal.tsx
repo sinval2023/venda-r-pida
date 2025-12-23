@@ -217,21 +217,36 @@ export function ReceiptPreviewModal({ order, clientName, open, onClose, onOpenSe
   };
 
   const generatePdf = async (): Promise<jsPDF> => {
-    const doc = new jsPDF({
-      orientation: 'portrait',
-      unit: 'mm',
-      format: [settings.paper_width, 297],
-    });
-
     const pageWidth = settings.paper_width;
     const margin = 5;
     const contentWidth = pageWidth - (margin * 2);
-    let yPosition = margin;
     const lineHeight = 4;
     const smallLineHeight = 3;
+    
+    // Calculate dynamic height based on content
+    let estimatedHeight = 60; // Base height
+    estimatedHeight += order.items.length * 6; // Items
+    order.items.forEach(item => {
+      if (item.observations) estimatedHeight += 4;
+    });
+    if (settings.company_name) estimatedHeight += 6;
+    if (settings.company_address) estimatedHeight += 4;
+    if (settings.company_phone) estimatedHeight += 4;
+    if (settings.logo_url && settings.show_logo) estimatedHeight += 20;
+    if (clientName) estimatedHeight += 8;
+    if (settings.footer_message) estimatedHeight += 4;
+    estimatedHeight = Math.max(estimatedHeight, 100);
+
+    const doc = new jsPDF({
+      orientation: 'portrait',
+      unit: 'mm',
+      format: [pageWidth, estimatedHeight],
+    });
+
+    let yPosition = margin;
 
     // Helper functions
-    const addText = (text: string, x: number, y: number, options: { align?: 'left' | 'center' | 'right'; fontSize?: number; fontStyle?: 'normal' | 'bold' } = {}) => {
+    const addText = (text: string, x: number, y: number, options: { align?: 'left' | 'center' | 'right'; fontSize?: number; fontStyle?: 'normal' | 'bold' | 'italic' } = {}) => {
       const { align = 'left', fontSize = 8, fontStyle = 'normal' } = options;
       doc.setFontSize(fontSize);
       doc.setFont('helvetica', fontStyle);
@@ -244,99 +259,156 @@ export function ReceiptPreviewModal({ order, clientName, open, onClose, onOpenSe
       doc.setLineDashPattern([], 0);
     };
 
+    const drawSolidLine = (y: number, width = 0.2) => {
+      doc.setLineWidth(width);
+      doc.line(margin, y, pageWidth - margin, y);
+      doc.setLineWidth(0.2);
+    };
+
+    // Logo
+    if (settings.logo_url && settings.show_logo) {
+      try {
+        const img = new Image();
+        img.crossOrigin = 'anonymous';
+        await new Promise<void>((resolve, reject) => {
+          img.onload = () => {
+            const maxWidth = 25;
+            const maxHeight = 15;
+            const ratio = Math.min(maxWidth / img.width, maxHeight / img.height);
+            const imgWidth = img.width * ratio;
+            const imgHeight = img.height * ratio;
+            const xPos = (pageWidth - imgWidth) / 2;
+            doc.addImage(img, 'PNG', xPos, yPosition, imgWidth, imgHeight);
+            yPosition += imgHeight + 2;
+            resolve();
+          };
+          img.onerror = () => {
+            console.warn('Failed to load logo for PDF');
+            resolve();
+          };
+          img.src = settings.logo_url || '';
+        });
+      } catch (e) {
+        console.warn('Error loading logo:', e);
+      }
+    }
+
     // Company Header
     if (settings.company_name) {
-      addText(settings.company_name, pageWidth / 2, yPosition + 4, { align: 'center', fontSize: 10, fontStyle: 'bold' });
-      yPosition += lineHeight + 2;
+      addText(settings.company_name.toUpperCase(), pageWidth / 2, yPosition + 4, { align: 'center', fontSize: 11, fontStyle: 'bold' });
+      yPosition += lineHeight + 3;
     }
     if (settings.company_address) {
-      addText(settings.company_address, pageWidth / 2, yPosition + 3, { align: 'center', fontSize: 7 });
-      yPosition += smallLineHeight;
+      addText(settings.company_address, pageWidth / 2, yPosition + 2, { align: 'center', fontSize: 7 });
+      yPosition += smallLineHeight + 1;
     }
     if (settings.company_phone) {
-      addText(settings.company_phone, pageWidth / 2, yPosition + 3, { align: 'center', fontSize: 7 });
-      yPosition += smallLineHeight;
+      addText(`Tel: ${settings.company_phone}`, pageWidth / 2, yPosition + 2, { align: 'center', fontSize: 7 });
+      yPosition += smallLineHeight + 1;
     }
     
-    if (settings.company_name || settings.company_address || settings.company_phone) {
-      yPosition += 2;
+    if (settings.company_name || settings.company_address || settings.company_phone || settings.logo_url) {
+      yPosition += 1;
       drawDashedLine(yPosition);
-      yPosition += 3;
+      yPosition += 4;
     }
 
     // Order Header
-    addText('CUPOM DE VENDA', pageWidth / 2, yPosition + 3, { align: 'center', fontSize: 12, fontStyle: 'bold' });
-    yPosition += lineHeight + 2;
-    addText(`Pedido #${order.number.toString().padStart(6, '0')}`, pageWidth / 2, yPosition + 2, { align: 'center', fontSize: 8 });
-    yPosition += lineHeight;
+    addText('CUPOM DE VENDA', pageWidth / 2, yPosition + 2, { align: 'center', fontSize: 12, fontStyle: 'bold' });
+    yPosition += lineHeight + 3;
+    
+    // Order number with box effect
+    doc.setDrawColor(100);
+    doc.setFillColor(245, 245, 245);
+    const orderNumText = `Pedido #${order.number.toString().padStart(6, '0')}`;
+    const orderNumWidth = doc.getTextWidth(orderNumText) + 6;
+    doc.roundedRect((pageWidth - orderNumWidth) / 2, yPosition - 2, orderNumWidth, 6, 1, 1, 'FD');
+    doc.setDrawColor(0);
+    addText(orderNumText, pageWidth / 2, yPosition + 2, { align: 'center', fontSize: 9, fontStyle: 'bold' });
+    yPosition += lineHeight + 3;
+    
     drawDashedLine(yPosition);
     yPosition += 4;
 
-    // Date/Time
+    // Date/Time in a grid
     addText(`Data: ${date}`, margin, yPosition, { fontSize: 8 });
     addText(`Hora: ${time}`, pageWidth - margin, yPosition, { align: 'right', fontSize: 8 });
     yPosition += lineHeight + 2;
 
     // Seller
-    addText('VENDEDOR', margin, yPosition, { fontSize: 7, fontStyle: 'bold' });
-    yPosition += smallLineHeight;
-    addText(order.vendorName, margin, yPosition, { fontSize: 8 });
-    yPosition += lineHeight;
+    doc.setFillColor(240, 240, 240);
+    doc.rect(margin, yPosition - 1, contentWidth, 7, 'F');
+    addText('VENDEDOR:', margin + 1, yPosition + 3, { fontSize: 7, fontStyle: 'bold' });
+    addText(order.vendorName, margin + 18, yPosition + 3, { fontSize: 8 });
+    yPosition += 8;
 
     // Client
     if (clientName) {
-      addText('CLIENTE', margin, yPosition, { fontSize: 7, fontStyle: 'bold' });
-      yPosition += smallLineHeight;
-      addText(clientName, margin, yPosition, { fontSize: 8 });
-      yPosition += lineHeight;
+      doc.setFillColor(240, 240, 240);
+      doc.rect(margin, yPosition - 1, contentWidth, 7, 'F');
+      addText('CLIENTE:', margin + 1, yPosition + 3, { fontSize: 7, fontStyle: 'bold' });
+      addText(clientName, margin + 15, yPosition + 3, { fontSize: 8 });
+      yPosition += 8;
     }
 
-    yPosition += 2;
+    yPosition += 1;
     drawDashedLine(yPosition);
     yPosition += 4;
 
-    // Items Header
-    const colWidths = {
-      code: contentWidth * 0.18,
-      desc: contentWidth * 0.35,
-      qty: contentWidth * 0.12,
-      unit: contentWidth * 0.17,
-      total: contentWidth * 0.18,
-    };
-
-    addText('CÓD', margin, yPosition, { fontSize: 7, fontStyle: 'bold' });
-    addText('DESC', margin + colWidths.code, yPosition, { fontSize: 7, fontStyle: 'bold' });
-    addText('QTD', margin + colWidths.code + colWidths.desc + colWidths.qty / 2, yPosition, { fontSize: 7, fontStyle: 'bold', align: 'center' });
-    addText('UNIT', margin + colWidths.code + colWidths.desc + colWidths.qty + colWidths.unit, yPosition, { fontSize: 7, fontStyle: 'bold', align: 'right' });
-    addText('TOTAL', pageWidth - margin, yPosition, { fontSize: 7, fontStyle: 'bold', align: 'right' });
-    yPosition += smallLineHeight + 1;
-    doc.line(margin, yPosition, pageWidth - margin, yPosition);
-    yPosition += 3;
+    // Items Header with background
+    doc.setFillColor(230, 230, 230);
+    doc.rect(margin, yPosition - 2, contentWidth, 5, 'F');
+    
+    addText('ITEM', margin + 1, yPosition + 1, { fontSize: 6, fontStyle: 'bold' });
+    addText('DESCRIÇÃO', margin + contentWidth * 0.15, yPosition + 1, { fontSize: 6, fontStyle: 'bold' });
+    addText('QTD', pageWidth - margin - contentWidth * 0.35, yPosition + 1, { fontSize: 6, fontStyle: 'bold', align: 'center' });
+    addText('UNIT', pageWidth - margin - contentWidth * 0.18, yPosition + 1, { fontSize: 6, fontStyle: 'bold', align: 'right' });
+    addText('TOTAL', pageWidth - margin - 1, yPosition + 1, { fontSize: 6, fontStyle: 'bold', align: 'right' });
+    yPosition += 5;
 
     // Items
-    order.items.forEach((item) => {
-      const code = item.code.length > 6 ? item.code.substring(0, 6) : item.code;
-      const desc = item.description.length > 12 ? item.description.substring(0, 12) + '..' : item.description;
+    order.items.forEach((item, index) => {
+      // Alternate row background
+      if (index % 2 === 0) {
+        doc.setFillColor(250, 250, 250);
+        doc.rect(margin, yPosition - 2, contentWidth, item.observations ? 8 : 5, 'F');
+      }
       
-      addText(code, margin, yPosition, { fontSize: 7 });
-      addText(desc, margin + colWidths.code, yPosition, { fontSize: 7 });
-      addText(item.quantity.toString(), margin + colWidths.code + colWidths.desc + colWidths.qty / 2, yPosition, { fontSize: 7, align: 'center' });
-      addText(formatCurrency(item.unitPrice).replace('R$', '').trim(), margin + colWidths.code + colWidths.desc + colWidths.qty + colWidths.unit, yPosition, { fontSize: 7, align: 'right' });
-      addText(formatCurrency(item.total).replace('R$', '').trim(), pageWidth - margin, yPosition, { fontSize: 7, align: 'right' });
-      yPosition += lineHeight;
+      const code = item.code.length > 8 ? item.code.substring(0, 8) + '..' : item.code;
+      const desc = item.description.length > 15 ? item.description.substring(0, 15) + '..' : item.description;
+      
+      addText(code, margin + 1, yPosition + 1, { fontSize: 7 });
+      addText(desc, margin + contentWidth * 0.15, yPosition + 1, { fontSize: 7 });
+      addText(item.quantity.toString(), pageWidth - margin - contentWidth * 0.35, yPosition + 1, { fontSize: 7, align: 'center' });
+      addText(formatCurrency(item.unitPrice).replace('R$', '').trim(), pageWidth - margin - contentWidth * 0.18, yPosition + 1, { fontSize: 7, align: 'right' });
+      addText(formatCurrency(item.total).replace('R$', '').trim(), pageWidth - margin - 1, yPosition + 1, { fontSize: 7, align: 'right' });
+      yPosition += 4;
+      
+      // Item observations
+      if (item.observations) {
+        addText(`↳ ${item.observations}`, margin + 3, yPosition + 1, { fontSize: 6, fontStyle: 'italic' });
+        yPosition += 4;
+      }
     });
 
     yPosition += 2;
-    doc.setLineWidth(0.5);
-    doc.line(margin, yPosition, pageWidth - margin, yPosition);
-    doc.setLineWidth(0.2);
+    drawSolidLine(yPosition, 0.5);
     yPosition += 4;
 
-    // Total
-    addText('TOTAL DO PEDIDO', pageWidth - margin, yPosition, { align: 'right', fontSize: 8 });
-    yPosition += lineHeight;
-    addText(formatCurrency(order.total), pageWidth - margin, yPosition, { align: 'right', fontSize: 14, fontStyle: 'bold' });
-    yPosition += lineHeight + 3;
+    // Subtotal info
+    const totalQty = order.items.reduce((acc, item) => acc + item.quantity, 0);
+    addText(`Itens: ${order.items.length}`, margin, yPosition, { fontSize: 7 });
+    addText(`Qtd Total: ${totalQty}`, pageWidth - margin, yPosition, { align: 'right', fontSize: 7 });
+    yPosition += 4;
+
+    // Total with emphasis
+    doc.setFillColor(0, 0, 0);
+    doc.rect(margin, yPosition - 1, contentWidth, 10, 'F');
+    doc.setTextColor(255, 255, 255);
+    addText('TOTAL:', margin + 2, yPosition + 5, { fontSize: 10, fontStyle: 'bold' });
+    addText(formatCurrency(order.total), pageWidth - margin - 2, yPosition + 5, { align: 'right', fontSize: 12, fontStyle: 'bold' });
+    doc.setTextColor(0, 0, 0);
+    yPosition += 12;
 
     // Footer
     drawDashedLine(yPosition);
@@ -344,11 +416,12 @@ export function ReceiptPreviewModal({ order, clientName, open, onClose, onOpenSe
     
     if (settings.footer_message) {
       addText(settings.footer_message, pageWidth / 2, yPosition, { align: 'center', fontSize: 7 });
-      yPosition += smallLineHeight;
+      yPosition += smallLineHeight + 2;
     }
     
-    const totalQty = order.items.reduce((acc, item) => acc + item.quantity, 0);
-    addText(`Qtd. Itens: ${order.items.length} | Qtd. Produtos: ${totalQty}`, pageWidth / 2, yPosition + 2, { align: 'center', fontSize: 6 });
+    addText(`Emitido em: ${date} às ${time}`, pageWidth / 2, yPosition, { align: 'center', fontSize: 6 });
+    yPosition += smallLineHeight;
+    addText('Obrigado pela preferência!', pageWidth / 2, yPosition + 2, { align: 'center', fontSize: 7, fontStyle: 'italic' });
 
     return doc;
   };
