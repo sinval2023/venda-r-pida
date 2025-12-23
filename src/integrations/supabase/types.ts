@@ -323,6 +323,60 @@ export type Database = {
           },
         ]
       }
+      printer_settings: {
+        Row: {
+          auto_print: boolean | null
+          company_address: string | null
+          company_name: string | null
+          company_phone: string | null
+          copies: number | null
+          created_at: string
+          font_size: number | null
+          footer_message: string | null
+          id: string
+          logo_url: string | null
+          paper_width: number | null
+          printer_name: string | null
+          show_logo: boolean | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          auto_print?: boolean | null
+          company_address?: string | null
+          company_name?: string | null
+          company_phone?: string | null
+          copies?: number | null
+          created_at?: string
+          font_size?: number | null
+          footer_message?: string | null
+          id?: string
+          logo_url?: string | null
+          paper_width?: number | null
+          printer_name?: string | null
+          show_logo?: boolean | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          auto_print?: boolean | null
+          company_address?: string | null
+          company_name?: string | null
+          company_phone?: string | null
+          copies?: number | null
+          created_at?: string
+          font_size?: number | null
+          footer_message?: string | null
+          id?: string
+          logo_url?: string | null
+          paper_width?: number | null
+          printer_name?: string | null
+          show_logo?: boolean | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       product_images: {
         Row: {
           created_at: string

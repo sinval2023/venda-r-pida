@@ -17,6 +17,7 @@ import { useFTPHistory } from '@/hooks/useFTPHistory';
 import { FTPHistoryList } from '@/components/FTPHistoryList';
 import { useAuth } from '@/hooks/useAuth';
 import { ReceiptPreviewModal } from '@/components/ReceiptPreviewModal';
+import { PrinterSettingsModal } from '@/components/PrinterSettingsModal';
 
 interface ExportModalProps {
   order: Order;
@@ -103,6 +104,7 @@ const getDefaultFTPConfig = (): FTPConfig => {
 export function ExportModal({ order, clientName, open, onClose, onSuccess, onBack }: ExportModalProps) {
   const { user } = useAuth();
   const [showReceiptPreview, setShowReceiptPreview] = useState(false);
+  const [showPrinterSettings, setShowPrinterSettings] = useState(false);
   const [format, setFormat] = useState<'xml' | 'txt'>('xml');
   const [destination, setDestination] = useState<'download' | 'share' | 'whatsapp' | 'ftp'>('ftp');
   const [ftpConfig, setFtpConfig] = useState<FTPConfig>(getDefaultFTPConfig);
@@ -958,6 +960,16 @@ export function ExportModal({ order, clientName, open, onClose, onSuccess, onBac
         clientName={clientName}
         open={showReceiptPreview}
         onClose={() => setShowReceiptPreview(false)}
+        onOpenSettings={() => {
+          setShowReceiptPreview(false);
+          setShowPrinterSettings(true);
+        }}
+      />
+
+      {/* Printer Settings Modal */}
+      <PrinterSettingsModal
+        open={showPrinterSettings}
+        onClose={() => setShowPrinterSettings(false)}
       />
     </Dialog>
   );

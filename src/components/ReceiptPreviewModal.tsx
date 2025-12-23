@@ -1,19 +1,22 @@
 import { useRef } from 'react';
-import { Printer, X, Eye } from 'lucide-react';
+import { Printer, X, Eye, Settings } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Order } from '@/types/order';
 import { toast } from '@/hooks/use-toast';
+import { usePrinterSettings } from '@/hooks/usePrinterSettings';
 
 interface ReceiptPreviewModalProps {
   order: Order;
   clientName?: string;
   open: boolean;
   onClose: () => void;
+  onOpenSettings?: () => void;
 }
 
-export function ReceiptPreviewModal({ order, clientName, open, onClose }: ReceiptPreviewModalProps) {
+export function ReceiptPreviewModal({ order, clientName, open, onClose, onOpenSettings }: ReceiptPreviewModalProps) {
   const receiptRef = useRef<HTMLDivElement>(null);
+  const { settings } = usePrinterSettings();
 
   const formatCurrency = (value: number) => {
     return value.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
@@ -52,7 +55,7 @@ export function ReceiptPreviewModal({ order, clientName, open, onClose }: Receip
         <title>Cupom - Pedido #${order.number.toString().padStart(6, '0')}</title>
         <style>
           @page {
-            size: 80mm auto;
+            size: ${settings.paper_width}mm auto;
             margin: 0;
           }
           * {
@@ -62,8 +65,8 @@ export function ReceiptPreviewModal({ order, clientName, open, onClose }: Receip
           }
           body {
             font-family: 'Courier New', Courier, monospace;
-            font-size: 12px;
-            width: 80mm;
+            font-size: ${settings.font_size}px;
+            width: ${settings.paper_width}mm;
             padding: 5mm;
             background: white;
             color: black;
@@ -171,7 +174,30 @@ export function ReceiptPreviewModal({ order, clientName, open, onClose }: Receip
         {/* Receipt Preview Container */}
         <div className="bg-white text-black p-4 rounded-lg border-2 border-dashed border-gray-300 font-mono text-sm">
           <div ref={receiptRef}>
-            {/* Header */}
+            {/* Company Header */}
+            {(settings.company_name || settings.show_logo) && (
+              <div className="text-center border-b border-dashed border-gray-400 pb-2 mb-2">
+                {settings.show_logo && settings.logo_url && (
+                  <img 
+                    src={settings.logo_url} 
+                    alt="Logo" 
+                    className="h-12 mx-auto mb-1"
+                    style={{ maxWidth: '60%' }}
+                  />
+                )}
+                {settings.company_name && (
+                  <div className="text-sm font-bold">{settings.company_name}</div>
+                )}
+                {settings.company_address && (
+                  <div className="text-[10px] text-gray-600">{settings.company_address}</div>
+                )}
+                {settings.company_phone && (
+                  <div className="text-[10px] text-gray-600">{settings.company_phone}</div>
+                )}
+              </div>
+            )}
+
+            {/* Order Header */}
             <div className="receipt-header text-center border-b border-dashed border-gray-400 pb-2 mb-2">
               <div className="receipt-title text-lg font-bold">CUPOM DE VENDA</div>
               <div className="receipt-info text-xs text-gray-600">
@@ -242,7 +268,7 @@ export function ReceiptPreviewModal({ order, clientName, open, onClose }: Receip
             {/* Footer */}
             <div className="receipt-footer text-center mt-4 text-xs text-gray-500">
               <div className="divider border-t border-dashed border-gray-400 my-2" />
-              <div>Obrigado pela preferência!</div>
+              <div>{settings.footer_message}</div>
               <div className="text-[10px] mt-1">
                 Qtd. Itens: {order.items.length} | 
                 Qtd. Produtos: {order.items.reduce((acc, item) => acc + item.quantity, 0)}
@@ -253,6 +279,17 @@ export function ReceiptPreviewModal({ order, clientName, open, onClose }: Receip
 
         {/* Action Buttons */}
         <div className="flex gap-2 mt-4">
+          {onOpenSettings && (
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={onOpenSettings}
+              className="shrink-0"
+              title="Configurações da impressora"
+            >
+              <Settings className="h-4 w-4" />
+            </Button>
+          )}
           <Button
             variant="outline"
             className="flex-1"
