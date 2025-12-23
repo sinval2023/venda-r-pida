@@ -1,10 +1,11 @@
-import { useRef } from 'react';
-import { Printer, X, Eye, Settings, ChevronLeft, ChevronRight } from 'lucide-react';
+import { useRef, useState } from 'react';
+import { Printer, X, Eye, Settings, ChevronLeft, ChevronRight, FileDown, Share2, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Order } from '@/types/order';
 import { toast } from '@/hooks/use-toast';
 import { usePrinterSettings } from '@/hooks/usePrinterSettings';
+import { jsPDF } from 'jspdf';
 import {
   ReceiptTemplateClassic,
   ReceiptTemplateModern,
@@ -25,6 +26,7 @@ interface ReceiptPreviewModalProps {
 export function ReceiptPreviewModal({ order, clientName, open, onClose, onOpenSettings }: ReceiptPreviewModalProps) {
   const receiptRef = useRef<HTMLDivElement>(null);
   const { settings, saveSettings } = usePrinterSettings();
+  const [isGeneratingPdf, setIsGeneratingPdf] = useState(false);
 
   const formatCurrency = (value: number) => {
     return value.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
@@ -214,6 +216,212 @@ export function ReceiptPreviewModal({ order, clientName, open, onClose, onOpenSe
     });
   };
 
+  const generatePdf = async (): Promise<jsPDF> => {
+    const doc = new jsPDF({
+      orientation: 'portrait',
+      unit: 'mm',
+      format: [settings.paper_width, 297],
+    });
+
+    const pageWidth = settings.paper_width;
+    const margin = 5;
+    const contentWidth = pageWidth - (margin * 2);
+    let yPosition = margin;
+    const lineHeight = 4;
+    const smallLineHeight = 3;
+
+    // Helper functions
+    const addText = (text: string, x: number, y: number, options: { align?: 'left' | 'center' | 'right'; fontSize?: number; fontStyle?: 'normal' | 'bold' } = {}) => {
+      const { align = 'left', fontSize = 8, fontStyle = 'normal' } = options;
+      doc.setFontSize(fontSize);
+      doc.setFont('helvetica', fontStyle);
+      doc.text(text, x, y, { align });
+    };
+
+    const drawDashedLine = (y: number) => {
+      doc.setLineDashPattern([1, 1], 0);
+      doc.line(margin, y, pageWidth - margin, y);
+      doc.setLineDashPattern([], 0);
+    };
+
+    // Company Header
+    if (settings.company_name) {
+      addText(settings.company_name, pageWidth / 2, yPosition + 4, { align: 'center', fontSize: 10, fontStyle: 'bold' });
+      yPosition += lineHeight + 2;
+    }
+    if (settings.company_address) {
+      addText(settings.company_address, pageWidth / 2, yPosition + 3, { align: 'center', fontSize: 7 });
+      yPosition += smallLineHeight;
+    }
+    if (settings.company_phone) {
+      addText(settings.company_phone, pageWidth / 2, yPosition + 3, { align: 'center', fontSize: 7 });
+      yPosition += smallLineHeight;
+    }
+    
+    if (settings.company_name || settings.company_address || settings.company_phone) {
+      yPosition += 2;
+      drawDashedLine(yPosition);
+      yPosition += 3;
+    }
+
+    // Order Header
+    addText('CUPOM DE VENDA', pageWidth / 2, yPosition + 3, { align: 'center', fontSize: 12, fontStyle: 'bold' });
+    yPosition += lineHeight + 2;
+    addText(`Pedido #${order.number.toString().padStart(6, '0')}`, pageWidth / 2, yPosition + 2, { align: 'center', fontSize: 8 });
+    yPosition += lineHeight;
+    drawDashedLine(yPosition);
+    yPosition += 4;
+
+    // Date/Time
+    addText(`Data: ${date}`, margin, yPosition, { fontSize: 8 });
+    addText(`Hora: ${time}`, pageWidth - margin, yPosition, { align: 'right', fontSize: 8 });
+    yPosition += lineHeight + 2;
+
+    // Seller
+    addText('VENDEDOR', margin, yPosition, { fontSize: 7, fontStyle: 'bold' });
+    yPosition += smallLineHeight;
+    addText(order.vendorName, margin, yPosition, { fontSize: 8 });
+    yPosition += lineHeight;
+
+    // Client
+    if (clientName) {
+      addText('CLIENTE', margin, yPosition, { fontSize: 7, fontStyle: 'bold' });
+      yPosition += smallLineHeight;
+      addText(clientName, margin, yPosition, { fontSize: 8 });
+      yPosition += lineHeight;
+    }
+
+    yPosition += 2;
+    drawDashedLine(yPosition);
+    yPosition += 4;
+
+    // Items Header
+    const colWidths = {
+      code: contentWidth * 0.18,
+      desc: contentWidth * 0.35,
+      qty: contentWidth * 0.12,
+      unit: contentWidth * 0.17,
+      total: contentWidth * 0.18,
+    };
+
+    addText('CÓD', margin, yPosition, { fontSize: 7, fontStyle: 'bold' });
+    addText('DESC', margin + colWidths.code, yPosition, { fontSize: 7, fontStyle: 'bold' });
+    addText('QTD', margin + colWidths.code + colWidths.desc + colWidths.qty / 2, yPosition, { fontSize: 7, fontStyle: 'bold', align: 'center' });
+    addText('UNIT', margin + colWidths.code + colWidths.desc + colWidths.qty + colWidths.unit, yPosition, { fontSize: 7, fontStyle: 'bold', align: 'right' });
+    addText('TOTAL', pageWidth - margin, yPosition, { fontSize: 7, fontStyle: 'bold', align: 'right' });
+    yPosition += smallLineHeight + 1;
+    doc.line(margin, yPosition, pageWidth - margin, yPosition);
+    yPosition += 3;
+
+    // Items
+    order.items.forEach((item) => {
+      const code = item.code.length > 6 ? item.code.substring(0, 6) : item.code;
+      const desc = item.description.length > 12 ? item.description.substring(0, 12) + '..' : item.description;
+      
+      addText(code, margin, yPosition, { fontSize: 7 });
+      addText(desc, margin + colWidths.code, yPosition, { fontSize: 7 });
+      addText(item.quantity.toString(), margin + colWidths.code + colWidths.desc + colWidths.qty / 2, yPosition, { fontSize: 7, align: 'center' });
+      addText(formatCurrency(item.unitPrice).replace('R$', '').trim(), margin + colWidths.code + colWidths.desc + colWidths.qty + colWidths.unit, yPosition, { fontSize: 7, align: 'right' });
+      addText(formatCurrency(item.total).replace('R$', '').trim(), pageWidth - margin, yPosition, { fontSize: 7, align: 'right' });
+      yPosition += lineHeight;
+    });
+
+    yPosition += 2;
+    doc.setLineWidth(0.5);
+    doc.line(margin, yPosition, pageWidth - margin, yPosition);
+    doc.setLineWidth(0.2);
+    yPosition += 4;
+
+    // Total
+    addText('TOTAL DO PEDIDO', pageWidth - margin, yPosition, { align: 'right', fontSize: 8 });
+    yPosition += lineHeight;
+    addText(formatCurrency(order.total), pageWidth - margin, yPosition, { align: 'right', fontSize: 14, fontStyle: 'bold' });
+    yPosition += lineHeight + 3;
+
+    // Footer
+    drawDashedLine(yPosition);
+    yPosition += 4;
+    
+    if (settings.footer_message) {
+      addText(settings.footer_message, pageWidth / 2, yPosition, { align: 'center', fontSize: 7 });
+      yPosition += smallLineHeight;
+    }
+    
+    const totalQty = order.items.reduce((acc, item) => acc + item.quantity, 0);
+    addText(`Qtd. Itens: ${order.items.length} | Qtd. Produtos: ${totalQty}`, pageWidth / 2, yPosition + 2, { align: 'center', fontSize: 6 });
+
+    return doc;
+  };
+
+  const handleExportPdf = async () => {
+    setIsGeneratingPdf(true);
+    try {
+      const doc = await generatePdf();
+      doc.save(`cupom-pedido-${order.number.toString().padStart(6, '0')}.pdf`);
+      
+      toast({
+        title: 'PDF gerado com sucesso',
+        description: 'O arquivo foi baixado para o seu dispositivo.',
+      });
+    } catch (error) {
+      console.error('Error generating PDF:', error);
+      toast({
+        title: 'Erro ao gerar PDF',
+        description: 'Não foi possível gerar o arquivo PDF.',
+        variant: 'destructive',
+      });
+    } finally {
+      setIsGeneratingPdf(false);
+    }
+  };
+
+  const handleSharePdf = async () => {
+    setIsGeneratingPdf(true);
+    try {
+      const doc = await generatePdf();
+      const pdfBlob = doc.output('blob');
+      const fileName = `cupom-pedido-${order.number.toString().padStart(6, '0')}.pdf`;
+      const file = new File([pdfBlob], fileName, { type: 'application/pdf' });
+
+      if (navigator.share && navigator.canShare({ files: [file] })) {
+        await navigator.share({
+          files: [file],
+          title: `Cupom - Pedido #${order.number.toString().padStart(6, '0')}`,
+          text: `Cupom do pedido #${order.number.toString().padStart(6, '0')}`,
+        });
+        
+        toast({
+          title: 'Compartilhamento iniciado',
+          description: 'Escolha como deseja compartilhar o cupom.',
+        });
+      } else {
+        // Fallback: download the file
+        const url = URL.createObjectURL(pdfBlob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = fileName;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+        
+        toast({
+          title: 'PDF gerado',
+          description: 'Compartilhamento não suportado neste dispositivo. O arquivo foi baixado.',
+        });
+      }
+    } catch (error) {
+      console.error('Error sharing PDF:', error);
+      toast({
+        title: 'Erro ao compartilhar',
+        description: 'Não foi possível compartilhar o arquivo.',
+        variant: 'destructive',
+      });
+    } finally {
+      setIsGeneratingPdf(false);
+    }
+  };
+
   return (
     <Dialog open={open} onOpenChange={onClose}>
       <DialogContent className="max-w-md max-h-[90vh] overflow-y-auto">
@@ -256,7 +464,7 @@ export function ReceiptPreviewModal({ order, clientName, open, onClose, onOpenSe
         </div>
 
         {/* Action Buttons */}
-        <div className="flex gap-2 mt-4">
+        <div className="flex flex-wrap gap-2 mt-4">
           {onOpenSettings && (
             <Button
               variant="ghost"
@@ -268,6 +476,35 @@ export function ReceiptPreviewModal({ order, clientName, open, onClose, onOpenSe
               <Settings className="h-4 w-4" />
             </Button>
           )}
+          <Button
+            variant="outline"
+            onClick={handleExportPdf}
+            disabled={isGeneratingPdf}
+            className="flex-1 min-w-[120px]"
+          >
+            {isGeneratingPdf ? (
+              <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+            ) : (
+              <FileDown className="h-4 w-4 mr-2" />
+            )}
+            Baixar PDF
+          </Button>
+          <Button
+            variant="outline"
+            onClick={handleSharePdf}
+            disabled={isGeneratingPdf}
+            className="flex-1 min-w-[120px]"
+            title="Compartilhar via WhatsApp ou Email"
+          >
+            {isGeneratingPdf ? (
+              <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+            ) : (
+              <Share2 className="h-4 w-4 mr-2" />
+            )}
+            Compartilhar
+          </Button>
+        </div>
+        <div className="flex gap-2">
           <Button
             variant="outline"
             className="flex-1"
