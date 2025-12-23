@@ -1,11 +1,12 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft } from 'lucide-react';
+import { ArrowLeft, Printer, Settings } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Header } from '@/components/Header';
 import { AdminProductForm } from '@/components/AdminProductForm';
 import { AdminProductList } from '@/components/AdminProductList';
 import { AdminCategoryList } from '@/components/AdminCategoryList';
+import { PrinterSettingsModal } from '@/components/PrinterSettingsModal';
 import { useProducts, ProductWithCategory } from '@/hooks/useProducts';
 import { useAuth } from '@/hooks/useAuth';
 import { toast } from '@/hooks/use-toast';
@@ -17,6 +18,7 @@ export default function Admin() {
   const { products, loading, addProduct, updateProduct, deleteProduct } = useProducts();
   const [editingProduct, setEditingProduct] = useState<ProductWithCategory | null>(null);
   const [selectedProduct, setSelectedProduct] = useState<ProductWithCategory | null>(null);
+  const [showPrinterSettings, setShowPrinterSettings] = useState(false);
 
   if (authLoading) {
     return (
@@ -86,9 +88,13 @@ export default function Admin() {
         </Button>
 
         <Tabs defaultValue="products" className="space-y-4">
-          <TabsList className="grid w-full grid-cols-2 max-w-md">
+          <TabsList className="grid w-full grid-cols-3 max-w-lg">
             <TabsTrigger value="products">Produtos</TabsTrigger>
             <TabsTrigger value="categories">Categorias</TabsTrigger>
+            <TabsTrigger value="settings" className="flex items-center gap-1">
+              <Settings className="h-3 w-3" />
+              Config
+            </TabsTrigger>
           </TabsList>
 
           <TabsContent value="products">
@@ -122,7 +128,39 @@ export default function Admin() {
               <AdminCategoryList />
             </div>
           </TabsContent>
+
+          <TabsContent value="settings">
+            <div className="max-w-md space-y-4">
+              <h2 className="text-lg font-semibold">Configurações do Sistema</h2>
+              
+              {/* Printer Settings Card */}
+              <div className="p-4 border rounded-lg bg-card hover:bg-accent/50 transition-colors">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <div className="p-2 bg-blue-100 dark:bg-blue-900/30 rounded-lg">
+                      <Printer className="h-5 w-5 text-blue-600 dark:text-blue-400" />
+                    </div>
+                    <div>
+                      <h3 className="font-medium">Impressora Térmica</h3>
+                      <p className="text-sm text-muted-foreground">Configurar impressora e dados do cupom</p>
+                    </div>
+                  </div>
+                  <Button
+                    variant="outline"
+                    onClick={() => setShowPrinterSettings(true)}
+                  >
+                    Configurar
+                  </Button>
+                </div>
+              </div>
+            </div>
+          </TabsContent>
         </Tabs>
+
+        <PrinterSettingsModal
+          open={showPrinterSettings}
+          onClose={() => setShowPrinterSettings(false)}
+        />
       </main>
     </div>
   );
