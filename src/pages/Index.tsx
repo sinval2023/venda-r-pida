@@ -274,6 +274,7 @@ const Index = () => {
       {exportOrder && (
         <ExportModal
           order={exportOrder}
+          clientName={clientName || selectedClient?.name}
           open={!!exportOrder}
           onClose={() => setExportOrder(null)}
           onSuccess={handleExportSuccess}
