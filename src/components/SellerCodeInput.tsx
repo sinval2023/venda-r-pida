@@ -3,6 +3,7 @@ import { useSellers, Seller } from '@/hooks/useSellers';
 import { UserCheck, UserPlus } from 'lucide-react';
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
+import { Card } from '@/components/ui/card';
 import { SellerManagementModal } from './SellerManagementModal';
 import { PasswordAuthModal } from './PasswordAuthModal';
 
@@ -46,8 +47,8 @@ export function SellerCodeInput({ onSellerSelect, selectedSeller, orderTotal = 0
 
   return (
     <div className="flex items-center gap-4">
-      <div>
-        <Label className="text-xs text-muted-foreground flex items-center gap-1 mb-1">
+      <Card className="bg-gradient-to-br from-blue-400 via-sky-300 to-blue-200 border-2 border-blue-300 shadow-lg p-4 rounded-2xl">
+        <Label className="text-xs text-white/90 flex items-center gap-1 mb-2 font-semibold">
           <UserCheck className="h-3 w-3" /> Vendedor
         </Label>
         <div className="flex gap-3 items-center flex-wrap">
@@ -59,11 +60,11 @@ export function SellerCodeInput({ onSellerSelect, selectedSeller, orderTotal = 0
                 key={seller.id}
                 onClick={() => handleSelectSeller(seller.code)}
                 className={`
-                  flex flex-col items-center justify-center p-2 rounded-xl border-3 
+                  flex flex-col items-center justify-center p-2 rounded-xl border-2 
                   transition-all duration-300 min-w-[70px] group
                   ${isSelected 
-                    ? 'bg-gradient-to-br from-blue-500 via-blue-400 to-sky-300 border-blue-600 shadow-xl scale-110' 
-                    : 'bg-gradient-to-br from-blue-50 via-sky-50 to-blue-100 border-blue-300 hover:from-blue-100 hover:via-sky-100 hover:to-blue-200 hover:border-blue-500 hover:scale-105 hover:shadow-lg'
+                    ? 'bg-gradient-to-br from-blue-600 via-blue-500 to-sky-400 border-white shadow-xl scale-110' 
+                    : 'bg-white/90 border-white/60 hover:bg-white hover:border-white hover:scale-105 hover:shadow-lg'
                   }
                   cursor-pointer
                 `}
@@ -90,7 +91,7 @@ export function SellerCodeInput({ onSellerSelect, selectedSeller, orderTotal = 0
                 </div>
                 {/* Name below image */}
                 <span className={`text-[10px] md:text-xs font-bold truncate max-w-[65px] text-center
-                  ${isSelected ? 'text-white' : 'text-black'}
+                  ${isSelected ? 'text-white' : 'text-blue-700'}
                 `}>
                   {seller.name.split(' ')[0]}
                 </span>
@@ -103,22 +104,22 @@ export function SellerCodeInput({ onSellerSelect, selectedSeller, orderTotal = 0
             variant="outline"
             size="icon"
             onClick={() => setShowSellerModal(true)}
-            className="h-10 w-10 rounded-full border-2 border-dashed border-blue-400 hover:border-blue-500 hover:bg-blue-50"
+            className="h-10 w-10 rounded-full border-2 border-dashed border-white/70 hover:border-white hover:bg-white/20 bg-white/10"
             title="Adicionar vendedor"
           >
-            <UserPlus className="h-5 w-5 text-blue-500" />
+            <UserPlus className="h-5 w-5 text-white" />
           </Button>
         </div>
-      </div>
-      
-      {selectedSeller && (
-        <div className="flex items-center gap-2 bg-blue-50 border border-blue-200 rounded-lg px-3 py-2">
-          <UserCheck className="h-4 w-4 text-blue-600" />
-          <span className="text-sm font-medium text-blue-700">
-            Vendedor: <span className="font-bold">{selectedSeller.name}</span>
-          </span>
-        </div>
-      )}
+        
+        {selectedSeller && (
+          <div className="flex items-center gap-2 bg-white/90 border border-white/60 rounded-lg px-3 py-2 mt-3">
+            <UserCheck className="h-4 w-4 text-blue-600" />
+            <span className="text-sm font-medium text-blue-700">
+              Vendedor: <span className="font-bold">{selectedSeller.name}</span>
+            </span>
+          </div>
+        )}
+      </Card>
 
       <SellerManagementModal
         open={showSellerModal}
