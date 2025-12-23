@@ -1,6 +1,6 @@
 import { useState, useMemo, useEffect } from 'react';
 import type { MouseEvent } from 'react';
-import { Download, Upload, FileText, FileCode, AlertCircle, Loader2, Share2, MessageCircle, CheckCircle2, Save, Database } from 'lucide-react';
+import { Download, Upload, FileText, FileCode, AlertCircle, Loader2, Share2, MessageCircle, CheckCircle2, Save, Database, Printer, Eye } from 'lucide-react';
 import { Progress } from '@/components/ui/progress';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -16,8 +16,11 @@ import { supabase } from '@/integrations/supabase/client';
 import { useFTPHistory } from '@/hooks/useFTPHistory';
 import { FTPHistoryList } from '@/components/FTPHistoryList';
 import { useAuth } from '@/hooks/useAuth';
+import { ReceiptPreviewModal } from '@/components/ReceiptPreviewModal';
+
 interface ExportModalProps {
   order: Order;
+  clientName?: string;
   open: boolean;
   onClose: () => void;
   onSuccess: () => void;
@@ -97,8 +100,9 @@ const getDefaultFTPConfig = (): FTPConfig => {
   };
 };
 
-export function ExportModal({ order, open, onClose, onSuccess, onBack }: ExportModalProps) {
+export function ExportModal({ order, clientName, open, onClose, onSuccess, onBack }: ExportModalProps) {
   const { user } = useAuth();
+  const [showReceiptPreview, setShowReceiptPreview] = useState(false);
   const [format, setFormat] = useState<'xml' | 'txt'>('xml');
   const [destination, setDestination] = useState<'download' | 'share' | 'whatsapp' | 'ftp'>('ftp');
   const [ftpConfig, setFtpConfig] = useState<FTPConfig>(getDefaultFTPConfig);
@@ -638,7 +642,41 @@ export function ExportModal({ order, open, onClose, onSuccess, onBack }: ExportM
               <span className="text-muted-foreground">Itens:</span>
               <span>{order.items.length}</span>
             </div>
+            {clientName && (
+              <div className="flex justify-between text-xs mt-1">
+                <span className="text-muted-foreground">Cliente:</span>
+                <span className="font-medium">{clientName}</span>
+              </div>
+            )}
           </Card>
+
+          {/* Receipt Preview and Print Buttons */}
+          <div className="grid grid-cols-2 gap-2">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => setShowReceiptPreview(true)}
+              className="h-12 flex items-center justify-center gap-2 font-semibold border-2 border-blue-300 hover:bg-blue-50 hover:border-blue-500 transition-all"
+            >
+              <Eye className="h-5 w-5 text-blue-600" />
+              <span className="text-blue-700">Visualizar Cupom</span>
+            </Button>
+            <Button
+              type="button"
+              onClick={() => {
+                setShowReceiptPreview(true);
+                // Auto-print after modal opens
+                setTimeout(() => {
+                  const printBtn = document.querySelector('[data-print-receipt]') as HTMLButtonElement;
+                  if (printBtn) printBtn.click();
+                }, 100);
+              }}
+              className="h-12 flex items-center justify-center gap-2 font-semibold bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white transition-all"
+            >
+              <Printer className="h-5 w-5" />
+              Imprimir Cupom
+            </Button>
+          </div>
 
           {/* Save to Database Button */}
           <Button
@@ -913,6 +951,14 @@ export function ExportModal({ order, open, onClose, onSuccess, onBack }: ExportM
           )}
         </div>
       </DialogContent>
+
+      {/* Receipt Preview Modal */}
+      <ReceiptPreviewModal
+        order={order}
+        clientName={clientName}
+        open={showReceiptPreview}
+        onClose={() => setShowReceiptPreview(false)}
+      />
     </Dialog>
   );
 }
