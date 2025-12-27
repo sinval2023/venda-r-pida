@@ -14,6 +14,30 @@ export type Database = {
   }
   public: {
     Tables: {
+      api_data: {
+        Row: {
+          created_at: string
+          data: Json
+          id: string
+          source_url: string | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          data: Json
+          id?: string
+          source_url?: string | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          data?: Json
+          id?: string
+          source_url?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       categories: {
         Row: {
           active: boolean

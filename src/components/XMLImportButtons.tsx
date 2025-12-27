@@ -6,12 +6,13 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { Package, Loader2, Users, X, ClipboardEdit, FolderOpen, MoreHorizontal, TrendingUp, BarChart3, History, UserPlus, ShoppingBag } from "lucide-react";
+import { Package, Loader2, Users, X, ClipboardEdit, FolderOpen, MoreHorizontal, TrendingUp, BarChart3, History, UserPlus, ShoppingBag, Cloud } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { ProductManagementModal } from "./ProductManagementModal";
 import { CategoryManagementModal } from "./CategoryManagementModal";
 import { ClientManagementModal } from "./ClientManagementModal";
 import { ClientOrdersModal } from "./ClientOrdersModal";
+import { ApiDataModal } from "./ApiDataModal";
 import { Client } from "@/hooks/useClients";
 
 interface XMLImportButtonsProps {
@@ -39,6 +40,7 @@ export function XMLImportButtons({ onClientsImported, onProductsImported, onShow
   const [categoryModalOpen, setCategoryModalOpen] = useState(false);
   const [clientModalOpen, setClientModalOpen] = useState(false);
   const [clientOrdersModalOpen, setClientOrdersModalOpen] = useState(false);
+  const [apiModalOpen, setApiModalOpen] = useState(false);
   const [loadingClients, setLoadingClients] = useState(false);
   const [loadingProducts, setLoadingProducts] = useState(false);
   const [progress, setProgress] = useState<ImportProgress | null>(null);
@@ -336,6 +338,16 @@ export function XMLImportButtons({ onClientsImported, onProductsImported, onShow
               <Button
                 variant="outline"
                 size="sm"
+                onClick={() => setApiModalOpen(true)}
+                className="gap-1.5 text-xs font-semibold hover:bg-gradient-to-r hover:from-sky-400 hover:to-blue-500 hover:text-white hover:border-sky-400 transition-all duration-300"
+              >
+                <Cloud className="h-3.5 w-3.5" />
+                API
+              </Button>
+
+              <Button
+                variant="outline"
+                size="sm"
                 onClick={() => setCategoryModalOpen(true)}
                 className="gap-1.5 text-xs font-semibold hover:bg-gradient-to-r hover:from-amber-400 hover:to-orange-500 hover:text-white hover:border-amber-400 transition-all duration-300"
               >
@@ -362,6 +374,11 @@ export function XMLImportButtons({ onClientsImported, onProductsImported, onShow
         open={clientModalOpen}
         onOpenChange={setClientModalOpen}
         onClientsChanged={onClientsImported}
+      />
+
+      <ApiDataModal
+        open={apiModalOpen}
+        onOpenChange={setApiModalOpen}
       />
 
       {selectedClient && (
