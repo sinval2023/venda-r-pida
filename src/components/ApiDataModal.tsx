@@ -6,6 +6,7 @@ import { Label } from '@/components/ui/label';
 import { Card } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { Progress } from '@/components/ui/progress';
 import { Database, Loader2, RefreshCw, Trash2, Cloud } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/hooks/use-toast';
@@ -24,10 +25,13 @@ interface ApiDataRecord {
 }
 
 export function ApiDataModal({ open, onOpenChange }: ApiDataModalProps) {
-  const [apiUrl, setApiUrl] = useState('https://a1b2c3d4.ngrok-free.app/listadados');
+  const [apiUrl, setApiUrl] = useState('https://merrilee-unopted-dangelo.ngrok-free.dev/listadados');
   const [loading, setLoading] = useState(false);
   const [apiData, setApiData] = useState<ApiDataRecord[]>([]);
   const [fetchedData, setFetchedData] = useState<unknown[] | null>(null);
+  const [progress, setProgress] = useState(0);
+  const [totalItems, setTotalItems] = useState(0);
+  const [processedItems, setProcessedItems] = useState(0);
 
   const fetchStoredData = async () => {
     const { data, error } = await supabase
@@ -78,9 +82,13 @@ export function ApiDataModal({ open, onOpenChange }: ApiDataModalProps) {
 
       const fetchedItems = Array.isArray(response.data) ? response.data : [response.data];
       setFetchedData(fetchedItems);
+      setTotalItems(fetchedItems.length);
+      setProcessedItems(0);
+      setProgress(0);
 
-      // Save each item to the database
-      for (const item of fetchedItems) {
+      // Save each item to the database with progress
+      for (let i = 0; i < fetchedItems.length; i++) {
+        const item = fetchedItems[i];
         const { error: insertError } = await supabase
           .from('api_data')
           .insert({
@@ -91,6 +99,10 @@ export function ApiDataModal({ open, onOpenChange }: ApiDataModalProps) {
         if (insertError) {
           console.error('Error inserting data:', insertError);
         }
+
+        const newProcessed = i + 1;
+        setProcessedItems(newProcessed);
+        setProgress(Math.round((newProcessed / fetchedItems.length) * 100));
       }
 
       await fetchStoredData();
@@ -197,6 +209,16 @@ export function ApiDataModal({ open, onOpenChange }: ApiDataModalProps) {
                 Limpar Dados
               </Button>
             </div>
+
+            {loading && totalItems > 0 && (
+              <div className="space-y-2 mt-3">
+                <div className="flex justify-between text-xs text-white/90 font-medium">
+                  <span>Importando itens...</span>
+                  <span>{processedItems} de {totalItems} ({progress}%)</span>
+                </div>
+                <Progress value={progress} className="h-3 bg-white/30" />
+              </div>
+            )}
           </div>
         </Card>
 
