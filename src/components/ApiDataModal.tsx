@@ -8,9 +8,10 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Progress } from '@/components/ui/progress';
 import { Checkbox } from '@/components/ui/checkbox';
-import { Database, Loader2, RefreshCw, Trash2, Cloud, ArrowRightLeft } from 'lucide-react';
+import { Database, Loader2, RefreshCw, Trash2, Cloud, ArrowRightLeft, Save } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/hooks/use-toast';
+import { useApiSettings } from '@/hooks/useApiSettings';
 
 interface ApiDataModalProps {
   open: boolean;
@@ -26,7 +27,8 @@ interface ApiDataRecord {
 }
 
 export function ApiDataModal({ open, onOpenChange }: ApiDataModalProps) {
-  const [apiUrl, setApiUrl] = useState('https://merrilee-unopted-dangelo.ngrok-free.dev/listadados');
+  const { apiUrl: savedApiUrl, saveApiUrl, saving: savingUrl, loading: loadingUrl } = useApiSettings();
+  const [apiUrl, setApiUrl] = useState('');
   const [loading, setLoading] = useState(false);
   const [syncing, setSyncing] = useState(false);
   const [apiData, setApiData] = useState<ApiDataRecord[]>([]);
@@ -38,6 +40,17 @@ export function ApiDataModal({ open, onOpenChange }: ApiDataModalProps) {
   const [syncTotalItems, setSyncTotalItems] = useState(0);
   const [syncProcessedItems, setSyncProcessedItems] = useState(0);
   const [clearProductsBeforeSync, setClearProductsBeforeSync] = useState(false);
+
+  // Load saved URL when available
+  useEffect(() => {
+    if (savedApiUrl && !loadingUrl) {
+      setApiUrl(savedApiUrl);
+    }
+  }, [savedApiUrl, loadingUrl]);
+
+  const handleSaveUrl = async () => {
+    await saveApiUrl(apiUrl);
+  };
 
   const fetchStoredData = async () => {
     const { data, error } = await supabase
@@ -285,13 +298,32 @@ export function ApiDataModal({ open, onOpenChange }: ApiDataModalProps) {
               <Label htmlFor="api-url" className="text-white/80 text-xs">
                 URL da API
               </Label>
-              <Input
-                id="api-url"
-                value={apiUrl}
-                onChange={(e) => setApiUrl(e.target.value)}
-                placeholder="https://exemplo.ngrok-free.app/endpoint"
-                className="bg-white/90 border-white/60 text-sm"
-              />
+              <div className="flex gap-2">
+                <Input
+                  id="api-url"
+                  value={apiUrl}
+                  onChange={(e) => setApiUrl(e.target.value)}
+                  placeholder="https://exemplo.ngrok-free.app/endpoint"
+                  className="bg-white/90 border-white/60 text-sm flex-1"
+                />
+                <Button
+                  onClick={handleSaveUrl}
+                  disabled={savingUrl || apiUrl === savedApiUrl}
+                  size="icon"
+                  variant="outline"
+                  className="bg-white/90 hover:bg-white text-green-600 border-green-300 hover:border-green-400"
+                  title="Salvar URL"
+                >
+                  {savingUrl ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : (
+                    <Save className="h-4 w-4" />
+                  )}
+                </Button>
+              </div>
+              {apiUrl !== savedApiUrl && (
+                <p className="text-[10px] text-white/70 mt-1">URL alterada - clique no ícone para salvar</p>
+              )}
             </div>
 
             <div className="flex gap-2 flex-wrap">
