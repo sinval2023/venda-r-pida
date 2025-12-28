@@ -267,16 +267,8 @@ export function ApiDataModal({ open, onOpenChange }: ApiDataModalProps) {
     });
   };
 
-  const getDataColumns = () => {
-    if (apiData.length === 0) return [];
-    const firstItem = apiData[0].data;
-    if (typeof firstItem === 'object' && firstItem !== null) {
-      return Object.keys(firstItem);
-    }
-    return ['valor'];
-  };
-
-  const columns = getDataColumns();
+  // Fixed columns to display
+  const displayColumns = ['CODIGO', 'DESCRICAO', 'VLR_VENDA', 'COD_UNI', 'ESTOQUE'];
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -424,31 +416,23 @@ export function ApiDataModal({ open, onOpenChange }: ApiDataModalProps) {
               <Table>
                 <TableHeader>
                   <TableRow className="bg-gradient-to-r from-blue-400 via-sky-300 to-blue-200">
-                    <TableHead className="text-white font-bold">ID</TableHead>
-                    {columns.slice(0, 5).map((col) => (
+                    {displayColumns.map((col) => (
                       <TableHead key={col} className="text-white font-bold">
                         {col}
                       </TableHead>
                     ))}
-                    <TableHead className="text-white font-bold">Data</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {apiData.map((record) => (
                     <TableRow key={record.id} className="hover:bg-blue-50">
-                      <TableCell className="font-mono text-xs">
-                        {record.id.substring(0, 8)}...
-                      </TableCell>
-                      {columns.slice(0, 5).map((col) => (
+                      {displayColumns.map((col) => (
                         <TableCell key={col} className="text-sm">
                           {typeof record.data === 'object' && record.data !== null
                             ? String((record.data as Record<string, unknown>)[col] ?? '-')
-                            : String(record.data)}
+                            : '-'}
                         </TableCell>
                       ))}
-                      <TableCell className="text-xs text-muted-foreground">
-                        {new Date(record.created_at).toLocaleString('pt-BR')}
-                      </TableCell>
                     </TableRow>
                   ))}
                 </TableBody>
