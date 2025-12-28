@@ -19,7 +19,12 @@ export function ProductGrid({ onAddToOrder, searchQuery, onSearchChange, hasSele
   const { products, loading, searchProducts } = useProducts();
   const [visibleCount, setVisibleCount] = useState(PRODUCTS_PER_PAGE);
 
-  const filteredProducts = searchQuery ? searchProducts(searchQuery) : products;
+  // Filter products: only show products with show_on_card = true, then apply search
+  const cardProducts = products.filter(p => p.show_on_card === true);
+  const filteredProducts = searchQuery ? cardProducts.filter(
+    p => p.code.toLowerCase().includes(searchQuery.toLowerCase()) || 
+         p.description.toLowerCase().includes(searchQuery.toLowerCase())
+  ) : cardProducts;
 
   // Reset visible count when search changes
   useEffect(() => {

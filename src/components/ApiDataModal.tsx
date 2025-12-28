@@ -209,6 +209,7 @@ export function ApiDataModal({ open, onOpenChange }: ApiDataModalProps) {
           barcode: data.barcode ? String(data.barcode) : data.ean ? String(data.ean) : null,
           image_url: data.image_url ? String(data.image_url) : data.imagem ? String(data.imagem) : null,
           active: true,
+          show_on_card: false, // Default to not showing on card
         };
 
         // Check if product with same code exists
@@ -553,7 +554,7 @@ export function ApiDataModal({ open, onOpenChange }: ApiDataModalProps) {
             <Label className="text-sm font-bold text-foreground">
               Dados Armazenados 
               <span className="ml-2 text-xs font-normal text-muted-foreground">
-                ({filteredData.length} de {apiData.length} registros)
+                (Exibindo {filteredData.length} de {apiData.length} registros | Total: {apiData.length})
               </span>
             </Label>
             <div className="flex gap-1 flex-wrap">

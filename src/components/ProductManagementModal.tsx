@@ -37,6 +37,7 @@ export function ProductManagementModal({
     category_id?: string;
     image_url?: string;
     barcode?: string;
+    show_on_card?: boolean;
   }) => {
     try {
       if (editingProduct) {

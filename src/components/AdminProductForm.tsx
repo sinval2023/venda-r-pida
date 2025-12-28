@@ -5,6 +5,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Checkbox } from '@/components/ui/checkbox';
 import { Product } from '@/types/order';
 import { useCategories } from '@/hooks/useCategories';
 import { toast } from '@/hooks/use-toast';
@@ -14,8 +15,8 @@ import { useProductImages, ProductImage } from '@/hooks/useProductImages';
 import { supabase } from '@/integrations/supabase/client';
 
 interface AdminProductFormProps {
-  product?: ProductWithCategory;
-  onSave: (product: Omit<Product, 'id' | 'active'> & { category_id?: string; image_url?: string; barcode?: string }) => Promise<{ error: Error | null }>;
+  product?: ProductWithCategory | null;
+  onSave: (product: Omit<Product, 'id' | 'active'> & { category_id?: string; image_url?: string; barcode?: string; show_on_card?: boolean }) => Promise<{ error: Error | null }>;
   onCancel?: () => void;
   onCodeSearch?: (product: ProductWithCategory) => void;
 }
@@ -28,6 +29,7 @@ export function AdminProductForm({ product, onSave, onCancel, onCodeSearch }: Ad
   const [barcode, setBarcode] = useState(product?.barcode || '');
   const [defaultPrice, setDefaultPrice] = useState(product?.default_price || 0);
   const [categoryId, setCategoryId] = useState<string | undefined>(product?.category_id || undefined);
+  const [showOnCard, setShowOnCard] = useState(product?.show_on_card ?? false);
   const [images, setImages] = useState<ProductImage[]>([]);
   const [pendingFiles, setPendingFiles] = useState<File[]>([]);
   const [loading, setLoading] = useState(false);
@@ -39,6 +41,7 @@ export function AdminProductForm({ product, onSave, onCancel, onCodeSearch }: Ad
       setBarcode(product.barcode || '');
       setDefaultPrice(product.default_price);
       setCategoryId(product.category_id || undefined);
+      setShowOnCard(product.show_on_card ?? false);
       loadProductImages(product.id);
       setPendingFiles([]);
     } else {
@@ -47,6 +50,7 @@ export function AdminProductForm({ product, onSave, onCancel, onCodeSearch }: Ad
       setBarcode('');
       setDefaultPrice(0);
       setCategoryId(undefined);
+      setShowOnCard(false);
       setImages([]);
       setPendingFiles([]);
     }
@@ -80,6 +84,7 @@ export function AdminProductForm({ product, onSave, onCancel, onCodeSearch }: Ad
       category_id: categoryId || undefined,
       image_url: imageUrl,
       barcode: barcode.trim() || undefined,
+      show_on_card: showOnCard,
     });
 
     if (error) {
@@ -111,6 +116,7 @@ export function AdminProductForm({ product, onSave, onCancel, onCodeSearch }: Ad
       setBarcode('');
       setDefaultPrice(0);
       setCategoryId(undefined);
+      setShowOnCard(false);
       setImages([]);
       setPendingFiles([]);
     }
@@ -228,6 +234,22 @@ export function AdminProductForm({ product, onSave, onCancel, onCodeSearch }: Ad
                 />
               </div>
             </div>
+          </div>
+
+          {/* Show on Card Checkbox */}
+          <div className="flex items-center space-x-2 p-3 bg-gradient-to-r from-blue-50 to-sky-50 dark:from-blue-900/20 dark:to-sky-900/20 rounded-lg border border-blue-200 dark:border-blue-800">
+            <Checkbox
+              id="show-on-card"
+              checked={showOnCard}
+              onCheckedChange={(checked) => setShowOnCard(checked === true)}
+              className="h-5 w-5 border-blue-400 data-[state=checked]:bg-blue-600 data-[state=checked]:border-blue-600"
+            />
+            <Label
+              htmlFor="show-on-card"
+              className="text-sm font-medium cursor-pointer flex-1"
+            >
+              Exibir no card da tela principal
+            </Label>
           </div>
 
           <div className="flex gap-2 pt-2">

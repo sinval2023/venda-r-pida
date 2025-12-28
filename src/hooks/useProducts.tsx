@@ -7,6 +7,7 @@ export interface ProductWithCategory extends Product {
   category_name?: string;
   image_url?: string | null;
   barcode?: string | null;
+  show_on_card?: boolean;
   images?: { id: string; image_url: string; is_primary: boolean }[];
 }
 
@@ -46,6 +47,7 @@ export function useProducts() {
           category_name: p.categories?.name || 'Sem categoria',
           image_url: primaryImage?.image_url || p.image_url,
           barcode: p.barcode || null,
+          show_on_card: p.show_on_card ?? false,
           images: sortedImages.map((img: any) => ({
             id: img.id,
             image_url: img.image_url,
@@ -66,7 +68,7 @@ export function useProducts() {
     );
   };
 
-  const addProduct = async (product: Omit<Product, 'id' | 'active'> & { category_id?: string; image_url?: string; barcode?: string }) => {
+  const addProduct = async (product: Omit<Product, 'id' | 'active'> & { category_id?: string; image_url?: string; barcode?: string; show_on_card?: boolean }) => {
     const { error } = await supabase
       .from('products')
       .insert({
@@ -76,6 +78,7 @@ export function useProducts() {
         category_id: product.category_id || null,
         image_url: product.image_url || null,
         barcode: product.barcode || null,
+        show_on_card: product.show_on_card ?? false,
       });
     
     if (!error) {
@@ -84,7 +87,7 @@ export function useProducts() {
     return { error };
   };
 
-  const updateProduct = async (id: string, product: Partial<Product> & { category_id?: string; image_url?: string | null; barcode?: string | null }) => {
+  const updateProduct = async (id: string, product: Partial<Product> & { category_id?: string; image_url?: string | null; barcode?: string | null; show_on_card?: boolean }) => {
     const { error } = await supabase
       .from('products')
       .update(product)

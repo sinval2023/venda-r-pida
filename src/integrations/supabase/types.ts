@@ -453,6 +453,7 @@ export type Database = {
           description: string
           id: string
           image_url: string | null
+          show_on_card: boolean
           updated_at: string
         }
         Insert: {
@@ -465,6 +466,7 @@ export type Database = {
           description: string
           id?: string
           image_url?: string | null
+          show_on_card?: boolean
           updated_at?: string
         }
         Update: {
@@ -477,6 +479,7 @@ export type Database = {
           description?: string
           id?: string
           image_url?: string | null
+          show_on_card?: boolean
           updated_at?: string
         }
         Relationships: [
