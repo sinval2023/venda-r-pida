@@ -8,7 +8,8 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Progress } from '@/components/ui/progress';
 import { Checkbox } from '@/components/ui/checkbox';
-import { Database, Loader2, RefreshCw, Trash2, Cloud, ArrowRightLeft, Save } from 'lucide-react';
+import { Database, Loader2, RefreshCw, Trash2, Cloud, ArrowRightLeft, Save, FileSpreadsheet, FileText } from 'lucide-react';
+import * as XLSX from 'xlsx';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/hooks/use-toast';
 import { useApiSettings } from '@/hooks/useApiSettings';
@@ -264,11 +265,75 @@ export function ApiDataModal({ open, onOpenChange }: ApiDataModalProps) {
     toast({
       title: 'Dados limpos',
       description: 'Todos os dados foram removidos.',
-    });
+  });
   };
 
   // Fixed columns to display
   const displayColumns = ['CODIGO', 'DESCRICAO', 'VLR_VENDA', 'COD_UNI', 'ESTOQUE'];
+
+  const getExportData = () => {
+    return apiData.map((record) => {
+      const row: Record<string, unknown> = {};
+      displayColumns.forEach((col) => {
+        row[col] = typeof record.data === 'object' && record.data !== null
+          ? (record.data as Record<string, unknown>)[col] ?? ''
+          : '';
+      });
+      return row;
+    });
+  };
+
+  const handleExportExcel = () => {
+    if (apiData.length === 0) {
+      toast({
+        title: 'Sem dados para exportar',
+        description: 'Primeiro processe dados da API.',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    const data = getExportData();
+    const worksheet = XLSX.utils.json_to_sheet(data);
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, 'Dados API');
+    
+    const fileName = `dados_api_${new Date().toISOString().split('T')[0]}.xlsx`;
+    XLSX.writeFile(workbook, fileName);
+
+    toast({
+      title: 'Exportação concluída',
+      description: `Arquivo ${fileName} exportado com sucesso.`,
+    });
+  };
+
+  const handleExportCSV = () => {
+    if (apiData.length === 0) {
+      toast({
+        title: 'Sem dados para exportar',
+        description: 'Primeiro processe dados da API.',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    const data = getExportData();
+    const worksheet = XLSX.utils.json_to_sheet(data);
+    const csv = XLSX.utils.sheet_to_csv(worksheet, { FS: ';' });
+    
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `dados_api_${new Date().toISOString().split('T')[0]}.csv`;
+    link.click();
+    URL.revokeObjectURL(url);
+
+    toast({
+      title: 'Exportação concluída',
+      description: 'Arquivo CSV exportado com sucesso.',
+    });
+  };
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -403,9 +468,33 @@ export function ApiDataModal({ open, onOpenChange }: ApiDataModalProps) {
         </Card>
 
         <div className="flex-1 overflow-hidden">
-          <Label className="text-sm font-semibold mb-2 block">
-            Dados Armazenados ({apiData.length} registros)
-          </Label>
+          <div className="flex items-center justify-between mb-2">
+            <Label className="text-sm font-semibold">
+              Dados Armazenados ({apiData.length} registros)
+            </Label>
+            <div className="flex gap-2">
+              <Button
+                onClick={handleExportExcel}
+                disabled={apiData.length === 0}
+                size="sm"
+                variant="outline"
+                className="gap-1 text-xs h-7"
+              >
+                <FileSpreadsheet className="h-3 w-3" />
+                Excel
+              </Button>
+              <Button
+                onClick={handleExportCSV}
+                disabled={apiData.length === 0}
+                size="sm"
+                variant="outline"
+                className="gap-1 text-xs h-7"
+              >
+                <FileText className="h-3 w-3" />
+                CSV
+              </Button>
+            </div>
+          </div>
           
           <ScrollArea className="h-[250px] border rounded-lg">
             {apiData.length === 0 ? (
