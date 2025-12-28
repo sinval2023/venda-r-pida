@@ -349,6 +349,7 @@ export type Database = {
       }
       printer_settings: {
         Row: {
+          api_url: string | null
           auto_print: boolean | null
           company_address: string | null
           company_name: string | null
@@ -367,6 +368,7 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          api_url?: string | null
           auto_print?: boolean | null
           company_address?: string | null
           company_name?: string | null
@@ -385,6 +387,7 @@ export type Database = {
           user_id: string
         }
         Update: {
+          api_url?: string | null
           auto_print?: boolean | null
           company_address?: string | null
           company_name?: string | null
