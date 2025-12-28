@@ -7,7 +7,8 @@ import { Card } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Progress } from '@/components/ui/progress';
-import { Database, Loader2, RefreshCw, Trash2, Cloud } from 'lucide-react';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Database, Loader2, RefreshCw, Trash2, Cloud, ArrowRightLeft } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/hooks/use-toast';
 
@@ -27,11 +28,16 @@ interface ApiDataRecord {
 export function ApiDataModal({ open, onOpenChange }: ApiDataModalProps) {
   const [apiUrl, setApiUrl] = useState('https://merrilee-unopted-dangelo.ngrok-free.dev/listadados');
   const [loading, setLoading] = useState(false);
+  const [syncing, setSyncing] = useState(false);
   const [apiData, setApiData] = useState<ApiDataRecord[]>([]);
   const [fetchedData, setFetchedData] = useState<unknown[] | null>(null);
   const [progress, setProgress] = useState(0);
   const [totalItems, setTotalItems] = useState(0);
   const [processedItems, setProcessedItems] = useState(0);
+  const [syncProgress, setSyncProgress] = useState(0);
+  const [syncTotalItems, setSyncTotalItems] = useState(0);
+  const [syncProcessedItems, setSyncProcessedItems] = useState(0);
+  const [clearProductsBeforeSync, setClearProductsBeforeSync] = useState(false);
 
   const fetchStoredData = async () => {
     const { data, error } = await supabase
@@ -123,6 +129,108 @@ export function ApiDataModal({ open, onOpenChange }: ApiDataModalProps) {
     }
   };
 
+  const handleSyncToProducts = async () => {
+    if (apiData.length === 0) {
+      toast({
+        title: 'Sem dados para sincronizar',
+        description: 'Primeiro processe dados da API.',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    setSyncing(true);
+    setSyncProgress(0);
+    setSyncProcessedItems(0);
+    setSyncTotalItems(apiData.length);
+
+    try {
+      // Clear products table if checkbox is checked
+      if (clearProductsBeforeSync) {
+        const { error: deleteError } = await supabase
+          .from('products')
+          .update({ active: false })
+          .neq('id', '00000000-0000-0000-0000-000000000000');
+
+        if (deleteError) {
+          console.error('Error clearing products:', deleteError);
+          toast({
+            title: 'Erro ao limpar produtos',
+            description: deleteError.message,
+            variant: 'destructive',
+          });
+          return;
+        }
+      }
+
+      let syncedCount = 0;
+      let errorCount = 0;
+
+      for (let i = 0; i < apiData.length; i++) {
+        const record = apiData[i];
+        const data = record.data as Record<string, unknown>;
+
+        // Map API data to product fields
+        const productData = {
+          code: String(data.codigo || data.code || data.id || `API-${i + 1}`),
+          description: String(data.descricao || data.description || data.nome || data.name || 'Produto Importado'),
+          default_price: Number(data.preco || data.price || data.valor || data.default_price || 0),
+          barcode: data.barcode ? String(data.barcode) : data.ean ? String(data.ean) : null,
+          image_url: data.image_url ? String(data.image_url) : data.imagem ? String(data.imagem) : null,
+          active: true,
+        };
+
+        // Check if product with same code exists
+        const { data: existingProduct } = await supabase
+          .from('products')
+          .select('id')
+          .eq('code', productData.code)
+          .maybeSingle();
+
+        let error;
+        if (existingProduct) {
+          // Update existing product
+          const { error: updateError } = await supabase
+            .from('products')
+            .update(productData)
+            .eq('id', existingProduct.id);
+          error = updateError;
+        } else {
+          // Insert new product
+          const { error: insertError } = await supabase
+            .from('products')
+            .insert(productData);
+          error = insertError;
+        }
+
+        if (error) {
+          console.error('Error syncing product:', error);
+          errorCount++;
+        } else {
+          syncedCount++;
+        }
+
+        const newProcessed = i + 1;
+        setSyncProcessedItems(newProcessed);
+        setSyncProgress(Math.round((newProcessed / apiData.length) * 100));
+      }
+
+      toast({
+        title: 'Sincronização concluída',
+        description: `${syncedCount} produto(s) sincronizado(s)${errorCount > 0 ? `, ${errorCount} erro(s)` : ''}.`,
+      });
+    } catch (error) {
+      console.error('Error syncing to products:', error);
+      toast({
+        title: 'Erro na sincronização',
+        description: error instanceof Error ? error.message : 'Erro ao sincronizar produtos.',
+        variant: 'destructive',
+      });
+    } finally {
+      setSyncing(false);
+    }
+  };
+
   const handleClearData = async () => {
     const { error } = await supabase
       .from('api_data')
@@ -189,7 +297,7 @@ export function ApiDataModal({ open, onOpenChange }: ApiDataModalProps) {
             <div className="flex gap-2 flex-wrap">
               <Button
                 onClick={handleProcessData}
-                disabled={loading}
+                disabled={loading || syncing}
                 className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white gap-2"
               >
                 {loading ? (
@@ -203,6 +311,7 @@ export function ApiDataModal({ open, onOpenChange }: ApiDataModalProps) {
               <Button
                 onClick={handleClearData}
                 variant="outline"
+                disabled={loading || syncing}
                 className="bg-white/90 hover:bg-white text-red-600 border-red-300 hover:border-red-400 gap-2"
               >
                 <Trash2 className="h-4 w-4" />
@@ -222,12 +331,59 @@ export function ApiDataModal({ open, onOpenChange }: ApiDataModalProps) {
           </div>
         </Card>
 
+        {/* Sync to Products Section */}
+        <Card className="bg-gradient-to-br from-green-400 via-emerald-300 to-green-200 border-2 border-green-300 shadow-lg p-4 rounded-2xl">
+          <Label className="text-xs text-white/90 flex items-center gap-1 mb-2 font-semibold">
+            <ArrowRightLeft className="h-3 w-3" /> Sincronizar com Produtos
+          </Label>
+          
+          <div className="space-y-3">
+            <div className="flex items-center space-x-2">
+              <Checkbox
+                id="clear-products"
+                checked={clearProductsBeforeSync}
+                onCheckedChange={(checked) => setClearProductsBeforeSync(checked === true)}
+                className="border-white/60 data-[state=checked]:bg-white data-[state=checked]:text-green-600"
+              />
+              <Label
+                htmlFor="clear-products"
+                className="text-white/90 text-sm cursor-pointer"
+              >
+                Desativar produtos existentes antes de sincronizar
+              </Label>
+            </div>
+
+            <Button
+              onClick={handleSyncToProducts}
+              disabled={loading || syncing || apiData.length === 0}
+              className="bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white gap-2"
+            >
+              {syncing ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : (
+                <ArrowRightLeft className="h-4 w-4" />
+              )}
+              {syncing ? 'Sincronizando...' : `Sincronizar ${apiData.length} item(s) para Produtos`}
+            </Button>
+
+            {syncing && syncTotalItems > 0 && (
+              <div className="space-y-2 mt-3">
+                <div className="flex justify-between text-xs text-white/90 font-medium">
+                  <span>Sincronizando produtos...</span>
+                  <span>{syncProcessedItems} de {syncTotalItems} ({syncProgress}%)</span>
+                </div>
+                <Progress value={syncProgress} className="h-3 bg-white/30" />
+              </div>
+            )}
+          </div>
+        </Card>
+
         <div className="flex-1 overflow-hidden">
           <Label className="text-sm font-semibold mb-2 block">
             Dados Armazenados ({apiData.length} registros)
           </Label>
           
-          <ScrollArea className="h-[300px] border rounded-lg">
+          <ScrollArea className="h-[250px] border rounded-lg">
             {apiData.length === 0 ? (
               <div className="flex items-center justify-center h-full text-muted-foreground">
                 Nenhum dado armazenado. Clique em "Processar Dados" para importar.
